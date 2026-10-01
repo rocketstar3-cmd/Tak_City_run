@@ -10,6 +10,17 @@ export const initialClubSettings = {
   adminPin: "1234"
 };
 
+export const initialAdminUsers = [
+  {
+    id: "admin-root",
+    username: "admin",
+    password: "1234",
+    displayName: "ผู้ดูแลระบบหลัก (Superadmin)",
+    role: "superadmin",
+    createdAt: "2026-10-01T00:00:00"
+  }
+];
+
 export const initialEvents = [
   {
     id: "ep-02",

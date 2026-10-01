@@ -124,7 +124,23 @@ CREATE TABLE IF NOT EXISTS event_gallery (
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
--- 7. Row Level Security (RLS) Configuration
+-- 7. Create Admin Users Table (ระบบล็อกอินแอดมินแบบ Username & Password ไม่ใช้อีเมล)
+CREATE TABLE IF NOT EXISTS admin_users (
+  id TEXT PRIMARY KEY,
+  username TEXT UNIQUE NOT NULL,
+  password TEXT NOT NULL,
+  display_name TEXT NOT NULL,
+  role TEXT DEFAULT 'admin', -- 'superadmin', 'admin', 'staff'
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- บัญชีเริ่มต้น Superadmin: Username: admin | Password: 1234
+INSERT INTO admin_users (id, username, password, display_name, role)
+VALUES ('admin-root', 'admin', '1234', 'ผู้ดูแลระบบหลัก (Superadmin)', 'superadmin')
+ON CONFLICT (username) DO NOTHING;
+
+-- 8. Row Level Security (RLS) Configuration
 -- ทางเลือกที่ 1 (แนะนำสำหรับเว็บชมรมฟรี): ปิด RLS เพื่อให้เว็บแอปบันทึกข้อมูลได้ทันที 100% ไม่ติด Permission
 ALTER TABLE IF EXISTS club_settings DISABLE ROW LEVEL SECURITY;
 ALTER TABLE IF EXISTS events DISABLE ROW LEVEL SECURITY;
@@ -132,6 +148,7 @@ ALTER TABLE IF EXISTS registrations DISABLE ROW LEVEL SECURITY;
 ALTER TABLE IF EXISTS event_attractions DISABLE ROW LEVEL SECURITY;
 ALTER TABLE IF EXISTS sponsors DISABLE ROW LEVEL SECURITY;
 ALTER TABLE IF EXISTS event_gallery DISABLE ROW LEVEL SECURITY;
+ALTER TABLE IF EXISTS admin_users DISABLE ROW LEVEL SECURITY;
 
 -- ทางเลือกที่ 2 (หากต้องการเปิด RLS แบบ Permissive สำหรับ Anon Key):
 -- ALTER TABLE club_settings ENABLE ROW LEVEL SECURITY;

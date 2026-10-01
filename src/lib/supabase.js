@@ -5,7 +5,8 @@ import {
   initialRegistrations,
   initialShopsAndActivities,
   initialSponsors,
-  initialPastGalleries
+  initialPastGalleries,
+  initialAdminUsers
 } from './initialData';
 
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || '';
@@ -30,7 +31,9 @@ const LS_KEYS = {
   SHOPS: 'tak_city_run_shops',
   SPONSORS: 'tak_city_run_sponsors',
   GALLERY: 'tak_city_run_gallery',
-  ADMIN_SESSION: 'tak_city_run_admin_auth'
+  ADMIN_SESSION: 'tak_city_run_admin_auth',
+  ADMIN_USERS: 'tak_city_run_admin_users',
+  CURRENT_ADMIN: 'tak_city_run_current_admin'
 };
 
 function getLocalItem(key, fallback) {
@@ -778,50 +781,206 @@ export const DataService = {
     return true;
   },
 
-  // 7. Admin Auth
-  async checkAdminAuth() {
+  // 7. Admin Accounts & Auth (Username & Password - No Email needed)
+  async getAdminUsers() {
     if (isSupabaseConfigured) {
       try {
-        const { data: { session } } = await supabase.auth.getSession();
-        if (session) return { isAuthenticated: true, user: session.user };
-      } catch (e) {}
+        const { data, error } = await supabase.from('admin_users').select('*').order('created_at', { ascending: true });
+        if (!error && data?.length) {
+          return data.map(u => ({
+            id: u.id,
+            username: u.username,
+            password: u.password,
+            displayName: u.display_name,
+            role: u.role || 'admin',
+            createdAt: u.created_at
+          }));
+        }
+      } catch (e) {
+        // Table might not exist yet in Supabase
+      }
     }
-    const localAuth = localStorage.getItem(LS_KEYS.ADMIN_SESSION);
-    if (localAuth === 'true') {
-      return { isAuthenticated: true, user: { email: 'admin@takcityrun.org' } };
-    }
-    return { isAuthenticated: false };
+    return getLocalItem(LS_KEYS.ADMIN_USERS, initialAdminUsers);
   },
 
-  async loginAdmin(credentials) {
-    if (isSupabaseConfigured && credentials.email && credentials.password) {
+  async addAdminUser({ username, password, displayName, role = 'admin' }) {
+    const list = await this.getAdminUsers();
+    const cleanUsername = username.trim().toLowerCase();
+    
+    if (list.some(u => u.username.toLowerCase() === cleanUsername)) {
+      return { success: false, error: `ชื่อผู้ใช้งาน "${cleanUsername}" มีอยู่ในระบบแล้ว` };
+    }
+
+    const newUser = {
+      id: `admin-${Date.now()}`,
+      username: cleanUsername,
+      password: password.trim(),
+      displayName: displayName.trim() || cleanUsername,
+      role: role || 'admin',
+      createdAt: new Date().toISOString()
+    };
+
+    const updated = [...list, newUser];
+    setLocalItem(LS_KEYS.ADMIN_USERS, updated);
+
+    if (isSupabaseConfigured) {
       try {
-        const { data, error } = await supabase.auth.signInWithPassword({
-          email: credentials.email,
-          password: credentials.password
-        });
-        if (!error && data?.session) {
-          localStorage.setItem(LS_KEYS.ADMIN_SESSION, 'true');
-          return { success: true, user: data.user };
+        await supabase.from('admin_users').insert([{
+          id: newUser.id,
+          username: newUser.username,
+          password: newUser.password,
+          display_name: newUser.displayName,
+          role: newUser.role
+        }]);
+      } catch (e) {
+        console.warn('Supabase addAdminUser insert error:', e);
+      }
+    }
+
+    return { success: true, user: newUser };
+  },
+
+  async deleteAdminUser(id) {
+    const list = await this.getAdminUsers();
+    const target = list.find(u => u.id === id);
+    if (!target) return { success: false, error: 'ไม่พบบัญชีแอดมิน' };
+    if (target.username.toLowerCase() === 'admin') {
+      return { success: false, error: 'ไม่สามารถลบบัญชีผู้ดูแลระบบหลัก (admin) ได้' };
+    }
+
+    const updated = list.filter(u => u.id !== id);
+    setLocalItem(LS_KEYS.ADMIN_USERS, updated);
+
+    if (isSupabaseConfigured) {
+      try {
+        await supabase.from('admin_users').delete().eq('id', id);
+      } catch (e) {}
+    }
+
+    return { success: true };
+  },
+
+  async updateAdminPassword({ username, currentPassword, newPassword }) {
+    const list = await this.getAdminUsers();
+    const cleanUsername = username.trim().toLowerCase();
+    const userIndex = list.findIndex(u => u.username.toLowerCase() === cleanUsername);
+
+    if (userIndex === -1) {
+      return { success: false, error: 'ไม่พบบัญชีผู้ใช้งานนี้ในระบบ' };
+    }
+
+    const user = list[userIndex];
+    if (user.password !== currentPassword.trim()) {
+      return { success: false, error: 'รหัสผ่านปัจจุบันไม่ถูกต้อง' };
+    }
+
+    user.password = newPassword.trim();
+    user.updatedAt = new Date().toISOString();
+    list[userIndex] = user;
+    setLocalItem(LS_KEYS.ADMIN_USERS, list);
+
+    // Update current session storage if same user
+    const cur = localStorage.getItem(LS_KEYS.CURRENT_ADMIN);
+    if (cur) {
+      try {
+        const parsed = JSON.parse(cur);
+        if (parsed.username.toLowerCase() === cleanUsername) {
+          localStorage.setItem(LS_KEYS.CURRENT_ADMIN, JSON.stringify({ ...parsed, password: user.password }));
         }
       } catch (e) {}
     }
 
-    const settings = await this.getSettings();
-    if (credentials.pin === (settings.adminPin || '1234') || credentials.password === 'takcityrun') {
-      localStorage.setItem(LS_KEYS.ADMIN_SESSION, 'true');
-      return { success: true, user: { email: 'admin@takcityrun.club' } };
+    if (isSupabaseConfigured) {
+      try {
+        await supabase.from('admin_users').update({
+          password: user.password,
+          updated_at: new Date().toISOString()
+        }).eq('id', user.id);
+      } catch (e) {
+        console.warn('Supabase updateAdminPassword error:', e);
+      }
     }
 
-    return { success: false, error: 'รหัสผ่านหรือ PIN ไม่ถูกต้อง (ค่าเริ่มต้นคือ 1234)' };
+    return { success: true, message: 'เปลี่ยนรหัสผ่านสำเร็จแล้ว' };
+  },
+
+  async checkAdminAuth() {
+    const sessionStr = localStorage.getItem(LS_KEYS.CURRENT_ADMIN);
+    if (sessionStr) {
+      try {
+        const user = JSON.parse(sessionStr);
+        if (user && user.username) {
+          return { isAuthenticated: true, user };
+        }
+      } catch (e) {}
+    }
+    const legacyAuth = localStorage.getItem(LS_KEYS.ADMIN_SESSION);
+    if (legacyAuth === 'true') {
+      return {
+        isAuthenticated: true,
+        user: { username: 'admin', displayName: 'ผู้ดูแลระบบหลัก (Admin)', role: 'superadmin' }
+      };
+    }
+    return { isAuthenticated: false, user: null };
+  },
+
+  async loginAdmin({ username, password, pin }) {
+    const inputUser = (username || '').trim().toLowerCase();
+    const inputPass = (password || pin || '').trim();
+
+    if (!inputPass) {
+      return { success: false, error: 'กรุณากรอกรหัสผ่าน' };
+    }
+
+    const users = await this.getAdminUsers();
+
+    // 1. Direct match by username & password
+    if (inputUser) {
+      const match = users.find(u => u.username.toLowerCase() === inputUser);
+      if (match) {
+        if (match.password === inputPass) {
+          const sessionUser = {
+            id: match.id,
+            username: match.username,
+            displayName: match.displayName,
+            role: match.role
+          };
+          localStorage.setItem(LS_KEYS.CURRENT_ADMIN, JSON.stringify(sessionUser));
+          localStorage.setItem(LS_KEYS.ADMIN_SESSION, 'true');
+          return { success: true, user: sessionUser };
+        } else {
+          return { success: false, error: 'รหัสผ่านไม่ถูกต้อง' };
+        }
+      }
+    }
+
+    // 2. Fallback: match by password/PIN if username is empty or 'admin'
+    const adminUser = users.find(u => u.username.toLowerCase() === 'admin') || initialAdminUsers[0];
+    const settings = await this.getSettings();
+    const validPin = settings.adminPin || '1234';
+
+    if (inputPass === adminUser.password || inputPass === validPin || inputPass === 'takcityrun') {
+      const sessionUser = {
+        id: adminUser.id || 'admin-root',
+        username: adminUser.username || 'admin',
+        displayName: adminUser.displayName || 'ผู้ดูแลระบบหลัก',
+        role: adminUser.role || 'superadmin'
+      };
+      localStorage.setItem(LS_KEYS.CURRENT_ADMIN, JSON.stringify(sessionUser));
+      localStorage.setItem(LS_KEYS.ADMIN_SESSION, 'true');
+      return { success: true, user: sessionUser };
+    }
+
+    return {
+      success: false,
+      error: inputUser
+        ? 'ชื่อผู้ใช้งานหรือรหัสผ่านไม่ถูกต้อง'
+        : 'รหัสผ่านไม่ถูกต้อง (ค่าเริ่มต้นระบบ: admin / 1234)'
+    };
   },
 
   async logoutAdmin() {
-    if (isSupabaseConfigured) {
-      try {
-        await supabase.auth.signOut();
-      } catch (e) {}
-    }
+    localStorage.removeItem(LS_KEYS.CURRENT_ADMIN);
     localStorage.removeItem(LS_KEYS.ADMIN_SESSION);
     return true;
   }

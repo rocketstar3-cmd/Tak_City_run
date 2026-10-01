@@ -29,7 +29,10 @@ import {
   Droplet,
   Activity,
   Mountain,
-  Eye
+  Eye,
+  Key,
+  UserCheck,
+  UserPlus
 } from 'lucide-react';
 import { DataService } from '../lib/supabase';
 
@@ -42,8 +45,19 @@ export function AdminPortal({
   onExitAdmin 
 }) {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [pinInput, setPinInput] = useState('');
+  const [currentAdmin, setCurrentAdmin] = useState(null);
+  const [adminUsername, setAdminUsername] = useState('admin');
+  const [adminPassword, setAdminPassword] = useState('');
   const [loginError, setLoginError] = useState('');
+
+  // Admin users & Password change state
+  const [adminUsersList, setAdminUsersList] = useState([]);
+  const [changePasswordModalOpen, setChangePasswordModalOpen] = useState(false);
+  const [changePasswordForm, setChangePasswordForm] = useState({ currentPassword: '', newPassword: '', confirmPassword: '' });
+  const [changePasswordError, setChangePasswordError] = useState('');
+  const [newAdminModalOpen, setNewAdminModalOpen] = useState(false);
+  const [newAdminForm, setNewAdminForm] = useState({ username: '', password: '', displayName: '', role: 'staff' });
+  const [newAdminError, setNewAdminError] = useState('');
 
   // Active Tab
   const [activeTab, setActiveTab] = useState('events');
@@ -161,40 +175,127 @@ export function AdminPortal({
     const auth = await DataService.checkAdminAuth();
     if (auth.isAuthenticated) {
       setIsAuthenticated(true);
+      setCurrentAdmin(auth.user);
     }
   };
 
   const handleLogin = async (e) => {
     e.preventDefault();
     setLoginError('');
-    const res = await DataService.loginAdmin({ pin: pinInput });
+    const res = await DataService.loginAdmin({ 
+      username: adminUsername, 
+      password: adminPassword 
+    });
     if (res.success) {
       setIsAuthenticated(true);
-      setPinInput('');
+      setCurrentAdmin(res.user);
+      setAdminPassword('');
     } else {
-      setLoginError(res.error || 'รหัส PIN ไม่ถูกต้อง');
+      setLoginError(res.error || 'ชื่อผู้ใช้งานหรือรหัสผ่านไม่ถูกต้อง');
     }
   };
 
   const handleLogout = async () => {
     await DataService.logoutAdmin();
     setIsAuthenticated(false);
+    setCurrentAdmin(null);
   };
 
   const loadAllAdminData = async () => {
     try {
-      const [regs, sps, shps, gals] = await Promise.all([
+      const [regs, sps, shps, gals, admins] = await Promise.all([
         DataService.getRegistrations(activeEvent?.id),
         DataService.getSponsors(),
         DataService.getShopsAndActivities(),
-        DataService.getPastGalleries()
+        DataService.getPastGalleries(),
+        DataService.getAdminUsers()
       ]);
       setRegistrations(regs);
       setSponsorsList(sps);
       setShopsList(shps);
       setGalleryList(gals);
+      setAdminUsersList(admins);
     } catch (e) {
       console.error(e);
+    }
+  };
+
+  const handleChangePassword = async (e) => {
+    e.preventDefault();
+    setChangePasswordError('');
+    if (!changePasswordForm.currentPassword) {
+      setChangePasswordError('กรุณากรอกรหัสผ่านปัจจุบัน');
+      return;
+    }
+    if (!changePasswordForm.newPassword) {
+      setChangePasswordError('กรุณากรอกรหัสผ่านใหม่');
+      return;
+    }
+    if (changePasswordForm.newPassword.length < 4) {
+      setChangePasswordError('รหัสผ่านใหม่อย่างน้อย 4 ตัวอักษร');
+      return;
+    }
+    if (changePasswordForm.newPassword !== changePasswordForm.confirmPassword) {
+      setChangePasswordError('รหัสผ่านใหม่และการยืนยันรหัสผ่านไม่ตรงกัน');
+      return;
+    }
+
+    const username = currentAdmin?.username || 'admin';
+    const res = await DataService.updateAdminPassword({
+      username,
+      currentPassword: changePasswordForm.currentPassword,
+      newPassword: changePasswordForm.newPassword
+    });
+
+    if (res.success) {
+      showToast('เปลี่ยนรหัสผ่านของคุณเรียบร้อยแล้ว!');
+      setChangePasswordModalOpen(false);
+      setChangePasswordForm({ currentPassword: '', newPassword: '', confirmPassword: '' });
+      const admins = await DataService.getAdminUsers();
+      setAdminUsersList(admins);
+    } else {
+      setChangePasswordError(res.error || 'ไม่สามารถเปลี่ยนรหัสผ่านได้');
+    }
+  };
+
+  const handleCreateAdminUser = async (e) => {
+    e.preventDefault();
+    setNewAdminError('');
+    if (!newAdminForm.username.trim()) {
+      setNewAdminError('กรุณากรอกชื่อผู้ใช้งาน (Username)');
+      return;
+    }
+    if (!newAdminForm.password.trim()) {
+      setNewAdminError('กรุณากำหนดรหัสผ่านเริ่มต้น');
+      return;
+    }
+
+    const res = await DataService.addAdminUser(newAdminForm);
+    if (res.success) {
+      showToast(`เพิ่มแอดมิน "${newAdminForm.username}" สำเร็จแล้ว!`);
+      setNewAdminModalOpen(false);
+      setNewAdminForm({ username: '', password: '', displayName: '', role: 'staff' });
+      const admins = await DataService.getAdminUsers();
+      setAdminUsersList(admins);
+    } else {
+      setNewAdminError(res.error || 'ไม่สามารถเพิ่มแอดมินได้');
+    }
+  };
+
+  const handleDeleteAdminUser = async (id, username) => {
+    if (username.toLowerCase() === 'admin') {
+      alert('ไม่สามารถลบบัญชีผู้ดูแลระบบหลัก (admin) ได้');
+      return;
+    }
+    if (!window.confirm(`คุณแน่ใจหรือไม่ว่าต้องการลบบัญชีแอดมิน "${username}"?`)) return;
+
+    const res = await DataService.deleteAdminUser(id);
+    if (res.success) {
+      showToast(`ลบบัญชีแอดมิน "${username}" แล้ว`);
+      const admins = await DataService.getAdminUsers();
+      setAdminUsersList(admins);
+    } else {
+      showToast(res.error || 'ลบไม่สำเร็จ', false);
     }
   };
 
@@ -516,7 +617,7 @@ export function AdminPortal({
             </div>
             <h2 style={{ fontSize: '1.5rem', color: '#FFF' }}>เข้าสู่ระบบผู้ดูแลชมรม</h2>
             <p style={{ color: 'var(--text-muted)', fontSize: '0.88rem', marginTop: '6px' }}>
-              TAK City Run Admin Portal
+              TAK City Run Admin & Staff Portal
             </p>
           </div>
 
@@ -528,19 +629,35 @@ export function AdminPortal({
 
           <form onSubmit={handleLogin}>
             <div className="form-group">
-              <label className="form-label">รหัส PIN แอดมิน (ค่าเริ่มต้น: 1234)</label>
+              <label className="form-label">ชื่อผู้ใช้งาน (Username) *</label>
               <input 
-                type="password" 
+                type="text" 
                 className="form-control"
-                placeholder="กรอกรหัส PIN"
-                value={pinInput}
-                onChange={(e) => setPinInput(e.target.value)}
-                maxLength={8}
+                placeholder="เช่น admin, staff_tak"
+                value={adminUsername}
+                onChange={(e) => setAdminUsername(e.target.value)}
                 autoFocus
+                required
               />
             </div>
 
-            <button type="submit" className="btn btn-primary" style={{ width: '100%', padding: '14px' }}>
+            <div className="form-group">
+              <label className="form-label">รหัสผ่าน (Password) *</label>
+              <input 
+                type="password" 
+                className="form-control"
+                placeholder="กรอกรหัสผ่านของคุณ"
+                value={adminPassword}
+                onChange={(e) => setAdminPassword(e.target.value)}
+                required
+              />
+            </div>
+
+            <div style={{ background: 'rgba(255, 255, 255, 0.04)', borderRadius: 'var(--radius-sm)', padding: '10px 14px', marginBottom: '20px', fontSize: '0.82rem', color: 'var(--text-muted)' }}>
+              💡 บัญชีเริ่มต้นระบบ: Username: <strong style={{ color: '#FFF' }}>admin</strong> | รหัสผ่าน: <strong style={{ color: '#FFF' }}>1234</strong>
+            </div>
+
+            <button type="submit" className="btn btn-primary" style={{ width: '100%', padding: '14px', fontSize: '1.05rem' }}>
               เข้าสู่ระบบ
             </button>
           </form>
@@ -591,9 +708,30 @@ export function AdminPortal({
           </p>
         </div>
 
-        <div style={{ display: 'flex', gap: '10px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
+          {currentAdmin && (
+            <div style={{ background: 'rgba(255, 255, 255, 0.05)', border: '1px solid var(--dark-border)', borderRadius: 'var(--radius-sm)', padding: '6px 12px', textAlign: 'right' }}>
+              <div style={{ fontSize: '0.85rem', fontWeight: 700, color: '#FFF' }}>
+                👤 {currentAdmin.displayName || currentAdmin.username}
+              </div>
+              <div style={{ fontSize: '0.72rem', color: 'var(--primary)' }}>
+                @{currentAdmin.username} ({currentAdmin.role === 'superadmin' ? 'Superadmin' : 'Staff'})
+              </div>
+            </div>
+          )}
+          <button 
+            className="btn btn-secondary btn-sm" 
+            onClick={() => {
+              setChangePasswordError('');
+              setChangePasswordForm({ currentPassword: '', newPassword: '', confirmPassword: '' });
+              setChangePasswordModalOpen(true);
+            }}
+            title="เปลี่ยนรหัสผ่านของฉัน"
+          >
+            <Key size={14} /> เปลี่ยนรหัสผ่าน
+          </button>
           <button className="btn btn-secondary btn-sm" onClick={handleLogout}>
-            <LogOut size={16} /> ออกจากระบบ
+            <LogOut size={14} /> ออกจากระบบ
           </button>
           <button className="btn btn-primary btn-sm" onClick={onExitAdmin}>
             ดูหน้าเว็บนักวิ่ง <ExternalLink size={14} />
@@ -619,8 +757,8 @@ export function AdminPortal({
         </div>
 
         <div className="stat-card">
-          <div className="stat-val" style={{ color: '#FBBF24' }}>{sponsorsList.length}</div>
-          <div className="stat-label">ผู้สนับสนุน</div>
+          <div className="stat-val" style={{ color: '#FBBF24' }}>{adminUsersList.length}</div>
+          <div className="stat-label">ผู้ดูแลระบบ (Admins)</div>
         </div>
       </div>
 
@@ -666,6 +804,13 @@ export function AdminPortal({
           onClick={() => setActiveTab('gallery')}
         >
           <ImageIcon size={18} /> แกลเลอรีภาพ ({galleryList.length})
+        </button>
+
+        <button 
+          className={`admin-tab ${activeTab === 'admins' ? 'active' : ''}`}
+          onClick={() => setActiveTab('admins')}
+        >
+          <Key size={18} /> จัดการแอดมิน ({adminUsersList.length})
         </button>
 
         <button 
@@ -1244,6 +1389,100 @@ export function AdminPortal({
               บันทึกการตั้งค่า
             </button>
           </form>
+        </div>
+      )}
+
+      {/* ========================================================
+          TAB 8: ADMIN USERS MANAGEMENT (Username & Password)
+         ======================================================== */}
+      {activeTab === 'admins' && (
+        <div>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px', flexWrap: 'wrap', gap: '14px' }}>
+            <div>
+              <h2 style={{ fontSize: '1.4rem', color: '#FFF' }}>👥 จัดการบัญชีผู้ดูแลระบบ (Admin & Staff)</h2>
+              <p style={{ color: 'var(--text-muted)', fontSize: '0.88rem' }}>
+                สร้างบัญชีผู้ใช้งานและรหัสผ่านให้ทีมงาน โดยไม่ต้องใช้อีเมล และทีมงานสามารถเข้ามาเปลี่ยนรหัสผ่านเองได้
+              </p>
+            </div>
+            <button 
+              className="btn btn-primary btn-sm"
+              onClick={() => {
+                setNewAdminError('');
+                setNewAdminForm({ username: '', password: '', displayName: '', role: 'staff' });
+                setNewAdminModalOpen(true);
+              }}
+            >
+              <Plus size={16} /> + เพิ่มแอดมินใหม่
+            </button>
+          </div>
+
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: '16px' }}>
+            {adminUsersList.map(u => (
+              <div 
+                key={u.id || u.username}
+                className="glass-card"
+                style={{ padding: '20px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}
+              >
+                <div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '10px' }}>
+                    <span className={`badge-tag ${u.role === 'superadmin' ? '' : 'cyan'}`}>
+                      {u.role === 'superadmin' ? '👑 Superadmin' : '🛡️ Staff แอดมิน'}
+                    </span>
+                    {u.username.toLowerCase() !== 'admin' && (
+                      <button 
+                        className="btn btn-secondary btn-sm"
+                        style={{ color: '#F87171', padding: '4px 8px' }}
+                        onClick={() => handleDeleteAdminUser(u.id, u.username)}
+                        title="ลบบัญชีนี้"
+                      >
+                        <Trash2 size={14} />
+                      </button>
+                    )}
+                  </div>
+
+                  <h3 style={{ fontSize: '1.15rem', color: '#FFF', marginBottom: '4px' }}>
+                    {u.displayName || u.username}
+                  </h3>
+                  <div style={{ color: 'var(--primary)', fontSize: '0.9rem', fontWeight: 700, marginBottom: '12px' }}>
+                    @{u.username}
+                  </div>
+
+                  <div style={{ fontSize: '0.82rem', color: 'var(--text-muted)', background: 'rgba(255, 255, 255, 0.03)', padding: '10px', borderRadius: 'var(--radius-sm)' }}>
+                    <div>🔑 รหัสผ่านปัจจุบัน: <strong style={{ color: '#FFF' }}>{u.password}</strong></div>
+                    <div style={{ marginTop: '4px', fontSize: '0.75rem' }}>สร้างเมื่อ: {new Date(u.createdAt || Date.now()).toLocaleDateString('th-TH')}</div>
+                  </div>
+                </div>
+
+                <div style={{ marginTop: '16px', display: 'flex', gap: '8px' }}>
+                  <button 
+                    className="btn btn-secondary btn-sm" 
+                    style={{ flex: 1, fontSize: '0.82rem' }}
+                    onClick={() => {
+                      const newPass = prompt(`ตั้งรหัสผ่านใหม่สำหรับ @${u.username}:`, '');
+                      if (newPass && newPass.trim().length >= 4) {
+                        DataService.updateAdminPassword({
+                          username: u.username,
+                          currentPassword: u.password,
+                          newPassword: newPass.trim()
+                        }).then(res => {
+                          if (res.success) {
+                            showToast(`อัปเดตรหัสผ่านของ @${u.username} เรียบร้อยแล้ว`);
+                            DataService.getAdminUsers().then(setAdminUsersList);
+                          } else {
+                            alert(res.error);
+                          }
+                        });
+                      } else if (newPass) {
+                        alert('รหัสผ่านต้องมีอย่างน้อย 4 ตัวอักษร');
+                      }
+                    }}
+                  >
+                    <Key size={14} /> รีเซ็ตรหัสผ่าน
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
         </div>
       )}
 
@@ -1849,6 +2088,157 @@ export function AdminPortal({
               <button type="submit" className="btn btn-primary" style={{ width: '100%', padding: '14px', marginTop: '10px' }}>
                 บันทึกภาพแกลเลอรี
               </button>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL: CHANGE PASSWORD */}
+      {changePasswordModalOpen && (
+        <div className="modal-overlay" onClick={() => setChangePasswordModalOpen(false)}>
+          <div className="modal-content" style={{ maxWidth: '440px', padding: '28px' }} onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header">
+              <h3 style={{ fontSize: '1.25rem', color: '#FFF' }}>🔑 เปลี่ยนรหัสผ่านของฉัน</h3>
+              <button className="modal-close-btn" onClick={() => setChangePasswordModalOpen(false)}>&times;</button>
+            </div>
+
+            <p style={{ color: 'var(--text-muted)', fontSize: '0.85rem', marginBottom: '16px' }}>
+              บัญชี: <strong style={{ color: 'var(--primary)' }}>@{currentAdmin?.username || 'admin'}</strong> ({currentAdmin?.displayName})
+            </p>
+
+            {changePasswordError && (
+              <div style={{ background: 'rgba(239, 68, 68, 0.15)', border: '1px solid rgba(239, 68, 68, 0.4)', color: '#FCA5A5', padding: '10px 14px', borderRadius: 'var(--radius-sm)', marginBottom: '16px', fontSize: '0.85rem' }}>
+                {changePasswordError}
+              </div>
+            )}
+
+            <form onSubmit={handleChangePassword}>
+              <div className="form-group">
+                <label className="form-label">รหัสผ่านปัจจุบัน *</label>
+                <input 
+                  type="password" 
+                  className="form-control"
+                  placeholder="กรอกรหัสผ่านเดิม"
+                  value={changePasswordForm.currentPassword}
+                  onChange={(e) => setChangePasswordForm({ ...changePasswordForm, currentPassword: e.target.value })}
+                  required
+                  autoFocus
+                />
+              </div>
+
+              <div className="form-group">
+                <label className="form-label">รหัสผ่านใหม่ (อย่างน้อย 4 ตัวอักษร) *</label>
+                <input 
+                  type="password" 
+                  className="form-control"
+                  placeholder="กำหนดรหัสผ่านใหม่"
+                  value={changePasswordForm.newPassword}
+                  onChange={(e) => setChangePasswordForm({ ...changePasswordForm, newPassword: e.target.value })}
+                  required
+                />
+              </div>
+
+              <div className="form-group">
+                <label className="form-label">ยืนยันรหัสผ่านใหม่อีกครั้ง *</label>
+                <input 
+                  type="password" 
+                  className="form-control"
+                  placeholder="กรอกรหัสผ่านใหม่อีกครั้งให้ตรงกัน"
+                  value={changePasswordForm.confirmPassword}
+                  onChange={(e) => setChangePasswordForm({ ...changePasswordForm, confirmPassword: e.target.value })}
+                  required
+                />
+              </div>
+
+              <div style={{ display: 'flex', gap: '10px', marginTop: '20px' }}>
+                <button type="submit" className="btn btn-primary" style={{ flex: 1, padding: '12px' }}>
+                  บันทึกรหัสผ่านใหม่
+                </button>
+                <button type="button" className="btn btn-secondary" onClick={() => setChangePasswordModalOpen(false)}>
+                  ยกเลิก
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL: ADD NEW ADMIN / STAFF */}
+      {newAdminModalOpen && (
+        <div className="modal-overlay" onClick={() => setNewAdminModalOpen(false)}>
+          <div className="modal-content" style={{ maxWidth: '480px', padding: '28px' }} onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header">
+              <h3 style={{ fontSize: '1.25rem', color: '#FFF' }}>➕ เพิ่มบัญชีผู้ดูแลระบบ / สตาฟใหม่</h3>
+              <button className="modal-close-btn" onClick={() => setNewAdminModalOpen(false)}>&times;</button>
+            </div>
+
+            <p style={{ color: 'var(--text-muted)', fontSize: '0.85rem', marginBottom: '16px' }}>
+              กำหนดชื่อผู้ใช้งานและรหัสผ่านเริ่มต้นให้ทีมงาน (ไม่ต้องใช้อีเมล) และทีมงานสามารถเปลี่ยนรหัสผ่านเองได้
+            </p>
+
+            {newAdminError && (
+              <div style={{ background: 'rgba(239, 68, 68, 0.15)', border: '1px solid rgba(239, 68, 68, 0.4)', color: '#FCA5A5', padding: '10px 14px', borderRadius: 'var(--radius-sm)', marginBottom: '16px', fontSize: '0.85rem' }}>
+                {newAdminError}
+              </div>
+            )}
+
+            <form onSubmit={handleCreateAdminUser}>
+              <div className="form-group">
+                <label className="form-label">ชื่อผู้ใช้งาน (Username สำหรับล็อกอิน) *</label>
+                <input 
+                  type="text" 
+                  className="form-control"
+                  placeholder="เช่น staff_tak, somchai, nurse01"
+                  value={newAdminForm.username}
+                  onChange={(e) => setNewAdminForm({ ...newAdminForm, username: e.target.value })}
+                  required
+                  autoFocus
+                />
+              </div>
+
+              <div className="form-group">
+                <label className="form-label">ชื่อเรียก / หน่วยงาน (Display Name)</label>
+                <input 
+                  type="text" 
+                  className="form-control"
+                  placeholder="เช่น สมชาย (โต๊ะลงทะเบียน), ทีมปฐมพยาบาล"
+                  value={newAdminForm.displayName}
+                  onChange={(e) => setNewAdminForm({ ...newAdminForm, displayName: e.target.value })}
+                />
+              </div>
+
+              <div className="form-group">
+                <label className="form-label">รหัสผ่านเริ่มต้น *</label>
+                <input 
+                  type="text" 
+                  className="form-control"
+                  placeholder="เช่น tak2026, 123456"
+                  value={newAdminForm.password}
+                  onChange={(e) => setNewAdminForm({ ...newAdminForm, password: e.target.value })}
+                  required
+                />
+              </div>
+
+              <div className="form-group">
+                <label className="form-label">ระดับสิทธิ์ (Role)</label>
+                <select 
+                  className="form-control"
+                  value={newAdminForm.role}
+                  onChange={(e) => setNewAdminForm({ ...newAdminForm, role: e.target.value })}
+                >
+                  <option value="staff">🛡️ สตาฟหน้างาน (Staff Check-in)</option>
+                  <option value="admin">👑 แอดมินจัดการงานวิ่ง (Admin)</option>
+                </select>
+              </div>
+
+              <div style={{ display: 'flex', gap: '10px', marginTop: '20px' }}>
+                <button type="submit" className="btn btn-primary" style={{ flex: 1, padding: '12px' }}>
+                  ✓ สร้างบัญชีแอดมิน
+                </button>
+                <button type="button" className="btn btn-secondary" onClick={() => setNewAdminModalOpen(false)}>
+                  ยกเลิก
+                </button>
+              </div>
             </form>
           </div>
         </div>
