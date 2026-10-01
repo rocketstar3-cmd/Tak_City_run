@@ -73,6 +73,7 @@ export function AdminPortal({
   // Search & Filters
   const [searchQuery, setSearchQuery] = useState('');
   const [filterCheckIn, setFilterCheckIn] = useState('all');
+  const [filterEventId, setFilterEventId] = useState(activeEvent?.id || 'all');
 
   // Quick Check-in
   const [quickBib, setQuickBib] = useState('');
@@ -230,7 +231,7 @@ export function AdminPortal({
   const loadAllAdminData = async () => {
     try {
       const [regs, sps, shps, gals, admins] = await Promise.all([
-        DataService.getRegistrations(activeEvent?.id),
+        DataService.getRegistrations(null), // Fetch all registrations across all events
         DataService.getSponsors(),
         DataService.getShopsAndActivities(),
         DataService.getPastGalleries(),
@@ -510,26 +511,40 @@ export function AdminPortal({
     const cleanBib = quickBib.trim().toUpperCase();
     if (!cleanBib) return;
 
-    const runner = registrations.find(r => r.bibNumber.toUpperCase() === cleanBib || r.phone === cleanBib);
+    // Search in current selected round first, or across all rounds
+    let runner = null;
+    if (filterEventId !== 'all') {
+      runner = registrations.find(r => r.eventId === filterEventId && (r.bibNumber.toUpperCase() === cleanBib || r.phone === cleanBib));
+    }
+    if (!runner) {
+      runner = registrations.find(r => r.bibNumber.toUpperCase() === cleanBib || r.phone === cleanBib);
+    }
+
     if (!runner) {
       showToast(`ไม่พบข้อมูลนักวิ่งสำหรับ "${cleanBib}"`, false);
       return;
     }
 
+    const eventInfo = events.find(e => e.id === runner.eventId);
+    const epLabel = eventInfo ? ` (EP.${String(eventInfo.epNumber).padStart(2, '0')})` : '';
+
     handleToggleCheckIn(runner.id);
+    showToast(`เช็คอิน ${runner.fullName}${epLabel} เรียบร้อย!`);
     setQuickBib('');
   };
 
   const handleExportCSV = () => {
-    if (registrations.length === 0) {
-      alert('ไม่มีข้อมูลนักวิ่งสำหรับส่งออก');
+    if (filteredRunners.length === 0) {
+      alert('ไม่มีข้อมูลนักวิ่งสำหรับส่งออกตามเงื่อนไขที่เลือก');
       return;
     }
 
-    const headers = ['ลำดับ', 'หมายเลขคูปอง', 'ชื่อ-นามสกุล', 'ชื่อเล่น', 'เบอร์โทรศัพท์', 'ระยะทาง', 'ไซส์เสื้อ', 'ผู้ติดต่อฉุกเฉิน', 'เบอร์ฉุกเฉิน', 'โรคประจำตัว', 'สถานะเช็คอิน', 'เวลาลงทะเบียน'];
+    const headers = ['ลำดับ', 'รอบ (EP)', 'หมายเลขคูปอง', 'ชื่อ-นามสกุล', 'ชื่อเล่น', 'เบอร์โทรศัพท์', 'ระยะทาง', 'ไซส์เสื้อ', 'ผู้ติดต่อฉุกเฉิน', 'เบอร์ฉุกเฉิน', 'โรคประจำตัว', 'สถานะเช็คอิน', 'เวลาลงทะเบียน'];
     const rows = filteredRunners.map((r, index) => {
+      const epNum = events.find(e => e.id === r.eventId)?.epNumber || '02';
       return [
         index + 1,
+        `"EP.${String(epNum).padStart(2, '0')}"`,
         `"${r.bibNumber}"`,
         `"${r.fullName}"`,
         `"${r.nickname || '-'}"`,
@@ -549,7 +564,11 @@ export function AdminPortal({
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.href = url;
-    link.setAttribute('download', `TAK_City_Run_EP${activeEvent?.epNumber || '02'}_Runners.csv`);
+    const selectedEv = events.find(e => e.id === filterEventId);
+    const fileName = filterEventId === 'all' 
+      ? 'TAK_City_Run_ALL_EPISODES_Runners.csv' 
+      : `TAK_City_Run_EP${String(selectedEv?.epNumber || '02').padStart(2, '0')}_Runners.csv`;
+    link.setAttribute('download', fileName);
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
@@ -624,22 +643,28 @@ export function AdminPortal({
     showToast('บันทึกการปรับแต่งคูปองเรียบร้อยแล้ว!');
   };
 
-  // Filter Runners
+  // Filter Runners by Event Round + Search + Check-in
   const filteredRunners = registrations.filter(r => {
+    const matchesEvent = filterEventId === 'all' || r.eventId === filterEventId;
+
     const matchesQuery = !searchQuery || 
-      r.bibNumber.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      r.fullName.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (r.bibNumber && r.bibNumber.toLowerCase().includes(searchQuery.toLowerCase())) ||
+      (r.fullName && r.fullName.toLowerCase().includes(searchQuery.toLowerCase())) ||
       (r.phone && r.phone.includes(searchQuery));
 
     const matchesCheckIn = filterCheckIn === 'all' || 
       (filterCheckIn === 'checked' && r.checkedIn) || 
       (filterCheckIn === 'pending' && !r.checkedIn);
 
-    return matchesQuery && matchesCheckIn;
+    return matchesEvent && matchesQuery && matchesCheckIn;
   });
 
-  const totalRunners = registrations.length;
-  const checkedInCount = registrations.filter(r => r.checkedIn).length;
+  const selectedEventRunners = filterEventId === 'all'
+    ? registrations
+    : registrations.filter(r => r.eventId === filterEventId);
+
+  const totalRunners = selectedEventRunners.length;
+  const checkedInCount = selectedEventRunners.filter(r => r.checkedIn).length;
   const checkedInPercent = totalRunners > 0 ? Math.round((checkedInCount / totalRunners) * 100) : 0;
 
   // Login view
@@ -779,12 +804,16 @@ export function AdminPortal({
       <div className="stats-grid">
         <div className="stat-card">
           <div className="stat-val" style={{ color: 'var(--primary)' }}>{totalRunners}</div>
-          <div className="stat-label">ยอดนักวิ่ง EP นี้ (คน)</div>
+          <div className="stat-label">
+            {filterEventId === 'all' 
+              ? 'ยอดนักวิ่งทุกรอบรวมกัน (คน)' 
+              : `ยอดนักวิ่ง EP.${String(events.find(e => e.id === filterEventId)?.epNumber || '02').padStart(2, '0')} (คน)`}
+          </div>
         </div>
 
         <div className="stat-card">
           <div className="stat-val" style={{ color: 'var(--green)' }}>{checkedInCount}</div>
-          <div className="stat-label">เช็คอินหน้างานแล้ว ({checkedInPercent}%)</div>
+          <div className="stat-label">เช็คอินแล้ว ({checkedInPercent}%)</div>
         </div>
 
         <div className="stat-card">
@@ -1043,6 +1072,53 @@ export function AdminPortal({
          ======================================================== */}
       {activeTab === 'runners' && (
         <div className="glass-card">
+          {/* Event / Episode Round Filter Selector */}
+          <div style={{ 
+            display: 'flex', 
+            alignItems: 'center', 
+            gap: '8px', 
+            overflowX: 'auto', 
+            paddingBottom: '10px', 
+            marginBottom: '18px', 
+            borderBottom: '1px solid rgba(255, 255, 255, 0.08)' 
+          }}>
+            <span style={{ fontSize: '0.85rem', color: 'var(--text-muted)', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '6px', whiteSpace: 'nowrap' }}>
+              <Calendar size={15} /> เลือกรอบวิ่ง (Episode):
+            </span>
+
+            <button
+              type="button"
+              className={`btn btn-sm ${filterEventId === 'all' ? 'btn-primary' : 'btn-secondary'}`}
+              style={{ padding: '5px 14px', borderRadius: '999px', fontSize: '0.82rem', whiteSpace: 'nowrap' }}
+              onClick={() => setFilterEventId('all')}
+            >
+              ทุกรอบ ({registrations.length})
+            </button>
+
+            {events.map(ev => {
+              const count = registrations.filter(r => r.eventId === ev.id).length;
+              const isSelected = filterEventId === ev.id;
+              return (
+                <button
+                  key={ev.id}
+                  type="button"
+                  className={`btn btn-sm ${isSelected ? 'btn-primary' : 'btn-secondary'}`}
+                  style={{ 
+                    padding: '5px 14px', 
+                    borderRadius: '999px', 
+                    fontSize: '0.82rem', 
+                    whiteSpace: 'nowrap',
+                    border: ev.isActive ? '1.5px solid var(--primary)' : undefined
+                  }}
+                  onClick={() => setFilterEventId(ev.id)}
+                >
+                  EP.{String(ev.epNumber).padStart(2, '0')} {ev.title?.split('-')[0]?.trim() || ev.title} ({count})
+                  {ev.isActive && <span style={{ fontSize: '0.7rem', color: isSelected ? '#FFF' : 'var(--primary)', marginLeft: '4px' }}>★ หน้าแรก</span>}
+                </button>
+              );
+            })}
+          </div>
+
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: '14px', alignItems: 'center', justifyContent: 'space-between', marginBottom: '20px' }}>
             <div style={{ display: 'flex', gap: '10px', flex: 1, minWidth: '280px' }}>
               <div style={{ position: 'relative', flex: 1 }}>
@@ -1088,6 +1164,7 @@ export function AdminPortal({
             <table className="data-table">
               <thead>
                 <tr>
+                  <th>รอบ (EP)</th>
                   <th>เลขคูปอง</th>
                   <th>ชื่อ-นามสกุล (ชื่อเล่น)</th>
                   <th>เบอร์โทร</th>
@@ -1102,15 +1179,25 @@ export function AdminPortal({
               <tbody>
                 {filteredRunners.length === 0 ? (
                   <tr>
-                    <td colSpan="9" style={{ textAlign: 'center', padding: '36px', color: 'var(--text-muted)' }}>
+                    <td colSpan="10" style={{ textAlign: 'center', padding: '36px', color: 'var(--text-muted)' }}>
                       ไม่พบรายชื่อนักวิ่งตามเงื่อนไขที่ค้นหา
                     </td>
                   </tr>
                 ) : (
-                  filteredRunners.map((runner) => (
+                  filteredRunners.map((runner) => {
+                    const evInfo = events.find(e => e.id === runner.eventId);
+                    return (
                     <tr key={runner.id}>
                       <td>
-                        <strong style={{ fontFamily: 'var(--font-heading)', color: 'var(--primary)', fontSize: '1.05rem' }}>
+                        <span 
+                          className={`badge-tag ${runner.eventId === activeEvent?.id ? 'cyan' : ''}`}
+                          style={{ margin: 0, fontSize: '0.74rem', padding: '2px 8px', whiteSpace: 'nowrap' }}
+                        >
+                          EP.{String(evInfo?.epNumber || '02').padStart(2, '0')}
+                        </span>
+                      </td>
+                      <td>
+                        <strong style={{ fontFamily: 'var(--font-heading)', color: '#F59E0B', fontSize: '1.05rem' }}>
                           {runner.bibNumber}
                         </strong>
                       </td>
@@ -1165,7 +1252,8 @@ export function AdminPortal({
                         </div>
                       </td>
                     </tr>
-                  ))
+                    );
+                  })
                 )}
               </tbody>
             </table>
@@ -1177,7 +1265,7 @@ export function AdminPortal({
           TAB 3: QUICK CHECK-IN DESK
          ======================================================== */}
       {activeTab === 'scanner' && (
-        <div className="glass-card" style={{ maxWidth: '640px', margin: '0 auto', textAlign: 'center', padding: '40px 30px' }}>
+        <div className="glass-card" style={{ maxWidth: '680px', margin: '0 auto', textAlign: 'center', padding: '40px 30px' }}>
           <div style={{ width: '64px', height: '64px', background: 'rgba(0, 240, 255, 0.15)', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 16px' }}>
             <QrCode size={36} color="var(--cyan)" />
           </div>
@@ -1185,9 +1273,25 @@ export function AdminPortal({
           <h2 style={{ fontSize: '1.6rem', color: '#FFF', marginBottom: '8px' }}>
             โต๊ะเช็คอิน & ยืนยันสิทธิ์คูปองหน้างาน
           </h2>
-          <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem', marginBottom: '28px' }}>
+          <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem', marginBottom: '20px' }}>
             พิมพ์หรือสแกนหมายเลขคูปอง (เช่น TK02-001) หรือกรอกเบอร์โทรศัพท์ 10 หลักเพื่อเช็คชื่อรับสิทธิ์และร่วมจับรางวัลทันที
           </p>
+
+          {/* Quick Round Selector for Desk */}
+          <div style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', background: 'rgba(255, 255, 255, 0.04)', padding: '6px 14px', borderRadius: '999px', marginBottom: '24px' }}>
+            <span style={{ fontSize: '0.82rem', color: 'var(--text-muted)' }}>เช็คอินประจำรอบ:</span>
+            <select 
+              className="form-control" 
+              style={{ width: 'auto', padding: '4px 10px', fontSize: '0.84rem', height: 'auto', background: 'transparent' }}
+              value={filterEventId}
+              onChange={(e) => setFilterEventId(e.target.value)}
+            >
+              <option value="all">ทุกรอบวิ่ง</option>
+              {events.map(e => (
+                <option key={e.id} value={e.id}>EP.{String(e.epNumber).padStart(2, '0')} - {e.title?.split('-')[0]?.trim() || e.title}</option>
+              ))}
+            </select>
+          </div>
 
           <form onSubmit={handleQuickCheckIn} style={{ display: 'flex', gap: '10px', marginBottom: '24px' }}>
             <input 

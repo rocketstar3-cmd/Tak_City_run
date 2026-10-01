@@ -499,7 +499,7 @@ export const DataService = {
     if (isSupabaseConfigured) {
       try {
         let query = supabase.from('registrations').select('*').order('created_at', { ascending: false });
-        if (eventId) query = query.eq('event_id', eventId);
+        if (eventId && eventId !== 'all') query = query.eq('event_id', eventId);
         const { data, error } = await query;
         if (!error && Array.isArray(data)) {
           dbRegs = data.map(mapRegFromDB);
@@ -512,7 +512,7 @@ export const DataService = {
     }
 
     const localRegs = getLocalItem(LS_KEYS.REGISTRATIONS, initialRegistrations);
-    const filteredLocal = eventId ? localRegs.filter(r => r.eventId === eventId) : localRegs;
+    const filteredLocal = (eventId && eventId !== 'all') ? localRegs.filter(r => r.eventId === eventId) : localRegs;
 
     // Combine DB records and Local records (deduplicating by id, bibNumber, or phone)
     const combined = [...dbRegs];
