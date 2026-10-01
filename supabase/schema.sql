@@ -124,20 +124,34 @@ CREATE TABLE IF NOT EXISTS event_gallery (
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
--- 7. Enable Row Level Security (RLS) & Set Policies
-ALTER TABLE club_settings ENABLE ROW LEVEL SECURITY;
-ALTER TABLE events ENABLE ROW LEVEL SECURITY;
-ALTER TABLE registrations ENABLE ROW LEVEL SECURITY;
-ALTER TABLE event_attractions ENABLE ROW LEVEL SECURITY;
-ALTER TABLE sponsors ENABLE ROW LEVEL SECURITY;
-ALTER TABLE event_gallery ENABLE ROW LEVEL SECURITY;
+-- 7. Row Level Security (RLS) Configuration
+-- ทางเลือกที่ 1 (แนะนำสำหรับเว็บชมรมฟรี): ปิด RLS เพื่อให้เว็บแอปบันทึกข้อมูลได้ทันที 100% ไม่ติด Permission
+ALTER TABLE IF EXISTS club_settings DISABLE ROW LEVEL SECURITY;
+ALTER TABLE IF EXISTS events DISABLE ROW LEVEL SECURITY;
+ALTER TABLE IF EXISTS registrations DISABLE ROW LEVEL SECURITY;
+ALTER TABLE IF EXISTS event_attractions DISABLE ROW LEVEL SECURITY;
+ALTER TABLE IF EXISTS sponsors DISABLE ROW LEVEL SECURITY;
+ALTER TABLE IF EXISTS event_gallery DISABLE ROW LEVEL SECURITY;
 
-CREATE POLICY "Full Access Settings" ON club_settings FOR ALL USING (true) WITH CHECK (true);
-CREATE POLICY "Full Access Events" ON events FOR ALL USING (true) WITH CHECK (true);
-CREATE POLICY "Full Access Registrations" ON registrations FOR ALL USING (true) WITH CHECK (true);
-CREATE POLICY "Full Access Attractions" ON event_attractions FOR ALL USING (true) WITH CHECK (true);
-CREATE POLICY "Full Access Sponsors" ON sponsors FOR ALL USING (true) WITH CHECK (true);
-CREATE POLICY "Full Access Gallery" ON event_gallery FOR ALL USING (true) WITH CHECK (true);
+-- ทางเลือกที่ 2 (หากต้องการเปิด RLS แบบ Permissive สำหรับ Anon Key):
+-- ALTER TABLE club_settings ENABLE ROW LEVEL SECURITY;
+-- ALTER TABLE events ENABLE ROW LEVEL SECURITY;
+-- ALTER TABLE registrations ENABLE ROW LEVEL SECURITY;
+-- ALTER TABLE event_attractions ENABLE ROW LEVEL SECURITY;
+-- ALTER TABLE sponsors ENABLE ROW LEVEL SECURITY;
+-- ALTER TABLE event_gallery ENABLE ROW LEVEL SECURITY;
+-- DROP POLICY IF EXISTS "Full Access Settings" ON club_settings;
+-- DROP POLICY IF EXISTS "Full Access Events" ON events;
+-- DROP POLICY IF EXISTS "Full Access Registrations" ON registrations;
+-- DROP POLICY IF EXISTS "Full Access Attractions" ON event_attractions;
+-- DROP POLICY IF EXISTS "Full Access Sponsors" ON sponsors;
+-- DROP POLICY IF EXISTS "Full Access Gallery" ON event_gallery;
+-- CREATE POLICY "Full Access Settings" ON club_settings FOR ALL USING (true) WITH CHECK (true);
+-- CREATE POLICY "Full Access Events" ON events FOR ALL USING (true) WITH CHECK (true);
+-- CREATE POLICY "Full Access Registrations" ON registrations FOR ALL USING (true) WITH CHECK (true);
+-- CREATE POLICY "Full Access Attractions" ON event_attractions FOR ALL USING (true) WITH CHECK (true);
+-- CREATE POLICY "Full Access Sponsors" ON sponsors FOR ALL USING (true) WITH CHECK (true);
+-- CREATE POLICY "Full Access Gallery" ON event_gallery FOR ALL USING (true) WITH CHECK (true);
 
 -- Insert Initial Active Event (EP.02) if not exists
 INSERT INTO events (

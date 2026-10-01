@@ -120,9 +120,10 @@ export default function App() {
             }
           }}
           onEventsUpdate={(newEvents) => {
-            setEvents(newEvents);
-            const active = newEvents.find(e => e.isActive) || newEvents[0];
-            setActiveEvent(active);
+            const fresh = newEvents.map(e => ({ ...e }));
+            setEvents(fresh);
+            const active = fresh.find(e => e.isActive) || fresh[0];
+            setActiveEvent(active ? { ...active } : null);
           }}
           onExitAdmin={() => setIsAdminView(false)}
         />

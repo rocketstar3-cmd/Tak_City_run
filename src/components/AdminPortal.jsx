@@ -261,13 +261,13 @@ export function AdminPortal({
 
     setEventFormData({
       ...event,
-      distanceKm: Number(event.distanceKm || 5.8),
+      distanceKm: Number(event.distanceKm ?? 5.8),
       distanceLabel: event.distanceLabel || `City Run ${event.distanceKm || 5.8}K`,
-      quota: Number(event.quota || 500),
+      quota: Number(event.quota ?? 500),
       routeImageUrl: event.routeImageUrl || '',
       routeDescription: event.routeDescription || '',
-      waterStations: Number(event.waterStations || 3),
-      firstAidPoints: Number(event.firstAidPoints || 2),
+      waterStations: Number(event.waterStations ?? 3),
+      firstAidPoints: Number(event.firstAidPoints ?? 2),
       elevationGain: event.elevationGain || '+12 ม. (ทางราบ 95%)',
       routeHighlightsText: highlightsText,
       schedule: event.schedule && event.schedule.length > 0 ? event.schedule : [
@@ -275,11 +275,9 @@ export function AdminPortal({
         { time: '06:00 น.', title: 'ปล่อยตัวนักวิ่ง' },
         { time: '07:15 น.', title: 'เข้าเส้นชัย รับอาหารเช้า' }
       ],
-      stats: event.stats || {
-        runnersJoined: 500,
-        totalKilometers: 2900,
-        photosTaken: '1,000+'
-      }
+      stats: event.status === 'completed'
+        ? (event.stats || { runnersJoined: 500, totalKilometers: 2900, photosTaken: '1,000+' })
+        : null
     });
     setEventModalOpen(true);
   };
@@ -298,10 +296,14 @@ export function AdminPortal({
 
     const payload = {
       ...eventFormData,
-      distanceKm: Number(eventFormData.distanceKm || 5.0),
+      distanceKm: Number(eventFormData.distanceKm || 5.8),
+      distanceLabel: eventFormData.distanceLabel || `City Run ${eventFormData.distanceKm || 5.8}K`,
       quota: Number(eventFormData.quota || 500),
+      routeImageUrl: eventFormData.routeImageUrl || '',
+      routeDescription: eventFormData.routeDescription || '',
       waterStations: Number(eventFormData.waterStations || 3),
       firstAidPoints: Number(eventFormData.firstAidPoints || 2),
+      elevationGain: eventFormData.elevationGain || '+12 ม. (ทางราบ 95%)',
       routeHighlights: highlightsArray
     };
 
@@ -805,7 +807,7 @@ export function AdminPortal({
                   </div>
 
                   {/* Stats for completed past event */}
-                  {ev.stats && (
+                  {ev.status === 'completed' && ev.stats && (
                     <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '8px', background: 'rgba(0, 240, 255, 0.06)', border: '1px solid rgba(0, 240, 255, 0.2)', padding: '10px', borderRadius: 'var(--radius-sm)', textAlign: 'center', marginBottom: '16px', fontSize: '0.82rem' }}>
                       <div>
                         <strong style={{ color: 'var(--cyan)' }}>{ev.stats.runnersJoined}</strong>
@@ -1266,38 +1268,38 @@ export function AdminPortal({
             </div>
 
             {/* Modal Internal Tabs */}
-            <div style={{ display: 'flex', gap: '8px', borderBottom: '1px solid var(--dark-border)', paddingBottom: '12px', marginBottom: '22px' }}>
+            <div style={{ display: 'flex', gap: '8px', borderBottom: '1px solid var(--dark-border)', paddingBottom: '12px', marginBottom: '22px', overflowX: 'auto' }}>
               <button 
                 type="button"
                 className={`admin-tab ${modalActiveTab === 'general' ? 'active' : ''}`}
-                style={{ padding: '8px 16px', fontSize: '0.88rem' }}
+                style={{ padding: '8px 16px', fontSize: '0.88rem', whiteSpace: 'nowrap' }}
                 onClick={() => setModalActiveTab('general')}
               >
-                1. ข้อมูลงานทั่วไป
+                1. 📋 ข้อมูลทั่วไป
               </button>
               <button 
                 type="button"
                 className={`admin-tab ${modalActiveTab === 'distance' ? 'active' : ''}`}
-                style={{ padding: '8px 16px', fontSize: '0.88rem' }}
+                style={{ padding: '8px 16px', fontSize: '0.88rem', whiteSpace: 'nowrap' }}
                 onClick={() => setModalActiveTab('distance')}
               >
-                2. ระยะทางวิ่ง (Fix ระยะเดียว)
+                2. 🏃 ระยะทาง & โควตา
               </button>
               <button 
                 type="button"
                 className={`admin-tab ${modalActiveTab === 'route' ? 'active' : ''}`}
-                style={{ padding: '8px 16px', fontSize: '0.88rem' }}
+                style={{ padding: '8px 16px', fontSize: '0.88rem', whiteSpace: 'nowrap' }}
                 onClick={() => setModalActiveTab('route')}
               >
-                3. แผนที่รูทวิ่ง & ไฮไลต์
+                3. 🗺️ แผนที่ & จุดบริการ
               </button>
               <button 
                 type="button"
                 className={`admin-tab ${modalActiveTab === 'schedule' ? 'active' : ''}`}
-                style={{ padding: '8px 16px', fontSize: '0.88rem' }}
+                style={{ padding: '8px 16px', fontSize: '0.88rem', whiteSpace: 'nowrap' }}
                 onClick={() => setModalActiveTab('schedule')}
               >
-                4. ตารางเวลา
+                4. ⏱️ กำหนดการ
               </button>
             </div>
 
@@ -1387,6 +1389,12 @@ export function AdminPortal({
                       required
                     />
                   </div>
+
+                  <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '16px' }}>
+                    <button type="button" className="btn btn-secondary btn-sm" onClick={() => setModalActiveTab('distance')}>
+                      ถัดไป: 🏃 ตั้งค่าระยะทาง & โควตา ➔
+                    </button>
+                  </div>
                 </div>
               )}
 
@@ -1395,7 +1403,7 @@ export function AdminPortal({
                 <div>
                   <div style={{ background: 'rgba(255, 85, 0, 0.1)', border: '1px solid rgba(255, 85, 0, 0.3)', borderRadius: 'var(--radius-sm)', padding: '14px', marginBottom: '20px' }}>
                     <p style={{ color: '#FFA559', fontSize: '0.9rem' }}>
-                      💡 <strong>ระยะทางเดียวประจำ EP:</strong> สมาชิกในชมรมจะวิ่งระยะทางเดียวกันในงานนี้
+                      💡 <strong>ระยะทางเดียวประจำ EP:</strong> สมาชิกในชมรมจะวิ่งระยะทางเดียวกันในงานนี้ (เช่น 5.8 KM)
                     </p>
                   </div>
 
@@ -1436,6 +1444,15 @@ export function AdminPortal({
                       onChange={(e) => setEventFormData({ ...eventFormData, distanceLabel: e.target.value })}
                       required
                     />
+                  </div>
+
+                  <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '16px' }}>
+                    <button type="button" className="btn btn-secondary btn-sm" onClick={() => setModalActiveTab('general')}>
+                      ⬅ 1. ข้อมูลทั่วไป
+                    </button>
+                    <button type="button" className="btn btn-secondary btn-sm" onClick={() => setModalActiveTab('route')}>
+                      ถัดไป: 🗺️ แผนที่รูท & จุดบริการ ➔
+                    </button>
                   </div>
                 </div>
               )}
@@ -1543,6 +1560,15 @@ export function AdminPortal({
                       value={eventFormData.routeHighlightsText}
                       onChange={(e) => setEventFormData({ ...eventFormData, routeHighlightsText: e.target.value })}
                     />
+                  </div>
+
+                  <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '16px' }}>
+                    <button type="button" className="btn btn-secondary btn-sm" onClick={() => setModalActiveTab('distance')}>
+                      ⬅ 2. ระยะทาง & โควตา
+                    </button>
+                    <button type="button" className="btn btn-secondary btn-sm" onClick={() => setModalActiveTab('schedule')}>
+                      ถัดไป: ⏱️ ตารางเวลา ➔
+                    </button>
                   </div>
                 </div>
               )}

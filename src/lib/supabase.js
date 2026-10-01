@@ -55,6 +55,48 @@ function setLocalItem(key, value) {
   }
 }
 
+// Auto-migrate legacy cached events in browser
+(function migrateLocalCache() {
+  try {
+    if (typeof window === 'undefined' || !window.localStorage) return;
+    const raw = localStorage.getItem(LS_KEYS.EVENTS);
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      if (Array.isArray(parsed)) {
+        let changed = false;
+        const migrated = parsed.map(ev => {
+          // If event has legacy 3.5K or old multi-distances, update it to 5.8K single distance
+          const isLegacyDist = !ev.distanceKm || ev.distanceKm === 3.5 || (Array.isArray(ev.distances) && ev.distances[0]?.distanceKm === 3.5);
+          if (ev.id === 'ep-02' && isLegacyDist) {
+            changed = true;
+            return {
+              ...ev,
+              distanceKm: 5.8,
+              distanceLabel: "City Run 5.8K ตะลุยเมืองเก่าเลียบปิง",
+              quota: 500,
+              waterStations: 3,
+              firstAidPoints: 2,
+              elevationGain: "+12 ม. (ทางราบ 95%)",
+              routeImageUrl: ev.routeImageUrl || "https://images.unsplash.com/photo-1524850011238-e3d235c7d4c9?auto=format&fit=crop&w=1200&q=80",
+              routeDescription: ev.routeDescription || "เส้นทางไฮไลต์เลียบเขื่อนแม่น้ำปิง วิ่งผ่านจุดเช็คอินสะพานแขวน 200 ปี ลัดเลาะชมตึกเก่าโบราณเมืองตาก และศาลสมเด็จพระเจ้าตากสินมหาราช ทางราบเรียบ วิ่งสบาย ลมพัดเย็นตลอดสาย",
+              stats: null, // Open event should not display completed stats
+              distances: [
+                { id: 'dist-main', label: "City Run 5.8K ตะลุยเมืองเก่าเลียบปิง", distanceKm: 5.8, quota: 500 }
+              ]
+            };
+          }
+          return ev;
+        });
+        if (changed) {
+          localStorage.setItem(LS_KEYS.EVENTS, JSON.stringify(migrated));
+        }
+      }
+    }
+  } catch (e) {
+    // Non-browser or JSON error
+  }
+})();
+
 // ==========================================
 // MAPPERS (Database snake_case <-> App camelCase)
 // ==========================================
@@ -69,7 +111,7 @@ const mapRegFromDB = (r) => ({
   emergencyPhone: r.emergency_phone,
   shirtSize: r.shirt_size,
   medicalNotes: r.medical_notes,
-  distanceKm: Number(r.distance_km || 5.0),
+  distanceKm: Number(r.distance_km || 5.8),
   distanceLabel: r.distance_label || 'City Run',
   checkedIn: Boolean(r.checked_in),
   checkedInAt: r.checked_in_at,
@@ -87,7 +129,7 @@ const mapRegToDB = (r) => ({
   emergency_phone: r.emergencyPhone,
   shirt_size: r.shirtSize,
   medical_notes: r.medicalNotes,
-  distance_km: Number(r.distanceKm || 5.0),
+  distance_km: Number(r.distanceKm || 5.8),
   distance_label: r.distanceLabel || 'City Run',
   checked_in: Boolean(r.checkedIn),
   checked_in_at: r.checkedInAt,
@@ -95,16 +137,44 @@ const mapRegToDB = (r) => ({
 });
 
 const mapEventFromDB = (e) => {
-  // Support both single distance directly on event and legacy distances array
-  const distKm = Number(e.distance_km || (Array.isArray(e.distances) && e.distances[0]?.distanceKm) || 5.8);
-  const distLabel = e.distance_label || (Array.isArray(e.distances) && e.distances[0]?.label) || `City Run ${distKm}K`;
-  const quota = Number(e.quota || (Array.isArray(e.distances) && e.distances[0]?.quota) || 500);
+  const rd = e.route_details && typeof e.route_details === 'object' && !Array.isArray(e.route_details) 
+    ? e.route_details 
+    : {};
+
+  // Check direct camelCase first, then rd JSONB, then snake_case, fallback 5.8
+  const distKm = Number(
+    e.distanceKm ?? 
+    rd.distanceKm ?? 
+    e.distance_km ?? 
+    5.8
+  );
+
+  const distLabel = 
+    e.distanceLabel || 
+    rd.distanceLabel || 
+    e.distance_label || 
+    `City Run ${distKm}K`;
+
+  const quota = Number(
+    e.quota ?? 
+    rd.quota ?? 
+    e.distance_quota ?? 
+    500
+  );
+
+  const routeImg = e.routeImageUrl || rd.routeImageUrl || e.route_image_url || '';
+  const routeDesc = e.routeDescription || rd.routeDescription || e.route_description || '';
+  const water = Number(e.waterStations ?? rd.waterStations ?? e.water_stations ?? 3);
+  const aid = Number(e.firstAidPoints ?? rd.firstAidPoints ?? e.first_aid_points ?? 2);
+  const elev = e.elevationGain || rd.elevationGain || e.elevation_gain || '+12 ม. (ทางราบ 95%)';
 
   let highlights = [];
-  if (Array.isArray(e.route_highlights)) {
-    highlights = e.route_highlights;
-  } else if (Array.isArray(e.routeHighlights)) {
+  if (Array.isArray(e.routeHighlights) && e.routeHighlights.length > 0) {
     highlights = e.routeHighlights;
+  } else if (Array.isArray(rd.routeHighlights) && rd.routeHighlights.length > 0) {
+    highlights = rd.routeHighlights;
+  } else if (Array.isArray(e.route_highlights) && e.route_highlights.length > 0) {
+    highlights = e.route_highlights;
   } else if (typeof e.route_highlights === 'string') {
     try { highlights = JSON.parse(e.route_highlights); } catch { highlights = e.route_highlights.split(',').map(s => s.trim()); }
   }
@@ -130,16 +200,16 @@ const mapEventFromDB = (e) => {
     quota: quota,
 
     // Route & Maps
-    routeImageUrl: e.route_image_url || e.routeImageUrl || '',
-    routeDescription: e.route_description || e.routeDescription || '',
-    waterStations: Number(e.water_stations ?? e.waterStations ?? 3),
-    firstAidPoints: Number(e.first_aid_points ?? e.firstAidPoints ?? 2),
-    elevationGain: e.elevation_gain || e.elevationGain || '+12 ม. (ทางราบ 95%)',
+    routeImageUrl: routeImg,
+    routeDescription: routeDesc,
+    waterStations: water,
+    firstAidPoints: aid,
+    elevationGain: elev,
     routeHighlights: highlights,
 
     // Schedule
     schedule: Array.isArray(e.schedule) ? e.schedule : [],
-    stats: e.stats || null
+    stats: (e.status === 'completed' ? (e.stats || rd.stats || null) : null)
   };
 };
 
@@ -199,6 +269,8 @@ export const DataService = {
 
   // 2. Events (CRUD with Single Distance and Route Map)
   async getEvents() {
+    const local = getLocalItem(LS_KEYS.EVENTS, initialEvents);
+
     if (isSupabaseConfigured) {
       try {
         const { data, error } = await supabase
@@ -206,13 +278,25 @@ export const DataService = {
           .select('*')
           .order('ep_number', { ascending: false });
         if (!error && data?.length) {
-          return data.map(mapEventFromDB);
+          return data.map(dbEvent => {
+            const mapped = mapEventFromDB(dbEvent);
+            const localMatch = local.find(l => l.id === dbEvent.id);
+            if (localMatch) {
+              return {
+                ...localMatch,
+                ...mapped,
+                distanceKm: mapped.distanceKm || localMatch.distanceKm,
+                quota: mapped.quota || localMatch.quota
+              };
+            }
+            return mapped;
+          });
         }
       } catch (err) {
         console.warn('Supabase events query error, using local data:', err);
       }
     }
-    const local = getLocalItem(LS_KEYS.EVENTS, initialEvents);
+    
     return local.map(mapEventFromDB);
   },
 
@@ -229,22 +313,35 @@ export const DataService = {
       epNumber: Number(eventData.epNumber) || events.length + 1,
       status: eventData.status || 'open',
       isActive: Boolean(eventData.isActive),
-      distanceKm: Number(eventData.distanceKm || 5.0),
-      distanceLabel: eventData.distanceLabel || `City Run ${eventData.distanceKm || 5.0}K`,
+      distanceKm: Number(eventData.distanceKm || 5.8),
+      distanceLabel: eventData.distanceLabel || `City Run ${eventData.distanceKm || 5.8}K`,
       quota: Number(eventData.quota || 500),
       routeImageUrl: eventData.routeImageUrl || '',
       routeDescription: eventData.routeDescription || '',
       waterStations: Number(eventData.waterStations || 3),
       firstAidPoints: Number(eventData.firstAidPoints || 2),
-      elevationGain: eventData.elevationGain || '+10 ม.',
+      elevationGain: eventData.elevationGain || '+12 ม. (ทางราบ 95%)',
       routeHighlights: Array.isArray(eventData.routeHighlights) ? eventData.routeHighlights : [],
       schedule: Array.isArray(eventData.schedule) ? eventData.schedule : [],
-      stats: eventData.stats || null
+      stats: eventData.stats || null,
+      distances: [
+        {
+          id: 'dist-main',
+          label: eventData.distanceLabel || `City Run ${eventData.distanceKm || 5.8}K`,
+          distanceKm: Number(eventData.distanceKm || 5.8),
+          quota: Number(eventData.quota || 500)
+        }
+      ]
     };
 
+    // Save LocalStorage first
+    const updated = [newEvent, ...events];
+    setLocalItem(LS_KEYS.EVENTS, updated);
+
+    // Save Supabase
     if (isSupabaseConfigured) {
       try {
-        await supabase.from('events').insert([{
+        await supabase.from('events').upsert([{
           id: newEvent.id,
           ep_number: newEvent.epNumber,
           title: newEvent.title,
@@ -255,63 +352,92 @@ export const DataService = {
           cover_image: newEvent.coverImage || '',
           status: newEvent.status,
           is_active: newEvent.isActive,
-          distance_km: newEvent.distanceKm,
-          distance_label: newEvent.distanceLabel,
-          quota: newEvent.quota,
-          route_image_url: newEvent.routeImageUrl,
-          route_description: newEvent.routeDescription,
-          water_stations: newEvent.waterStations,
-          first_aid_points: newEvent.firstAidPoints,
-          elevation_gain: newEvent.elevationGain,
-          route_highlights: newEvent.routeHighlights,
           schedule: newEvent.schedule,
-          stats: newEvent.stats
+          route_details: {
+            distanceKm: newEvent.distanceKm,
+            distanceLabel: newEvent.distanceLabel,
+            quota: newEvent.quota,
+            routeImageUrl: newEvent.routeImageUrl,
+            routeDescription: newEvent.routeDescription,
+            waterStations: newEvent.waterStations,
+            firstAidPoints: newEvent.firstAidPoints,
+            elevationGain: newEvent.elevationGain,
+            routeHighlights: newEvent.routeHighlights,
+            stats: newEvent.stats || null
+          }
         }]);
       } catch (err) {
         console.warn('Supabase event insert error:', err);
       }
     }
 
-    const updated = [newEvent, ...events];
-    setLocalItem(LS_KEYS.EVENTS, updated);
-    return newEvent;
+    return mapEventFromDB(newEvent);
   },
 
   async updateEvent(id, eventData) {
     const events = getLocalItem(LS_KEYS.EVENTS, initialEvents);
-    const updated = events.map(e => (e.id === id ? { ...e, ...eventData } : e));
+
+    const merged = {
+      ...eventData,
+      id,
+      distanceKm: Number(eventData.distanceKm || 5.8),
+      distanceLabel: eventData.distanceLabel || `City Run ${eventData.distanceKm || 5.8}K`,
+      quota: Number(eventData.quota || 500),
+      waterStations: Number(eventData.waterStations || 3),
+      firstAidPoints: Number(eventData.firstAidPoints || 2),
+      elevationGain: eventData.elevationGain || '+12 ม. (ทางราบ 95%)',
+      routeImageUrl: eventData.routeImageUrl || '',
+      routeDescription: eventData.routeDescription || '',
+      routeHighlights: Array.isArray(eventData.routeHighlights) ? eventData.routeHighlights : [],
+      // Override legacy distances completely
+      distances: [
+        {
+          id: 'dist-main',
+          label: eventData.distanceLabel || `City Run ${eventData.distanceKm || 5.8}K`,
+          distanceKm: Number(eventData.distanceKm || 5.8),
+          quota: Number(eventData.quota || 500)
+        }
+      ]
+    };
+
+    // Update LocalStorage immediately
+    const updated = events.map(e => (e.id === id ? merged : e));
     setLocalItem(LS_KEYS.EVENTS, updated);
 
+    // Save Supabase using JSONB route_details
     if (isSupabaseConfigured) {
       try {
-        await supabase.from('events').update({
-          ep_number: Number(eventData.epNumber),
-          title: eventData.title,
-          subtitle: eventData.subtitle || '',
-          event_date: eventData.eventDate,
-          location_name: eventData.locationName,
-          location_map_url: eventData.locationMapUrl || '',
-          cover_image: eventData.coverImage || '',
-          status: eventData.status,
-          is_active: Boolean(eventData.isActive),
-          distance_km: Number(eventData.distanceKm || 5.0),
-          distance_label: eventData.distanceLabel || 'City Run',
-          quota: Number(eventData.quota || 500),
-          route_image_url: eventData.routeImageUrl || '',
-          route_description: eventData.routeDescription || '',
-          water_stations: Number(eventData.waterStations || 3),
-          first_aid_points: Number(eventData.firstAidPoints || 2),
-          elevation_gain: eventData.elevationGain || '+10 ม.',
-          route_highlights: Array.isArray(eventData.routeHighlights) ? eventData.routeHighlights : [],
-          schedule: Array.isArray(eventData.schedule) ? eventData.schedule : [],
-          stats: eventData.stats || null
-        }).eq('id', id);
+        await supabase.from('events').upsert([{
+          id: merged.id,
+          ep_number: Number(merged.epNumber),
+          title: merged.title,
+          subtitle: merged.subtitle || '',
+          event_date: merged.eventDate,
+          location_name: merged.locationName,
+          location_map_url: merged.locationMapUrl || '',
+          cover_image: merged.coverImage || '',
+          status: merged.status,
+          is_active: Boolean(merged.isActive),
+          schedule: merged.schedule || [],
+          route_details: {
+            distanceKm: merged.distanceKm,
+            distanceLabel: merged.distanceLabel,
+            quota: merged.quota,
+            routeImageUrl: merged.routeImageUrl,
+            routeDescription: merged.routeDescription,
+            waterStations: merged.waterStations,
+            firstAidPoints: merged.firstAidPoints,
+            elevationGain: merged.elevationGain,
+            routeHighlights: merged.routeHighlights,
+            stats: merged.stats || null
+          }
+        }]);
       } catch (err) {
-        console.warn('Supabase event update error:', err);
+        console.warn('Supabase event upsert error:', err);
       }
     }
 
-    return updated.find(e => e.id === id);
+    return mapEventFromDB(merged);
   },
 
   async deleteEvent(id) {
@@ -330,6 +456,13 @@ export const DataService = {
   },
 
   async setActiveEvent(eventId) {
+    const events = getLocalItem(LS_KEYS.EVENTS, initialEvents);
+    const updated = events.map(e => ({
+      ...e,
+      isActive: e.id === eventId
+    }));
+    setLocalItem(LS_KEYS.EVENTS, updated);
+
     if (isSupabaseConfigured) {
       try {
         await supabase.from('events').update({ is_active: false }).neq('id', eventId);
@@ -338,13 +471,7 @@ export const DataService = {
         console.warn('Supabase setActiveEvent error:', err);
       }
     }
-    const events = getLocalItem(LS_KEYS.EVENTS, initialEvents);
-    const updated = events.map(e => ({
-      ...e,
-      isActive: e.id === eventId
-    }));
-    setLocalItem(LS_KEYS.EVENTS, updated);
-    return updated;
+    return updated.map(mapEventFromDB);
   },
 
   // 3. Registrations (CRUD)
@@ -396,6 +523,9 @@ export const DataService = {
       phone: cleanPhone
     };
 
+    const updated = [newRegistration, ...regs];
+    setLocalItem(LS_KEYS.REGISTRATIONS, updated);
+
     if (isSupabaseConfigured) {
       try {
         const dbPayload = mapRegToDB(newRegistration);
@@ -405,8 +535,6 @@ export const DataService = {
       }
     }
 
-    const updated = [newRegistration, ...regs];
-    setLocalItem(LS_KEYS.REGISTRATIONS, updated);
     return { success: true, data: newRegistration };
   },
 
