@@ -61,7 +61,6 @@ function setLocalItem(key, value) {
 const mapRegFromDB = (r) => ({
   id: r.id,
   eventId: r.event_id,
-  distanceId: r.distance_id,
   bibNumber: r.bib_number,
   fullName: r.full_name,
   nickname: r.nickname,
@@ -70,6 +69,8 @@ const mapRegFromDB = (r) => ({
   emergencyPhone: r.emergency_phone,
   shirtSize: r.shirt_size,
   medicalNotes: r.medical_notes,
+  distanceKm: Number(r.distance_km || 5.0),
+  distanceLabel: r.distance_label || 'City Run',
   checkedIn: Boolean(r.checked_in),
   checkedInAt: r.checked_in_at,
   createdAt: r.created_at
@@ -78,7 +79,6 @@ const mapRegFromDB = (r) => ({
 const mapRegToDB = (r) => ({
   id: r.id,
   event_id: r.eventId,
-  distance_id: r.distanceId,
   bib_number: r.bibNumber,
   full_name: r.fullName,
   nickname: r.nickname,
@@ -87,36 +87,61 @@ const mapRegToDB = (r) => ({
   emergency_phone: r.emergencyPhone,
   shirt_size: r.shirtSize,
   medical_notes: r.medicalNotes,
+  distance_km: Number(r.distanceKm || 5.0),
+  distance_label: r.distanceLabel || 'City Run',
   checked_in: Boolean(r.checkedIn),
   checked_in_at: r.checkedInAt,
   created_at: r.createdAt
 });
 
-const mapEventFromDB = (e) => ({
-  id: e.id,
-  epNumber: Number(e.ep_number),
-  title: e.title,
-  subtitle: e.subtitle || '',
-  description: e.description || '',
-  eventDate: e.event_date,
-  registrationStart: e.registration_start,
-  registrationEnd: e.registration_end,
-  locationName: e.location_name,
-  locationMapUrl: e.location_map_url || '',
-  coverImage: e.cover_image || 'https://images.unsplash.com/photo-1452626038306-9aae5e071dd3?auto=format&fit=crop&w=1200&q=80',
-  status: e.status || 'open',
-  isActive: Boolean(e.is_active),
-  schedule: Array.isArray(e.schedule) ? e.schedule : [],
-  routeDetails: Array.isArray(e.route_details) ? e.route_details : [],
-  stats: e.stats || null,
-  distances: Array.isArray(e.event_distances) ? e.event_distances.map(d => ({
-    id: d.id,
-    label: d.label,
-    distanceKm: Number(d.distance_km),
-    quota: d.quota || 0,
-    startPrice: Number(d.start_price || 0)
-  })) : []
-});
+const mapEventFromDB = (e) => {
+  // Support both single distance directly on event and legacy distances array
+  const distKm = Number(e.distance_km || (Array.isArray(e.distances) && e.distances[0]?.distanceKm) || 5.8);
+  const distLabel = e.distance_label || (Array.isArray(e.distances) && e.distances[0]?.label) || `City Run ${distKm}K`;
+  const quota = Number(e.quota || (Array.isArray(e.distances) && e.distances[0]?.quota) || 500);
+
+  let highlights = [];
+  if (Array.isArray(e.route_highlights)) {
+    highlights = e.route_highlights;
+  } else if (Array.isArray(e.routeHighlights)) {
+    highlights = e.routeHighlights;
+  } else if (typeof e.route_highlights === 'string') {
+    try { highlights = JSON.parse(e.route_highlights); } catch { highlights = e.route_highlights.split(',').map(s => s.trim()); }
+  }
+
+  return {
+    id: e.id,
+    epNumber: Number(e.ep_number ?? e.epNumber ?? 1),
+    title: e.title,
+    subtitle: e.subtitle || '',
+    description: e.description || '',
+    eventDate: e.event_date || e.eventDate,
+    registrationStart: e.registration_start || e.registrationStart,
+    registrationEnd: e.registration_end || e.registrationEnd,
+    locationName: e.location_name || e.locationName,
+    locationMapUrl: e.location_map_url || e.locationMapUrl || '',
+    coverImage: e.cover_image || e.coverImage || 'https://images.unsplash.com/photo-1452626038306-9aae5e071dd3?auto=format&fit=crop&w=1200&q=80',
+    status: e.status || 'open',
+    isActive: Boolean(e.is_active ?? e.isActive),
+    
+    // Single Fixed Distance
+    distanceKm: distKm,
+    distanceLabel: distLabel,
+    quota: quota,
+
+    // Route & Maps
+    routeImageUrl: e.route_image_url || e.routeImageUrl || '',
+    routeDescription: e.route_description || e.routeDescription || '',
+    waterStations: Number(e.water_stations ?? e.waterStations ?? 3),
+    firstAidPoints: Number(e.first_aid_points ?? e.firstAidPoints ?? 2),
+    elevationGain: e.elevation_gain || e.elevationGain || '+12 ม. (ทางราบ 95%)',
+    routeHighlights: highlights,
+
+    // Schedule
+    schedule: Array.isArray(e.schedule) ? e.schedule : [],
+    stats: e.stats || null
+  };
+};
 
 const mapSettingsFromDB = (s) => ({
   clubName: s.club_name,
@@ -172,13 +197,13 @@ export const DataService = {
     return updated;
   },
 
-  // 2. Events (CRUD)
+  // 2. Events (CRUD with Single Distance and Route Map)
   async getEvents() {
     if (isSupabaseConfigured) {
       try {
         const { data, error } = await supabase
           .from('events')
-          .select('*, event_distances(*)')
+          .select('*')
           .order('ep_number', { ascending: false });
         if (!error && data?.length) {
           return data.map(mapEventFromDB);
@@ -187,7 +212,8 @@ export const DataService = {
         console.warn('Supabase events query error, using local data:', err);
       }
     }
-    return getLocalItem(LS_KEYS.EVENTS, initialEvents);
+    const local = getLocalItem(LS_KEYS.EVENTS, initialEvents);
+    return local.map(mapEventFromDB);
   },
 
   async getActiveEvent() {
@@ -202,7 +228,18 @@ export const DataService = {
       id: eventData.id || `ep-${Date.now()}`,
       epNumber: Number(eventData.epNumber) || events.length + 1,
       status: eventData.status || 'open',
-      isActive: Boolean(eventData.isActive)
+      isActive: Boolean(eventData.isActive),
+      distanceKm: Number(eventData.distanceKm || 5.0),
+      distanceLabel: eventData.distanceLabel || `City Run ${eventData.distanceKm || 5.0}K`,
+      quota: Number(eventData.quota || 500),
+      routeImageUrl: eventData.routeImageUrl || '',
+      routeDescription: eventData.routeDescription || '',
+      waterStations: Number(eventData.waterStations || 3),
+      firstAidPoints: Number(eventData.firstAidPoints || 2),
+      elevationGain: eventData.elevationGain || '+10 ม.',
+      routeHighlights: Array.isArray(eventData.routeHighlights) ? eventData.routeHighlights : [],
+      schedule: Array.isArray(eventData.schedule) ? eventData.schedule : [],
+      stats: eventData.stats || null
     };
 
     if (isSupabaseConfigured) {
@@ -218,21 +255,18 @@ export const DataService = {
           cover_image: newEvent.coverImage || '',
           status: newEvent.status,
           is_active: newEvent.isActive,
-          schedule: newEvent.schedule || [],
-          route_details: newEvent.routeDetails || []
+          distance_km: newEvent.distanceKm,
+          distance_label: newEvent.distanceLabel,
+          quota: newEvent.quota,
+          route_image_url: newEvent.routeImageUrl,
+          route_description: newEvent.routeDescription,
+          water_stations: newEvent.waterStations,
+          first_aid_points: newEvent.firstAidPoints,
+          elevation_gain: newEvent.elevationGain,
+          route_highlights: newEvent.routeHighlights,
+          schedule: newEvent.schedule,
+          stats: newEvent.stats
         }]);
-
-        if (newEvent.distances?.length) {
-          const distancesPayload = newEvent.distances.map(d => ({
-            id: d.id || `dist-${Date.now()}-${Math.random()}`,
-            event_id: newEvent.id,
-            label: d.label,
-            distance_km: Number(d.distanceKm),
-            quota: Number(d.quota || 0),
-            start_price: 0
-          }));
-          await supabase.from('event_distances').insert(distancesPayload);
-        }
       } catch (err) {
         console.warn('Supabase event insert error:', err);
       }
@@ -260,24 +294,18 @@ export const DataService = {
           cover_image: eventData.coverImage || '',
           status: eventData.status,
           is_active: Boolean(eventData.isActive),
-          schedule: eventData.schedule || [],
-          route_details: eventData.routeDetails || []
+          distance_km: Number(eventData.distanceKm || 5.0),
+          distance_label: eventData.distanceLabel || 'City Run',
+          quota: Number(eventData.quota || 500),
+          route_image_url: eventData.routeImageUrl || '',
+          route_description: eventData.routeDescription || '',
+          water_stations: Number(eventData.waterStations || 3),
+          first_aid_points: Number(eventData.firstAidPoints || 2),
+          elevation_gain: eventData.elevationGain || '+10 ม.',
+          route_highlights: Array.isArray(eventData.routeHighlights) ? eventData.routeHighlights : [],
+          schedule: Array.isArray(eventData.schedule) ? eventData.schedule : [],
+          stats: eventData.stats || null
         }).eq('id', id);
-
-        if (eventData.distances) {
-          await supabase.from('event_distances').delete().eq('event_id', id);
-          if (eventData.distances.length) {
-            const distPayload = eventData.distances.map(d => ({
-              id: d.id || `dist-${Date.now()}-${Math.random()}`,
-              event_id: id,
-              label: d.label,
-              distance_km: Number(d.distanceKm),
-              quota: Number(d.quota || 0),
-              start_price: 0
-            }));
-            await supabase.from('event_distances').insert(distPayload);
-          }
-        }
       } catch (err) {
         console.warn('Supabase event update error:', err);
       }
@@ -651,7 +679,6 @@ export const DataService = {
       } catch (e) {}
     }
 
-    // PIN Login fallback (PIN 1234 or configured adminPin)
     const settings = await this.getSettings();
     if (credentials.pin === (settings.adminPin || '1234') || credentials.password === 'takcityrun') {
       localStorage.setItem(LS_KEYS.ADMIN_SESSION, 'true');

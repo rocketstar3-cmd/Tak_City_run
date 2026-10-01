@@ -46,7 +46,8 @@ export function RegistrationModal({ activeEvent, onClose, onSuccessRegistration 
       const payload = {
         eventId: activeEvent.id,
         epNumber: activeEvent.epNumber,
-        distanceId: formData.distanceId,
+        distanceKm: activeEvent.distanceKm || 5.8,
+        distanceLabel: activeEvent.distanceLabel || 'City Run',
         fullName: formData.fullName.trim(),
         nickname: formData.nickname.trim(),
         phone: formData.phone.replace(/[^0-9]/g, ''),
@@ -122,35 +123,30 @@ export function RegistrationModal({ activeEvent, onClose, onSuccessRegistration 
         )}
 
         <form onSubmit={handleSubmit}>
-          {/* Distance Selection */}
-          <div className="form-group">
-            <label className="form-label">เลือกระยะทางที่คุณต้องการวิ่ง *</label>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: '10px' }}>
-              {activeEvent.distances?.map((dist) => {
-                const isSelected = formData.distanceId === dist.id;
-                return (
-                  <div
-                    key={dist.id}
-                    onClick={() => setFormData({ ...formData, distanceId: dist.id })}
-                    style={{
-                      border: isSelected ? '2px solid var(--primary)' : '1px solid var(--dark-border)',
-                      background: isSelected ? 'rgba(255, 85, 0, 0.12)' : 'rgba(255, 255, 255, 0.03)',
-                      borderRadius: 'var(--radius-sm)',
-                      padding: '14px 12px',
-                      cursor: 'pointer',
-                      textAlign: 'center',
-                      transition: 'var(--transition)'
-                    }}
-                  >
-                    <div style={{ fontFamily: 'var(--font-heading)', fontSize: '1.4rem', fontWeight: 800, color: isSelected ? 'var(--primary)' : '#FFF' }}>
-                      {dist.distanceKm}K
-                    </div>
-                    <div style={{ fontSize: '0.85rem', fontWeight: 600, color: 'var(--text-secondary)' }}>
-                      {dist.label}
-                    </div>
-                  </div>
-                );
-              })}
+          {/* Single Fixed Distance Banner */}
+          <div style={{
+            background: 'rgba(255, 85, 0, 0.12)',
+            border: '1.5px solid rgba(255, 85, 0, 0.4)',
+            borderRadius: 'var(--radius-md)',
+            padding: '14px 20px',
+            marginBottom: '22px',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between'
+          }}>
+            <div>
+              <span style={{ fontSize: '0.78rem', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 700, letterSpacing: '0.05em' }}>
+                ระยะทางประจำ EP.{String(activeEvent.epNumber).padStart(2, '0')} (วิ่งระยะเดียวร่วมกัน)
+              </span>
+              <div style={{ fontSize: '1.15rem', fontWeight: 800, color: '#FFF', marginTop: '2px' }}>
+                {activeEvent.distanceLabel || `City Run ${activeEvent.distanceKm || 5.8}K`}
+              </div>
+            </div>
+            <div style={{ textAlign: 'right' }}>
+              <span style={{ fontFamily: 'var(--font-heading)', fontSize: '2.2rem', fontWeight: 900, color: 'var(--primary)', lineHeight: 1 }}>
+                {activeEvent.distanceKm || 5.8}
+              </span>
+              <span style={{ fontSize: '0.85rem', fontWeight: 800, color: '#FFF', marginLeft: '4px' }}>KM</span>
             </div>
           </div>
 

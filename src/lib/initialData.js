@@ -1,4 +1,4 @@
-// Initial mock data & local store for TAK City Run
+// Initial mock data & local store for TAK City Run (Single Distance per EP)
 export const initialClubSettings = {
   clubName: "TAK City Run",
   tagline: "วิ่งเปิดเมืองตาก เชื่อมสัมพันธ์ ชุมชนสุขภาพดีไปด้วยกัน",
@@ -7,7 +7,7 @@ export const initialClubSettings = {
   themeColor: "#FF5500", // Vibrant Sporty Orange
   facebookUrl: "https://facebook.com",
   lineUrl: "https://line.me",
-  adminPin: "1234" // Default quick access PIN for demo/club staff
+  adminPin: "1234"
 };
 
 export const initialEvents = [
@@ -24,44 +24,33 @@ export const initialEvents = [
     status: "open", // 'open', 'closed', 'completed'
     isActive: true, // The currently active / promoted event
     coverImage: "https://images.unsplash.com/photo-1452626038306-9aae5e071dd3?auto=format&fit=crop&w=1200&q=80",
-    distances: [
-      { id: "dist-1", label: "Fun Run ชิลล์ริมปิง", distanceKm: 3.5, quota: 250, startPrice: 0 },
-      { id: "dist-2", label: "City Run ตะลุยเมืองเก่า", distanceKm: 5.8, quota: 350, startPrice: 0 },
-      { id: "dist-3", label: "Mini Challenge วิ่งข้ามสะพาน", distanceKm: 10.5, quota: 200, startPrice: 0 }
+    
+    // Single Official Distance for this EP
+    distanceKm: 5.8,
+    distanceLabel: "City Run 5.8K ตะลุยเมืองเก่าเลียบปิง",
+    quota: 500,
+
+    // Route & Map Details
+    routeImageUrl: "https://images.unsplash.com/photo-1524850011238-e3d235c7d4c9?auto=format&fit=crop&w=1200&q=80",
+    routeDescription: "เส้นทางไฮไลต์เลียบเขื่อนแม่น้ำปิง วิ่งผ่านจุดเช็คอินสะพานแขวน 200 ปี ลัดเลาะชมตึกเก่าโบราณเมืองตาก และศาลสมเด็จพระเจ้าตากสินมหาราช ทางราบเรียบ วิ่งสบาย ลมพัดเย็นตลอดสาย",
+    waterStations: 3,
+    firstAidPoints: 2,
+    elevationGain: "+12 ม. (ทางราบ 95%)",
+    routeHighlights: [
+      "จุดชมวิวสะพานสมโภชกรุงรัตนโกสินทร์ 200 ปี",
+      "ศาลสมเด็จพระเจ้าตากสินมหาราช",
+      "สตรีทอาร์ตและตรอกโบราณเมืองตาก",
+      "ทางเลียบหาดทรายแม่น้ำปิง"
     ],
+
+    // Schedule Timeline
     schedule: [
-      { time: "05:00 น.", title: "ลงทะเบียน & รับสติกเกอร์หมายเลข BIB หน้างาน" },
-      { time: "05:30 น.", title: "รวมพล กิจกรรม Warm-up ยืดเหยียดกล้ามเนื้อโดยโค้ชชมรม" },
+      { time: "05:00 น.", title: "เปิดโต๊ะลงทะเบียน & รับหมายเลข BIB หน้างาน" },
+      { time: "05:30 น.", title: "รวมพล Warm-up ยืดเหยียดกล้ามเนื้อโดยโค้ชชมรม" },
       { time: "05:45 น.", title: "ชี้แจงเส้นทางวิ่ง จุดให้น้ำ และข้อควรระวัง" },
-      { time: "06:00 น.", title: "ปล่อยตัวระยะ 10.5K และตามด้วยระยะ 5.8K / 3.5K" },
-      { time: "07:30 น.", title: "Finish Line! ลิ้มรสอาหารเช้าชุมชน & ถ่ายรูปเช็คอิน" },
-      { time: "08:15 น.", title: "กิจกรรมมอบของที่ระลึก & จับรางวัลจากผู้สนับสนุน" }
-    ],
-    routeDetails: [
-      {
-        distanceId: "dist-1",
-        name: "Fun Run 3.5K (ครอบครัว & สายเดินชิลล์)",
-        description: "เส้นทางเลียบเขื่อนแม่น้ำปิง ทางราบ วิ่งง่าย เหมาะสำหรับทุกเพศทุกวัย ชมวิวเกาะกลางน้ำปิง",
-        waterStations: 2,
-        firstAidPoints: 2,
-        highlights: ["วิวสะพานแขวน 200 ปี", "จุดชมวิวดอยแม่สอดไกลๆ", "สวนสาธารณะหนองมณีบรรพต"]
-      },
-      {
-        distanceId: "dist-2",
-        name: "City Run 5.8K (สายซิตี้ สัมผัสเมืองเก่า)",
-        description: "วิ่งลัดเลาะผ่านย่านการค้าเมืองเก่าตาก แวะถ่ายรูปตึกโบราณและศาลสมเด็จพระเจ้าตากสินมหาราช",
-        waterStations: 3,
-        firstAidPoints: 2,
-        highlights: ["ศาลสมเด็จพระเจ้าตากสินมหาราช", "สตรีทอาร์ตเมืองตาก", "ตรอกโบราณริมน้ำ"]
-      },
-      {
-        distanceId: "dist-3",
-        name: "Mini Challenge 10.5K (สายฟูลเพซ ข้ามแม่น้ำปิง)",
-        description: "เส้นทางไฮไลต์ข้ามสะพานกิตติขจร วิ่งวนรอบสวนหลวงและแนวตลิ่งแม่น้ำปิง สัมผัสอากาศยามเช้าเต็มปอด",
-        waterStations: 4,
-        firstAidPoints: 3,
-        highlights: ["สะพานกิตติขจร", "จุดชมวิวพระอาทิตย์ขึ้นเหนือน้ำปิง", "เส้นทางเลียบหาดทรายแม่น้ำปิง"]
-      }
+      { time: "06:00 น.", title: "ปล่อยตัวนักวิ่งระยะ 5.8K อย่างเป็นทางการ" },
+      { time: "07:15 น.", title: "Finish Line! ลิ้มรสอาหารเช้าชุมชน & ถ่ายรูปเช็คอิน" },
+      { time: "08:00 น.", title: "กิจกรรมมอบของที่ระลึก & จับรางวัลจากผู้สนับสนุน" }
     ]
   },
   {
@@ -77,13 +66,21 @@ export const initialEvents = [
     status: "completed",
     isActive: false,
     coverImage: "https://images.unsplash.com/photo-1476480862126-209bfaa8edc8?auto=format&fit=crop&w=1200&q=80",
-    distances: [
-      { id: "dist-ep1-1", label: "Fun Run 4K", distanceKm: 4.0, quota: 300, startPrice: 0 },
-      { id: "dist-ep1-2", label: "Mini Run 8K", distanceKm: 8.0, quota: 300, startPrice: 0 }
-    ],
+    
+    distanceKm: 5.0,
+    distanceLabel: "City Run 5.0K รอบเมืองประวัติศาสตร์",
+    quota: 500,
+
+    routeImageUrl: "https://images.unsplash.com/photo-1476480862126-209bfaa8edc8?auto=format&fit=crop&w=1200&q=80",
+    routeDescription: "เส้นทางรอบใจกลางเมืองตาก วิ่งวนผ่านศาลสมเด็จพระเจ้าตากสินและแนวแม่น้ำปิง",
+    waterStations: 2,
+    firstAidPoints: 2,
+    elevationGain: "+8 ม.",
+    routeHighlights: ["ศาลสมเด็จพระเจ้าตากสิน", "วงเวียนใหญ่เมืองตาก"],
+
     stats: {
       runnersJoined: 524,
-      totalKilometers: 3120,
+      totalKilometers: 2620,
       photosTaken: "1,200+"
     }
   }
@@ -93,7 +90,8 @@ export const initialRegistrations = [
   {
     id: "reg-001",
     eventId: "ep-02",
-    distanceId: "dist-2",
+    distanceKm: 5.8,
+    distanceLabel: "City Run 5.8K ตะลุยเมืองเก่าเลียบปิง",
     bibNumber: "TK02-001",
     fullName: "กิตติศักดิ์ พรหมมินทร์",
     nickname: "ต้อม",
@@ -109,7 +107,8 @@ export const initialRegistrations = [
   {
     id: "reg-002",
     eventId: "ep-02",
-    distanceId: "dist-3",
+    distanceKm: 5.8,
+    distanceLabel: "City Run 5.8K ตะลุยเมืองเก่าเลียบปิง",
     bibNumber: "TK02-002",
     fullName: "วรรณภา สุขสวัสดิ์",
     nickname: "ฝน",
@@ -125,7 +124,8 @@ export const initialRegistrations = [
   {
     id: "reg-003",
     eventId: "ep-02",
-    distanceId: "dist-1",
+    distanceKm: 5.8,
+    distanceLabel: "City Run 5.8K ตะลุยเมืองเก่าเลียบปิง",
     bibNumber: "TK02-003",
     fullName: "ธนากร รุ่งเรืองพัฒนา",
     nickname: "บาส",
@@ -167,7 +167,7 @@ export const initialShopsAndActivities = [
     type: "activity",
     name: "บูธฟื้นฟูกล้ามเนื้อ & นวดแผนไทยตาก",
     category: "สุขภาพ & ฟื้นฟู",
-    description: "ทีมนวดผ่อนคลายกล้ามเนื้อขาและน่อง สำหรับนักวิ่งระยะ 5.8K และ 10.5K",
+    description: "ทีมนวดผ่อนคลายกล้ามเนื้อขาและน่อง สำหรับนักวิ่งทุกคนหลังจบระยะ",
     image: "https://images.unsplash.com/photo-1544367567-0f2fcb009e0b?auto=format&fit=crop&w=600&q=80",
     badge: "บริการฟรีโดยชมรม"
   },

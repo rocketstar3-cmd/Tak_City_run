@@ -22,9 +22,16 @@ import {
   History,
   AlertTriangle,
   Award,
-  Sparkles
+  Sparkles,
+  MapPin,
+  Compass,
+  Clock,
+  Droplet,
+  Activity,
+  Mountain,
+  Eye
 } from 'lucide-react';
-import { DataService, isSupabaseConfigured } from '../lib/supabase';
+import { DataService } from '../lib/supabase';
 
 export function AdminPortal({ 
   clubSettings, 
@@ -38,7 +45,7 @@ export function AdminPortal({
   const [pinInput, setPinInput] = useState('');
   const [loginError, setLoginError] = useState('');
 
-  // Tabs: 'runners', 'scanner', 'events', 'sponsors', 'market', 'gallery', 'settings'
+  // Active Tab
   const [activeTab, setActiveTab] = useState('events');
   const [registrations, setRegistrations] = useState([]);
   const [sponsorsList, setSponsorsList] = useState([]);
@@ -47,36 +54,56 @@ export function AdminPortal({
 
   // Search & Filters
   const [searchQuery, setSearchQuery] = useState('');
-  const [filterDistance, setFilterDistance] = useState('all');
   const [filterCheckIn, setFilterCheckIn] = useState('all');
 
-  // Quick Check-in input for race day
+  // Quick Check-in
   const [quickBib, setQuickBib] = useState('');
   const [notice, setNotice] = useState(null);
 
-  // Event Modal (Create / Edit)
+  // Event Edit/Create Modal
   const [eventModalOpen, setEventModalOpen] = useState(false);
   const [isEditingEvent, setIsEditingEvent] = useState(false);
-  const [eventFormType, setEventFormType] = useState('upcoming'); // 'upcoming' or 'past'
+  const [modalActiveTab, setModalActiveTab] = useState('general'); // 'general', 'distance', 'route', 'schedule'
+  
   const [eventFormData, setEventFormData] = useState({
     id: '',
-    epNumber: 3,
+    epNumber: 2,
     title: '',
     subtitle: '',
-    eventDate: '2026-12-20T05:30',
+    eventDate: '2026-11-15T05:30',
     locationName: 'ริมแม่น้ำปิง หน้าสะพานสมโภชกรุงรัตนโกสินทร์ 200 ปี จ.ตาก',
-    locationMapUrl: 'https://maps.google.com/?q=Tak+City',
+    locationMapUrl: 'https://maps.google.com/?q=Tak+Ping+River',
     coverImage: 'https://images.unsplash.com/photo-1452626038306-9aae5e071dd3?auto=format&fit=crop&w=1200&q=80',
     status: 'open', // 'open', 'closed', 'completed'
     isActive: false,
-    distances: [
-      { id: 'dist-1', label: 'Fun Run 3.5K', distanceKm: 3.5, quota: 300 },
-      { id: 'dist-2', label: 'City Run 5.8K', distanceKm: 5.8, quota: 400 },
-      { id: 'dist-3', label: 'Mini 10.5K', distanceKm: 10.5, quota: 200 }
+
+    // Single Distance
+    distanceKm: 5.8,
+    distanceLabel: 'City Run 5.8K ตะลุยเมืองเก่าเลียบปิง',
+    quota: 500,
+
+    // Route & Map
+    routeImageUrl: 'https://images.unsplash.com/photo-1524850011238-e3d235c7d4c9?auto=format&fit=crop&w=1200&q=80',
+    routeDescription: 'เส้นทางเลียบแม่น้ำปิง ผ่านสะพาน 200 ปี ศาลสมเด็จพระเจ้าตากสิน และตึกโบราณเมืองตาก',
+    waterStations: 3,
+    firstAidPoints: 2,
+    elevationGain: '+12 ม. (ทางราบ 95%)',
+    routeHighlightsText: 'จุดชมวิวสะพานสมโภช 200 ปี, ศาลสมเด็จพระเจ้าตากสินมหาราช, สตรีทอาร์ตเมืองตาก, เลียบหาดทรายริมปิง',
+
+    // Schedule Timeline
+    schedule: [
+      { time: '05:00 น.', title: 'เปิดโต๊ะลงทะเบียน & รับหมายเลข BIB หน้างาน' },
+      { time: '05:30 น.', title: 'รวมพล Warm-up ยืดเหยียดกล้ามเนื้อโดยโค้ชชมรม' },
+      { time: '05:45 น.', title: 'ชี้แจงเส้นทางวิ่ง จุดให้น้ำ และข้อควรระวัง' },
+      { time: '06:00 น.', title: 'ปล่อยตัวนักวิ่งอย่างเป็นทางการ' },
+      { time: '07:15 น.', title: 'Finish Line! ลิ้มรสอาหารเช้าชุมชน & ถ่ายรูปเช็คอิน' },
+      { time: '08:00 น.', title: 'กิจกรรมมอบของที่ระลึก & จับรางวัลจากผู้สนับสนุน' }
     ],
+
+    // Stats for completed events
     stats: {
       runnersJoined: 500,
-      totalKilometers: 3200,
+      totalKilometers: 2900,
       photosTaken: '1,000+'
     }
   });
@@ -177,33 +204,46 @@ export function AdminPortal({
   };
 
   // ==========================================
-  // EVENT ACTIONS (CREATE, EDIT, DELETE, SWITCH)
+  // EVENT EDIT & CREATE HANDLERS
   // ==========================================
-  const handleOpenCreateEvent = (type = 'upcoming') => {
+  const handleOpenCreateEvent = (isPast = false) => {
     setIsEditingEvent(false);
-    setEventFormType(type);
+    setModalActiveTab('general');
     const nextEp = events.length + 1;
     setEventFormData({
       id: `ep-${Date.now()}`,
       epNumber: nextEp,
-      title: type === 'past' 
+      title: isPast 
         ? `TAK City Run EP.${String(nextEp).padStart(2, '0')} - งานวิ่งในอดีต` 
-        : `TAK City Run EP.${String(nextEp).padStart(2, '0')} - ชื่องานวิ่งใหม่`,
-      subtitle: type === 'past' ? 'บันทึกประวัติความประทับใจของงานวิ่งที่ผ่านมา' : 'วิ่งเปิดเมืองตาก เชื่อมสัมพันธ์ ชุมชนสุขภาพดี',
-      eventDate: '2026-11-20T05:30',
+        : `TAK City Run EP.${String(nextEp).padStart(2, '0')} - งานวิ่งใหม่เมืองตาก`,
+      subtitle: isPast ? 'บันทึกประวัติความประทับใจงานวิ่งที่ผ่านมา' : 'วิ่งเปิดเมืองตาก เชื่อมสัมพันธ์ ชุมชนสุขภาพดี',
+      eventDate: '2026-12-15T05:30',
       locationName: 'ริมแม่น้ำปิง หน้าสะพานสมโภชกรุงรัตนโกสินทร์ 200 ปี จ.ตาก',
-      locationMapUrl: 'https://maps.google.com/?q=Tak+City',
+      locationMapUrl: 'https://maps.google.com/?q=Tak+Ping+River',
       coverImage: 'https://images.unsplash.com/photo-1452626038306-9aae5e071dd3?auto=format&fit=crop&w=1200&q=80',
-      status: type === 'past' ? 'completed' : 'open',
+      status: isPast ? 'completed' : 'open',
       isActive: false,
-      distances: [
-        { id: `dist-${Date.now()}-1`, label: 'Fun Run 3.5K', distanceKm: 3.5, quota: 300 },
-        { id: `dist-${Date.now()}-2`, label: 'City Run 5.8K', distanceKm: 5.8, quota: 400 },
-        { id: `dist-${Date.now()}-3`, label: 'Mini 10.5K', distanceKm: 10.5, quota: 200 }
+
+      distanceKm: 5.0,
+      distanceLabel: 'City Run 5.0K วิ่งเลียบแม่น้ำปิง',
+      quota: 500,
+
+      routeImageUrl: 'https://images.unsplash.com/photo-1524850011238-e3d235c7d4c9?auto=format&fit=crop&w=1200&q=80',
+      routeDescription: 'เส้นทางวิ่งเลียบแม่น้ำปิง ชมวิวสะพาน 200 ปี และจุดประวัติศาสตร์เมืองตาก',
+      waterStations: 3,
+      firstAidPoints: 2,
+      elevationGain: '+10 ม. (ทางราบเรียบ)',
+      routeHighlightsText: 'สะพานสมโภช 200 ปี, ศาลสมเด็จพระเจ้าตากสิน, เลียบหาดทรายริมปิง',
+
+      schedule: [
+        { time: '05:00 น.', title: 'เปิดโต๊ะลงทะเบียน & รับหมายเลข BIB หน้างาน' },
+        { time: '05:30 น.', title: 'รวมพล Warm-up ยืดเหยียดกล้ามเนื้อโดยโค้ชชมรม' },
+        { time: '06:00 น.', title: 'ปล่อยตัวนักวิ่งอย่างเป็นทางการ' },
+        { time: '07:15 น.', title: 'Finish Line! ทานอาหารเช้าชุมชน & ถ่ายรูปเช็คอิน' }
       ],
       stats: {
         runnersJoined: 450,
-        totalKilometers: 2800,
+        totalKilometers: 2250,
         photosTaken: '800+'
       }
     });
@@ -212,15 +252,32 @@ export function AdminPortal({
 
   const handleOpenEditEvent = (event) => {
     setIsEditingEvent(true);
-    setEventFormType(event.status === 'completed' ? 'past' : 'upcoming');
+    setModalActiveTab('general');
+    
+    // Parse highlights text
+    const highlightsText = Array.isArray(event.routeHighlights) 
+      ? event.routeHighlights.join(', ') 
+      : (typeof event.routeHighlights === 'string' ? event.routeHighlights : '');
+
     setEventFormData({
       ...event,
-      distances: event.distances && event.distances.length > 0 ? event.distances : [
-        { id: 'dist-1', label: 'Fun Run 3.5K', distanceKm: 3.5, quota: 300 }
+      distanceKm: Number(event.distanceKm || 5.8),
+      distanceLabel: event.distanceLabel || `City Run ${event.distanceKm || 5.8}K`,
+      quota: Number(event.quota || 500),
+      routeImageUrl: event.routeImageUrl || '',
+      routeDescription: event.routeDescription || '',
+      waterStations: Number(event.waterStations || 3),
+      firstAidPoints: Number(event.firstAidPoints || 2),
+      elevationGain: event.elevationGain || '+12 ม. (ทางราบ 95%)',
+      routeHighlightsText: highlightsText,
+      schedule: event.schedule && event.schedule.length > 0 ? event.schedule : [
+        { time: '05:00 น.', title: 'เปิดโต๊ะลงทะเบียน & รับหมายเลข BIB' },
+        { time: '06:00 น.', title: 'ปล่อยตัวนักวิ่ง' },
+        { time: '07:15 น.', title: 'เข้าเส้นชัย รับอาหารเช้า' }
       ],
       stats: event.stats || {
         runnersJoined: 500,
-        totalKilometers: 3000,
+        totalKilometers: 2900,
         photosTaken: '1,000+'
       }
     });
@@ -234,13 +291,27 @@ export function AdminPortal({
       return;
     }
 
+    // Process route highlights array from comma-separated text
+    const highlightsArray = eventFormData.routeHighlightsText
+      ? eventFormData.routeHighlightsText.split(',').map(s => s.trim()).filter(Boolean)
+      : [];
+
+    const payload = {
+      ...eventFormData,
+      distanceKm: Number(eventFormData.distanceKm || 5.0),
+      quota: Number(eventFormData.quota || 500),
+      waterStations: Number(eventFormData.waterStations || 3),
+      firstAidPoints: Number(eventFormData.firstAidPoints || 2),
+      routeHighlights: highlightsArray
+    };
+
     try {
       if (isEditingEvent) {
-        await DataService.updateEvent(eventFormData.id, eventFormData);
-        showToast(`แก้ไขข้อมูล EP.${eventFormData.epNumber} สำเร็จแล้ว!`);
+        await DataService.updateEvent(payload.id, payload);
+        showToast(`บันทึกการแก้ไข EP.${payload.epNumber} สำเร็จแล้ว!`);
       } else {
-        await DataService.createEvent(eventFormData);
-        showToast(`เพิ่มงานวิ่ง EP.${eventFormData.epNumber} สำเร็จแล้ว!`);
+        await DataService.createEvent(payload);
+        showToast(`สร้างงานวิ่ง EP.${payload.epNumber} สำเร็จแล้ว!`);
       }
 
       const allEvents = await DataService.getEvents();
@@ -253,7 +324,7 @@ export function AdminPortal({
   };
 
   const handleDeleteEvent = async (eventId, title) => {
-    if (!window.confirm(`คุณแน่ใจหรือไม่ว่าต้องการลบงานวิ่ง "${title}"?`)) return;
+    if (!window.confirm(`⚠️ คุณแน่ใจหรือไม่ว่าต้องการลบงานวิ่ง "${title}"?\n(การกระทำนี้ไม่สามารถย้อนกลับได้)`)) return;
 
     try {
       await DataService.deleteEvent(eventId);
@@ -269,24 +340,24 @@ export function AdminPortal({
   const handleSetActiveEvent = async (eventId) => {
     const updated = await DataService.setActiveEvent(eventId);
     onEventsUpdate(updated);
-    showToast('เปลี่ยน EP หน้าเว็บหลักเรียบร้อยแล้ว');
+    showToast('เปลี่ยนงานวิ่ง EP หน้าแรกสำเร็จแล้ว');
   };
 
-  // Add/remove distance in event modal form
-  const handleAddDistanceToForm = () => {
+  // Schedule timeline helpers in modal
+  const handleAddScheduleRow = () => {
     setEventFormData({
       ...eventFormData,
-      distances: [
-        ...eventFormData.distances,
-        { id: `dist-${Date.now()}`, label: 'ระยะใหม่', distanceKm: 5.0, quota: 200 }
+      schedule: [
+        ...eventFormData.schedule,
+        { time: '06:00 น.', title: 'กิจกรรมใหม่' }
       ]
     });
   };
 
-  const handleRemoveDistance = (index) => {
-    const updated = [...eventFormData.distances];
-    updated.splice(index, 1);
-    setEventFormData({ ...eventFormData, distances: updated });
+  const handleRemoveScheduleRow = (idx) => {
+    const updated = [...eventFormData.schedule];
+    updated.splice(idx, 1);
+    setEventFormData({ ...eventFormData, schedule: updated });
   };
 
   // ==========================================
@@ -328,14 +399,13 @@ export function AdminPortal({
 
     const headers = ['ลำดับ', 'หมายเลข BIB', 'ชื่อ-นามสกุล', 'ชื่อเล่น', 'เบอร์โทรศัพท์', 'ระยะทาง', 'ไซส์เสื้อ', 'ผู้ติดต่อฉุกเฉิน', 'เบอร์ฉุกเฉิน', 'โรคประจำตัว', 'สถานะเช็คอิน', 'เวลาลงทะเบียน'];
     const rows = filteredRunners.map((r, index) => {
-      const distLabel = activeEvent?.distances?.find(d => d.id === r.distanceId)?.label || r.distanceId || '-';
       return [
         index + 1,
         `"${r.bibNumber}"`,
         `"${r.fullName}"`,
         `"${r.nickname || '-'}"`,
         `"${r.phone}"`,
-        `"${distLabel}"`,
+        `"${r.distanceLabel || `${activeEvent?.distanceKm || 5.8}K`}"`,
         `"${r.shirtSize || '-'}"`,
         `"${r.emergencyContact || '-'}"`,
         `"${r.emergencyPhone || '-'}"`,
@@ -387,7 +457,7 @@ export function AdminPortal({
   const handleDeleteShop = async (id) => {
     if (!window.confirm('ต้องการลบรายการนี้หรือไม่?')) return;
     await DataService.deleteShopOrActivity(id);
-    setShopsList(shopsList.filter(s => s.id !== id));
+    setShopsList(shopsList.filter(item => item.id !== id));
     showToast('ลบรายการเรียบร้อย');
   };
 
@@ -422,20 +492,18 @@ export function AdminPortal({
       r.fullName.toLowerCase().includes(searchQuery.toLowerCase()) ||
       (r.phone && r.phone.includes(searchQuery));
 
-    const matchesDist = filterDistance === 'all' || r.distanceId === filterDistance;
     const matchesCheckIn = filterCheckIn === 'all' || 
       (filterCheckIn === 'checked' && r.checkedIn) || 
       (filterCheckIn === 'pending' && !r.checkedIn);
 
-    return matchesQuery && matchesDist && matchesCheckIn;
+    return matchesQuery && matchesCheckIn;
   });
 
-  // Calculate Stats
   const totalRunners = registrations.length;
   const checkedInCount = registrations.filter(r => r.checkedIn).length;
   const checkedInPercent = totalRunners > 0 ? Math.round((checkedInCount / totalRunners) * 100) : 0;
 
-  // Unauthenticated screen
+  // Login view
   if (!isAuthenticated) {
     return (
       <div className="container" style={{ paddingTop: 'calc(var(--header-height) + 60px)', minHeight: '80vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
@@ -485,7 +553,6 @@ export function AdminPortal({
     );
   }
 
-  // Authenticated Admin Dashboard
   return (
     <div className="container" style={{ paddingTop: 'calc(var(--header-height) + 30px)', paddingBottom: '90px' }}>
       {/* Toast Notice */}
@@ -518,7 +585,7 @@ export function AdminPortal({
           </span>
           <h1 style={{ fontSize: '2.1rem' }}>ระบบจัดการงานวิ่ง & คอนเทนต์</h1>
           <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem' }}>
-            งานวิ่งที่เปิดอยู่ปัจจุบัน: <strong>EP.{activeEvent?.epNumber || '02'} - {activeEvent?.title}</strong>
+            งานวิ่งที่กำลังเปิดอยู่: <strong>EP.{activeEvent?.epNumber || '02'} - {activeEvent?.title}</strong> ({activeEvent?.distanceKm || 5.8}K)
           </p>
         </div>
 
@@ -561,7 +628,7 @@ export function AdminPortal({
           className={`admin-tab ${activeTab === 'events' ? 'active' : ''}`}
           onClick={() => setActiveTab('events')}
         >
-          <Calendar size={18} /> จัดการ EP งานวิ่ง ({events.length})
+          <Calendar size={18} /> จัดการ EP & แผนที่รูทวิ่ง ({events.length})
         </button>
 
         <button 
@@ -608,29 +675,29 @@ export function AdminPortal({
       </div>
 
       {/* ========================================================
-          TAB: EVENTS MANAGEMENT (CREATE, EDIT, DELETE, PAST EP)
+          TAB 1: EVENTS & ROUTE MAP MANAGEMENT
          ======================================================== */}
       {activeTab === 'events' && (
         <div>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px', flexWrap: 'wrap', gap: '14px' }}>
             <div>
-              <h2 style={{ fontSize: '1.4rem' }}>จัดการงานวิ่งแต่ละ Episode</h2>
-              <p style={{ color: 'var(--text-muted)', fontSize: '0.88rem' }}>
-                เพิ่มงานใหม่ที่กำลังจะจัด หรือเพิ่มประวัติงานเก่าที่เคยจัดจบไปแล้วเพื่อเก็บบันทึก
+              <h2 style={{ fontSize: '1.45rem', color: '#FFF' }}>จัดการงานวิ่ง Episode & แผนที่เส้นทางวิ่ง</h2>
+              <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem' }}>
+                แต่ละ EP จะกำหนดระยะทางวิ่งเดียว (Single Distance) พร้อมใส่รูปแผนที่เส้นทาง จุดให้น้ำ และกำหนดการได้อิสระ
               </p>
             </div>
 
             <div style={{ display: 'flex', gap: '10px' }}>
-              <button className="btn btn-secondary btn-sm" onClick={() => handleOpenCreateEvent('past')}>
-                <History size={16} /> + บันทึกประวัติงานเก่า (Past EP)
+              <button className="btn btn-secondary btn-sm" onClick={() => handleOpenCreateEvent(true)}>
+                <History size={16} /> + เพิ่มประวัติงานเก่า (Past EP)
               </button>
-              <button className="btn btn-primary btn-sm" onClick={() => handleOpenCreateEvent('upcoming')}>
-                <Plus size={16} /> + สร้างงานวิ่ง EP ใหม่ (เปิดรับสมัคร)
+              <button className="btn btn-primary btn-sm" onClick={() => handleOpenCreateEvent(false)}>
+                <Plus size={16} /> + สร้างงานวิ่ง EP ใหม่
               </button>
             </div>
           </div>
 
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(360px, 1fr))', gap: '24px' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(380px, 1fr))', gap: '24px' }}>
             {events.map((ev) => (
               <div 
                 key={ev.id} 
@@ -643,26 +710,27 @@ export function AdminPortal({
                 }}
               >
                 <div>
-                  <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '10px', marginBottom: '12px' }}>
+                  {/* Top Bar of card */}
+                  <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '10px', marginBottom: '14px' }}>
                     <div>
                       <span className={`badge-tag ${ev.status === 'completed' ? 'cyan' : ev.status === 'open' ? 'green' : ''}`} style={{ marginBottom: '6px' }}>
                         {ev.status === 'open' ? '🟢 เปิดรับสมัคร' : ev.status === 'completed' ? '📜 จัดจบแล้ว (งานเก่า)' : '⚪ ปิดรับสมัคร'}
                       </span>
                       {ev.isActive && (
                         <span className="badge-tag" style={{ marginLeft: '6px' }}>
-                          ★ EP หน้าแรก
+                          ★ แสดงหน้าแรก
                         </span>
                       )}
                     </div>
 
                     <div style={{ display: 'flex', gap: '6px' }}>
                       <button 
-                        className="btn btn-secondary btn-sm"
-                        style={{ padding: '6px 10px' }}
+                        className="btn btn-primary btn-sm"
+                        style={{ padding: '6px 12px', fontSize: '0.85rem' }}
                         onClick={() => handleOpenEditEvent(ev)}
-                        title="แก้ไขงานวิ่งนี้"
+                        title="แก้ไขงานวิ่งและแผนที่รูท"
                       >
-                        <Edit size={14} /> แก้ไข
+                        <Edit size={14} /> แก้ไขงานวิ่ง & แผนที่
                       </button>
                       <button 
                         className="btn btn-secondary btn-sm"
@@ -675,31 +743,68 @@ export function AdminPortal({
                     </div>
                   </div>
 
-                  <h3 style={{ fontSize: '1.3rem', marginBottom: '6px' }}>
+                  <h3 style={{ fontSize: '1.35rem', marginBottom: '6px', color: '#FFF' }}>
                     EP.{String(ev.epNumber).padStart(2, '0')} - {ev.title}
                   </h3>
-                  <p style={{ color: 'var(--text-muted)', fontSize: '0.88rem', marginBottom: '16px' }}>
+                  <p style={{ color: 'var(--text-muted)', fontSize: '0.88rem', marginBottom: '16px', lineHeight: 1.6 }}>
                     {ev.subtitle}
                   </p>
 
-                  <div style={{ background: 'rgba(255, 255, 255, 0.03)', padding: '12px', borderRadius: 'var(--radius-sm)', fontSize: '0.85rem', marginBottom: '16px' }}>
-                    <div>📅 วันที่: <strong>{new Date(ev.eventDate).toLocaleDateString('th-TH', { dateStyle: 'long' })}</strong></div>
-                    <div style={{ marginTop: '4px' }}>📍 สถานที่: <strong>{ev.locationName}</strong></div>
-                  </div>
-
-                  {/* Distances List */}
-                  <div style={{ marginBottom: '16px' }}>
-                    <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)', display: 'block', marginBottom: '6px' }}>ระยะทางที่เปิดรับ:</span>
-                    <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
-                      {ev.distances?.map(d => (
-                        <span key={d.id} style={{ background: 'rgba(255, 85, 0, 0.12)', border: '1px solid rgba(255, 85, 0, 0.3)', padding: '4px 10px', borderRadius: '6px', fontSize: '0.8rem', color: '#FFF' }}>
-                          <strong>{d.label}</strong> ({d.distanceKm}K) • โควตา {d.quota} คน
-                        </span>
-                      ))}
+                  {/* Single Distance Badge Box */}
+                  <div style={{
+                    background: 'rgba(255, 85, 0, 0.1)',
+                    border: '1px solid rgba(255, 85, 0, 0.3)',
+                    borderRadius: 'var(--radius-sm)',
+                    padding: '12px 16px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    marginBottom: '16px'
+                  }}>
+                    <div>
+                      <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 700 }}>
+                        ระยะทางวิ่งอย่างเป็นทางการ (ระยะเดียว)
+                      </span>
+                      <div style={{ fontSize: '1.05rem', fontWeight: 700, color: '#FFF' }}>
+                        {ev.distanceLabel || `City Run ${ev.distanceKm || 5.8}K`}
+                      </div>
+                    </div>
+                    <div style={{ textAlign: 'right' }}>
+                      <span style={{ fontFamily: 'var(--font-heading)', fontSize: '1.8rem', fontWeight: 900, color: 'var(--primary)' }}>
+                        {ev.distanceKm || 5.8}
+                      </span>
+                      <span style={{ fontSize: '0.8rem', fontWeight: 800, color: '#FFF', marginLeft: '4px' }}>KM</span>
                     </div>
                   </div>
 
-                  {/* Stats for past event */}
+                  {/* Route Map Preview Thumbnail */}
+                  <div style={{ background: 'rgba(255, 255, 255, 0.03)', padding: '12px', borderRadius: 'var(--radius-sm)', marginBottom: '16px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px' }}>
+                      <span style={{ fontSize: '0.82rem', color: 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                        <Compass size={14} color="var(--cyan)" /> แผนที่เส้นทางวิ่ง:
+                      </span>
+                      {ev.routeImageUrl ? (
+                        <span style={{ fontSize: '0.75rem', color: 'var(--green)' }}>✓ มีรูปแผนที่แล้ว</span>
+                      ) : (
+                        <span style={{ fontSize: '0.75rem', color: '#F87171' }}>! ยังไม่มีรูปแผนที่</span>
+                      )}
+                    </div>
+                    {ev.routeImageUrl && (
+                      <img 
+                        src={ev.routeImageUrl} 
+                        alt="แผนที่เส้นทาง" 
+                        style={{ width: '100%', height: '120px', objectFit: 'cover', borderRadius: 'var(--radius-sm)' }}
+                      />
+                    )}
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', fontSize: '0.8rem', color: 'var(--text-muted)', marginTop: '8px' }}>
+                      <div>💧 จุดให้น้ำ: <strong style={{ color: '#FFF' }}>{ev.waterStations || 3} จุด</strong></div>
+                      <div>🏥 จุดพยาบาล: <strong style={{ color: '#FFF' }}>{ev.firstAidPoints || 2} จุด</strong></div>
+                      <div>👥 โควตา: <strong style={{ color: '#FFF' }}>{ev.quota || 500} ท่าน</strong></div>
+                      <div>⛰️ ความชัน: <strong style={{ color: '#FFF' }}>{ev.elevationGain || '+10 ม.'}</strong></div>
+                    </div>
+                  </div>
+
+                  {/* Stats for completed past event */}
                   {ev.stats && (
                     <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '8px', background: 'rgba(0, 240, 255, 0.06)', border: '1px solid rgba(0, 240, 255, 0.2)', padding: '10px', borderRadius: 'var(--radius-sm)', textAlign: 'center', marginBottom: '16px', fontSize: '0.82rem' }}>
                       <div>
@@ -718,6 +823,7 @@ export function AdminPortal({
                   )}
                 </div>
 
+                {/* Footer of Card */}
                 <div style={{ paddingTop: '16px', borderTop: '1px solid var(--dark-border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                   {!ev.isActive ? (
                     <button 
@@ -731,6 +837,10 @@ export function AdminPortal({
                       ✓ กำลังแสดงเป็น EP หน้าแรก
                     </span>
                   )}
+
+                  <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>
+                    📍 {ev.locationName?.split(' ')[0] || 'เมืองตาก'}
+                  </span>
                 </div>
               </div>
             ))}
@@ -739,7 +849,7 @@ export function AdminPortal({
       )}
 
       {/* ========================================================
-          TAB: RUNNERS LIST & EXPORT
+          TAB 2: RUNNERS DIRECTORY
          ======================================================== */}
       {activeTab === 'runners' && (
         <div className="glass-card">
@@ -776,7 +886,6 @@ export function AdminPortal({
             </div>
           </div>
 
-          {/* Table */}
           <div className="data-table-container">
             <table className="data-table">
               <thead>
@@ -800,68 +909,65 @@ export function AdminPortal({
                     </td>
                   </tr>
                 ) : (
-                  filteredRunners.map((runner) => {
-                    const distLabel = activeEvent?.distances?.find(d => d.id === runner.distanceId)?.label || runner.distanceId || '-';
-                    return (
-                      <tr key={runner.id}>
-                        <td>
-                          <strong style={{ fontFamily: 'var(--font-heading)', color: 'var(--primary)', fontSize: '1.05rem' }}>
-                            {runner.bibNumber}
-                          </strong>
-                        </td>
-                        <td>
-                          <div style={{ fontWeight: 600, color: '#FFF' }}>{runner.fullName}</div>
-                          {runner.nickname && <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>({runner.nickname})</div>}
-                        </td>
-                        <td>{runner.phone}</td>
-                        <td>
-                          <span style={{ padding: '3px 8px', borderRadius: '4px', background: 'rgba(255, 255, 255, 0.06)', fontSize: '0.85rem' }}>
-                            {distLabel}
+                  filteredRunners.map((runner) => (
+                    <tr key={runner.id}>
+                      <td>
+                        <strong style={{ fontFamily: 'var(--font-heading)', color: 'var(--primary)', fontSize: '1.05rem' }}>
+                          {runner.bibNumber}
+                        </strong>
+                      </td>
+                      <td>
+                        <div style={{ fontWeight: 600, color: '#FFF' }}>{runner.fullName}</div>
+                        {runner.nickname && <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>({runner.nickname})</div>}
+                      </td>
+                      <td>{runner.phone}</td>
+                      <td>
+                        <span style={{ padding: '3px 8px', borderRadius: '4px', background: 'rgba(255, 85, 0, 0.1)', color: 'var(--primary)', fontWeight: 700, fontSize: '0.85rem' }}>
+                          {runner.distanceLabel || `${activeEvent?.distanceKm || 5.8}K`}
+                        </span>
+                      </td>
+                      <td>{runner.shirtSize || '-'}</td>
+                      <td>
+                        <div style={{ fontSize: '0.85rem' }}>{runner.emergencyContact || '-'}</div>
+                        <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>{runner.emergencyPhone || ''}</div>
+                      </td>
+                      <td>
+                        <span style={{ fontSize: '0.82rem', color: runner.medicalNotes && runner.medicalNotes !== '-' ? '#F87171' : 'var(--text-muted)' }}>
+                          {runner.medicalNotes || '-'}
+                        </span>
+                      </td>
+                      <td>
+                        {runner.checkedIn ? (
+                          <span className="badge-tag green" style={{ margin: 0, fontSize: '0.75rem', padding: '3px 8px' }}>
+                            <CheckCircle size={12} /> เช็คอินแล้ว
                           </span>
-                        </td>
-                        <td>{runner.shirtSize || '-'}</td>
-                        <td>
-                          <div style={{ fontSize: '0.85rem' }}>{runner.emergencyContact || '-'}</div>
-                          <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>{runner.emergencyPhone || ''}</div>
-                        </td>
-                        <td>
-                          <span style={{ fontSize: '0.82rem', color: runner.medicalNotes && runner.medicalNotes !== '-' ? '#F87171' : 'var(--text-muted)' }}>
-                            {runner.medicalNotes || '-'}
+                        ) : (
+                          <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>
+                            ยังไม่เช็คอิน
                           </span>
-                        </td>
-                        <td>
-                          {runner.checkedIn ? (
-                            <span className="badge-tag green" style={{ margin: 0, fontSize: '0.75rem', padding: '3px 8px' }}>
-                              <CheckCircle size={12} /> เช็คอินแล้ว
-                            </span>
-                          ) : (
-                            <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>
-                              ยังไม่เช็คอิน
-                            </span>
-                          )}
-                        </td>
-                        <td>
-                          <div style={{ display: 'flex', gap: '6px' }}>
-                            <button 
-                              className={`btn btn-sm ${runner.checkedIn ? 'btn-secondary' : 'btn-primary'}`}
-                              onClick={() => handleToggleCheckIn(runner.id)}
-                              style={{ padding: '4px 10px', fontSize: '0.8rem' }}
-                            >
-                              {runner.checkedIn ? 'ยกเลิก' : 'เช็คอิน'}
-                            </button>
-                            <button 
-                              className="btn btn-secondary btn-sm"
-                              onClick={() => handleDeleteRunner(runner.id, runner.fullName)}
-                              style={{ padding: '4px 8px', color: '#F87171' }}
-                              title="ลบรายชื่อ"
-                            >
-                              <Trash2 size={14} />
-                            </button>
-                          </div>
-                        </td>
-                      </tr>
-                    );
-                  })
+                        )}
+                      </td>
+                      <td>
+                        <div style={{ display: 'flex', gap: '6px' }}>
+                          <button 
+                            className={`btn btn-sm ${runner.checkedIn ? 'btn-secondary' : 'btn-primary'}`}
+                            onClick={() => handleToggleCheckIn(runner.id)}
+                            style={{ padding: '4px 10px', fontSize: '0.8rem' }}
+                          >
+                            {runner.checkedIn ? 'ยกเลิก' : 'เช็คอิน'}
+                          </button>
+                          <button 
+                            className="btn btn-secondary btn-sm"
+                            onClick={() => handleDeleteRunner(runner.id, runner.fullName)}
+                            style={{ padding: '4px 8px', color: '#F87171' }}
+                            title="ลบรายชื่อ"
+                          >
+                            <Trash2 size={14} />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))
                 )}
               </tbody>
             </table>
@@ -870,7 +976,7 @@ export function AdminPortal({
       )}
 
       {/* ========================================================
-          TAB: QUICK RACE DAY CHECK-IN
+          TAB 3: QUICK CHECK-IN DESK
          ======================================================== */}
       {activeTab === 'scanner' && (
         <div className="glass-card" style={{ maxWidth: '640px', margin: '0 auto', textAlign: 'center', padding: '40px 30px' }}>
@@ -903,7 +1009,7 @@ export function AdminPortal({
       )}
 
       {/* ========================================================
-          TAB: SPONSORS MANAGEMENT
+          TAB 4: SPONSORS
          ======================================================== */}
       {activeTab === 'sponsors' && (
         <div>
@@ -947,7 +1053,7 @@ export function AdminPortal({
       )}
 
       {/* ========================================================
-          TAB: SHOPS & ACTIVITIES MANAGEMENT
+          TAB 5: SHOPS & ACTIVITIES
          ======================================================== */}
       {activeTab === 'market' && (
         <div>
@@ -995,7 +1101,7 @@ export function AdminPortal({
       )}
 
       {/* ========================================================
-          TAB: GALLERY MANAGEMENT
+          TAB 6: GALLERY
          ======================================================== */}
       {activeTab === 'gallery' && (
         <div>
@@ -1035,7 +1141,7 @@ export function AdminPortal({
       )}
 
       {/* ========================================================
-          TAB: SETTINGS & STYLES
+          TAB 7: SETTINGS & STYLES
          ======================================================== */}
       {activeTab === 'settings' && (
         <div className="glass-card" style={{ maxWidth: '680px' }}>
@@ -1073,9 +1179,6 @@ export function AdminPortal({
                 value={settingsForm.logoUrl || ''}
                 onChange={(e) => setSettingsForm({ ...settingsForm, logoUrl: e.target.value })}
               />
-              <span style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>
-                ค่าเริ่มต้น: /tak-city-run-logo.svg หรือใส่ Direct Link ของรูปภาพ
-              </span>
             </div>
 
             {/* Theme Color Picker */}
@@ -1143,18 +1246,18 @@ export function AdminPortal({
       )}
 
       {/* ========================================================
-          MODAL: CREATE / EDIT EVENT (Supports Past and Upcoming)
+          MODAL: POWERFUL EVENT & ROUTE MAP EDITOR
          ======================================================== */}
       {eventModalOpen && (
         <div className="modal-overlay" onClick={() => setEventModalOpen(false)}>
-          <div className="modal-content" style={{ maxWidth: '680px' }} onClick={(e) => e.stopPropagation()}>
+          <div className="modal-content" style={{ maxWidth: '780px', padding: '30px' }} onClick={(e) => e.stopPropagation()}>
             <div className="modal-header">
               <div>
                 <span className="badge-tag" style={{ marginBottom: '4px' }}>
-                  {eventFormType === 'past' ? 'คลังประวัติงานเก่า' : 'งานวิ่งเปิดรับสมัคร'}
+                  EP.{eventFormData.epNumber}
                 </span>
-                <h3 style={{ fontSize: '1.35rem', color: '#FFF' }}>
-                  {isEditingEvent ? 'แก้ไขข้อมูลงานวิ่ง' : eventFormType === 'past' ? 'บันทึกประวัติงานวิ่งที่จบไปแล้ว (Past EP)' : 'สร้างงานวิ่ง EP ใหม่'}
+                <h3 style={{ fontSize: '1.45rem', color: '#FFF' }}>
+                  {isEditingEvent ? 'แก้ไขงานวิ่ง & อัปเดตแผนที่เส้นทาง' : 'สร้างงานวิ่ง Episode ใหม่'}
                 </h3>
               </div>
               <button className="modal-close-btn" onClick={() => setEventModalOpen(false)}>
@@ -1162,186 +1265,382 @@ export function AdminPortal({
               </button>
             </div>
 
+            {/* Modal Internal Tabs */}
+            <div style={{ display: 'flex', gap: '8px', borderBottom: '1px solid var(--dark-border)', paddingBottom: '12px', marginBottom: '22px' }}>
+              <button 
+                type="button"
+                className={`admin-tab ${modalActiveTab === 'general' ? 'active' : ''}`}
+                style={{ padding: '8px 16px', fontSize: '0.88rem' }}
+                onClick={() => setModalActiveTab('general')}
+              >
+                1. ข้อมูลงานทั่วไป
+              </button>
+              <button 
+                type="button"
+                className={`admin-tab ${modalActiveTab === 'distance' ? 'active' : ''}`}
+                style={{ padding: '8px 16px', fontSize: '0.88rem' }}
+                onClick={() => setModalActiveTab('distance')}
+              >
+                2. ระยะทางวิ่ง (Fix ระยะเดียว)
+              </button>
+              <button 
+                type="button"
+                className={`admin-tab ${modalActiveTab === 'route' ? 'active' : ''}`}
+                style={{ padding: '8px 16px', fontSize: '0.88rem' }}
+                onClick={() => setModalActiveTab('route')}
+              >
+                3. แผนที่รูทวิ่ง & ไฮไลต์
+              </button>
+              <button 
+                type="button"
+                className={`admin-tab ${modalActiveTab === 'schedule' ? 'active' : ''}`}
+                style={{ padding: '8px 16px', fontSize: '0.88rem' }}
+                onClick={() => setModalActiveTab('schedule')}
+              >
+                4. ตารางเวลา
+              </button>
+            </div>
+
             <form onSubmit={handleSaveEvent}>
-              <div className="form-row">
-                <div className="form-group">
-                  <label className="form-label">Episode ลำดับที่ *</label>
-                  <input 
-                    type="number" 
-                    className="form-control"
-                    value={eventFormData.epNumber}
-                    onChange={(e) => setEventFormData({ ...eventFormData, epNumber: Number(e.target.value) })}
-                    required
-                  />
-                </div>
-                <div className="form-group">
-                  <label className="form-label">สถานะงานวิ่ง *</label>
-                  <select 
-                    className="form-control"
-                    value={eventFormData.status}
-                    onChange={(e) => setEventFormData({ ...eventFormData, status: e.target.value })}
-                  >
-                    <option value="open">🟢 เปิดรับสมัคร (Open)</option>
-                    <option value="closed">⚪ ปิดรับสมัคร (Closed)</option>
-                    <option value="completed">📜 จัดจบแล้ว (Completed / งานเก่า)</option>
-                  </select>
-                </div>
-              </div>
+              {/* TAB 1: General Info */}
+              {modalActiveTab === 'general' && (
+                <div>
+                  <div className="form-row">
+                    <div className="form-group">
+                      <label className="form-label">Episode ลำดับที่ *</label>
+                      <input 
+                        type="number" 
+                        className="form-control"
+                        value={eventFormData.epNumber}
+                        onChange={(e) => setEventFormData({ ...eventFormData, epNumber: Number(e.target.value) })}
+                        required
+                      />
+                    </div>
+                    <div className="form-group">
+                      <label className="form-label">สถานะงานวิ่ง *</label>
+                      <select 
+                        className="form-control"
+                        value={eventFormData.status}
+                        onChange={(e) => setEventFormData({ ...eventFormData, status: e.target.value })}
+                      >
+                        <option value="open">🟢 เปิดรับสมัคร (Open)</option>
+                        <option value="closed">⚪ ปิดรับสมัคร (Closed)</option>
+                        <option value="completed">📜 จัดจบแล้ว (Completed / งานเก่า)</option>
+                      </select>
+                    </div>
+                  </div>
 
-              <div className="form-group">
-                <label className="form-label">ชื่องานวิ่ง Episode *</label>
-                <input 
-                  type="text" 
-                  className="form-control"
-                  placeholder="เช่น TAK City Run EP.03 - วิ่งรับลมหนาว ริมปิง"
-                  value={eventFormData.title}
-                  onChange={(e) => setEventFormData({ ...eventFormData, title: e.target.value })}
-                  required
-                />
-              </div>
-
-              <div className="form-group">
-                <label className="form-label">คำโปรย / สโลแกนงาน</label>
-                <input 
-                  type="text" 
-                  className="form-control"
-                  placeholder="เช่น วิ่งสัมผัสบรรยากาศยามเช้าเมืองตาก"
-                  value={eventFormData.subtitle}
-                  onChange={(e) => setEventFormData({ ...eventFormData, subtitle: e.target.value })}
-                />
-              </div>
-
-              <div className="form-row">
-                <div className="form-group">
-                  <label className="form-label">วันและเวลาจัดกิจกรรม *</label>
-                  <input 
-                    type="datetime-local" 
-                    className="form-control"
-                    value={eventFormData.eventDate ? eventFormData.eventDate.substring(0, 16) : ''}
-                    onChange={(e) => setEventFormData({ ...eventFormData, eventDate: e.target.value })}
-                    required
-                  />
-                </div>
-                <div className="form-group">
-                  <label className="form-label">รูปภาพหน้าปก / โปสเตอร์ (URL)</label>
-                  <input 
-                    type="text" 
-                    className="form-control"
-                    value={eventFormData.coverImage}
-                    onChange={(e) => setEventFormData({ ...eventFormData, coverImage: e.target.value })}
-                  />
-                </div>
-              </div>
-
-              <div className="form-group">
-                <label className="form-label">สถานที่จัดงาน & จุดปล่อยตัว *</label>
-                <input 
-                  type="text" 
-                  className="form-control"
-                  value={eventFormData.locationName}
-                  onChange={(e) => setEventFormData({ ...eventFormData, locationName: e.target.value })}
-                  required
-                />
-              </div>
-
-              {/* Distances Manager */}
-              <div style={{ marginTop: '20px', padding: '16px', background: 'rgba(255, 255, 255, 0.03)', borderRadius: 'var(--radius-sm)', border: '1px solid var(--dark-border)' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
-                  <label className="form-label" style={{ margin: 0 }}>ระยะทางวิ่งใน EP นี้</label>
-                  <button type="button" className="btn btn-secondary btn-sm" onClick={handleAddDistanceToForm}>
-                    <Plus size={14} /> เพิ่มระยะ
-                  </button>
-                </div>
-
-                {eventFormData.distances?.map((dist, idx) => (
-                  <div key={idx} style={{ display: 'grid', gridTemplateColumns: '2fr 1fr 1fr auto', gap: '8px', marginBottom: '8px', alignItems: 'center' }}>
+                  <div className="form-group">
+                    <label className="form-label">ชื่องานวิ่ง Episode *</label>
                     <input 
                       type="text" 
-                      className="form-control" 
-                      placeholder="ชื่อระยะ เช่น City Run 5.8K"
-                      value={dist.label}
-                      onChange={(e) => {
-                        const updated = [...eventFormData.distances];
-                        updated[idx].label = e.target.value;
-                        setEventFormData({ ...eventFormData, distances: updated });
-                      }}
+                      className="form-control"
+                      placeholder="เช่น TAK City Run EP.02 - ปั่นปันรัก วิ่งรับลมหนาว ริมแม่น้ำปิง"
+                      value={eventFormData.title}
+                      onChange={(e) => setEventFormData({ ...eventFormData, title: e.target.value })}
+                      required
                     />
-                    <input 
-                      type="number" 
-                      step="0.1" 
-                      className="form-control" 
-                      placeholder="กม."
-                      value={dist.distanceKm}
-                      onChange={(e) => {
-                        const updated = [...eventFormData.distances];
-                        updated[idx].distanceKm = Number(e.target.value);
-                        setEventFormData({ ...eventFormData, distances: updated });
-                      }}
-                    />
-                    <input 
-                      type="number" 
-                      className="form-control" 
-                      placeholder="โควตา"
-                      value={dist.quota}
-                      onChange={(e) => {
-                        const updated = [...eventFormData.distances];
-                        updated[idx].quota = Number(e.target.value);
-                        setEventFormData({ ...eventFormData, distances: updated });
-                      }}
-                    />
-                    {eventFormData.distances.length > 1 && (
-                      <button 
-                        type="button" 
-                        className="btn btn-secondary btn-sm" 
-                        style={{ color: '#F87171' }}
-                        onClick={() => handleRemoveDistance(idx)}
-                      >
-                        <Trash2 size={14} />
-                      </button>
-                    )}
                   </div>
-                ))}
-              </div>
 
-              {/* Stats for completed past event */}
-              {eventFormData.status === 'completed' && (
-                <div style={{ marginTop: '16px', padding: '16px', background: 'rgba(0, 240, 255, 0.05)', borderRadius: 'var(--radius-sm)', border: '1px solid rgba(0, 240, 255, 0.2)' }}>
-                  <h4 style={{ fontSize: '0.95rem', color: 'var(--cyan)', marginBottom: '10px' }}>สถิติความสำเร็จของงาน (สำหรับคลังประวัติ)</h4>
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '10px' }}>
-                    <div>
-                      <label className="form-label" style={{ fontSize: '0.8rem' }}>นักวิ่งเข้าร่วม (คน)</label>
+                  <div className="form-group">
+                    <label className="form-label">คำโปรย / สโลแกนประจำ EP</label>
+                    <input 
+                      type="text" 
+                      className="form-control"
+                      placeholder="เช่น วิ่งสัมผัสสายหมอกและลมหนาวเลียบสะพาน 200 ปี"
+                      value={eventFormData.subtitle}
+                      onChange={(e) => setEventFormData({ ...eventFormData, subtitle: e.target.value })}
+                    />
+                  </div>
+
+                  <div className="form-row">
+                    <div className="form-group">
+                      <label className="form-label">วันและเวลาปล่อยตัว *</label>
                       <input 
-                        type="number" 
+                        type="datetime-local" 
                         className="form-control"
-                        value={eventFormData.stats?.runnersJoined || 500}
-                        onChange={(e) => setEventFormData({ ...eventFormData, stats: { ...eventFormData.stats, runnersJoined: Number(e.target.value) } })}
+                        value={eventFormData.eventDate ? eventFormData.eventDate.substring(0, 16) : ''}
+                        onChange={(e) => setEventFormData({ ...eventFormData, eventDate: e.target.value })}
+                        required
                       />
                     </div>
-                    <div>
-                      <label className="form-label" style={{ fontSize: '0.8rem' }}>กิโลเมตรรวม</label>
-                      <input 
-                        type="number" 
-                        className="form-control"
-                        value={eventFormData.stats?.totalKilometers || 3000}
-                        onChange={(e) => setEventFormData({ ...eventFormData, stats: { ...eventFormData.stats, totalKilometers: Number(e.target.value) } })}
-                      />
-                    </div>
-                    <div>
-                      <label className="form-label" style={{ fontSize: '0.8rem' }}>จำนวนภาพถ่าย</label>
+                    <div className="form-group">
+                      <label className="form-label">รูปโปสเตอร์หน้าปก (Cover Image URL)</label>
                       <input 
                         type="text" 
                         className="form-control"
-                        value={eventFormData.stats?.photosTaken || '1,000+'}
-                        onChange={(e) => setEventFormData({ ...eventFormData, stats: { ...eventFormData.stats, photosTaken: e.target.value } })}
+                        placeholder="https://..."
+                        value={eventFormData.coverImage}
+                        onChange={(e) => setEventFormData({ ...eventFormData, coverImage: e.target.value })}
                       />
                     </div>
+                  </div>
+
+                  <div className="form-group">
+                    <label className="form-label">สถานที่จัดงาน & จุดปล่อยตัว *</label>
+                    <input 
+                      type="text" 
+                      className="form-control"
+                      placeholder="เช่น ริมแม่น้ำปิง หน้าสะพานสมโภชกรุงรัตนโกสินทร์ 200 ปี จ.ตาก"
+                      value={eventFormData.locationName}
+                      onChange={(e) => setEventFormData({ ...eventFormData, locationName: e.target.value })}
+                      required
+                    />
                   </div>
                 </div>
               )}
 
-              <button type="submit" className="btn btn-primary" style={{ width: '100%', padding: '16px', marginTop: '24px', fontSize: '1.05rem' }}>
-                {isEditingEvent ? 'บันทึกการแก้ไขงานวิ่ง' : 'ยืนยันสร้างงานวิ่ง'}
-              </button>
+              {/* TAB 2: Single Distance */}
+              {modalActiveTab === 'distance' && (
+                <div>
+                  <div style={{ background: 'rgba(255, 85, 0, 0.1)', border: '1px solid rgba(255, 85, 0, 0.3)', borderRadius: 'var(--radius-sm)', padding: '14px', marginBottom: '20px' }}>
+                    <p style={{ color: '#FFA559', fontSize: '0.9rem' }}>
+                      💡 <strong>ระยะทางเดียวประจำ EP:</strong> สมาชิกในชมรมจะวิ่งระยะทางเดียวกันในงานนี้
+                    </p>
+                  </div>
+
+                  <div className="form-row">
+                    <div className="form-group">
+                      <label className="form-label">ระยะทางวิ่งอย่างเป็นทางการ (กิโลเมตร) *</label>
+                      <input 
+                        type="number" 
+                        step="0.1" 
+                        className="form-control"
+                        style={{ fontSize: '1.2rem', fontWeight: 800, color: 'var(--primary)' }}
+                        placeholder="เช่น 5.8"
+                        value={eventFormData.distanceKm}
+                        onChange={(e) => setEventFormData({ ...eventFormData, distanceKm: Number(e.target.value) })}
+                        required
+                      />
+                    </div>
+                    <div className="form-group">
+                      <label className="form-label">โควตาผู้เข้าร่วม (คน) *</label>
+                      <input 
+                        type="number" 
+                        className="form-control"
+                        placeholder="เช่น 500"
+                        value={eventFormData.quota}
+                        onChange={(e) => setEventFormData({ ...eventFormData, quota: Number(e.target.value) })}
+                        required
+                      />
+                    </div>
+                  </div>
+
+                  <div className="form-group">
+                    <label className="form-label">ชื่อเรียกของระยะทางวิ่งนี้ *</label>
+                    <input 
+                      type="text" 
+                      className="form-control"
+                      placeholder="เช่น City Run 5.8K ตะลุยเมืองเก่าเลียบปิง"
+                      value={eventFormData.distanceLabel}
+                      onChange={(e) => setEventFormData({ ...eventFormData, distanceLabel: e.target.value })}
+                      required
+                    />
+                  </div>
+                </div>
+              )}
+
+              {/* TAB 3: Route Map & Details */}
+              {modalActiveTab === 'route' && (
+                <div>
+                  <div className="form-group">
+                    <label className="form-label">
+                      🗺️ URL รูปภาพแผนที่เส้นทางวิ่ง (Route Map Image URL)
+                    </label>
+                    <input 
+                      type="text" 
+                      className="form-control"
+                      placeholder="วางลิงก์รูปภาพแผนที่รูทวิ่ง / แผนที่ GPX (เช่น https://...)"
+                      value={eventFormData.routeImageUrl}
+                      onChange={(e) => setEventFormData({ ...eventFormData, routeImageUrl: e.target.value })}
+                    />
+                    <div style={{ display: 'flex', gap: '8px', marginTop: '6px', fontSize: '0.8rem' }}>
+                      <span style={{ color: 'var(--text-muted)' }}>ตัวอย่างรูป:</span>
+                      <button 
+                        type="button" 
+                        style={{ background: 'none', border: 'none', color: 'var(--cyan)', cursor: 'pointer', textDecoration: 'underline' }}
+                        onClick={() => setEventFormData({ ...eventFormData, routeImageUrl: 'https://images.unsplash.com/photo-1524850011238-e3d235c7d4c9?auto=format&fit=crop&w=1200&q=80' })}
+                      >
+                        [ใช้รูปตัวอย่างแผนที่เมืองตาก]
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Live Image Preview */}
+                  {eventFormData.routeImageUrl && (
+                    <div style={{ marginBottom: '18px', textAlign: 'center' }}>
+                      <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)', display: 'block', marginBottom: '6px' }}>
+                        ตัวอย่างรูปแผนที่ปัจจุบัน (Preview):
+                      </span>
+                      <img 
+                        src={eventFormData.routeImageUrl} 
+                        alt="Preview Map" 
+                        style={{ maxWidth: '100%', height: '180px', objectFit: 'cover', borderRadius: 'var(--radius-sm)', border: '1px solid var(--dark-border)' }}
+                      />
+                    </div>
+                  )}
+
+                  <div className="form-group">
+                    <label className="form-label">ลิงก์ Google Maps สำหรับปักหมุดจุดปล่อยตัว</label>
+                    <input 
+                      type="text" 
+                      className="form-control"
+                      placeholder="https://maps.google.com/?q=..."
+                      value={eventFormData.locationMapUrl}
+                      onChange={(e) => setEventFormData({ ...eventFormData, locationMapUrl: e.target.value })}
+                    />
+                  </div>
+
+                  <div className="form-group">
+                    <label className="form-label">คำอธิบายเส้นทางวิ่ง สภาพถนน และบรรยากาศ</label>
+                    <textarea 
+                      className="form-control"
+                      rows="3"
+                      placeholder="เช่น เส้นทางไฮไลต์เลียบเขื่อนแม่น้ำปิง ผ่านสะพานแขวน 200 ปี ทางราบเรียบ วิ่งสบายตลอดสาย"
+                      value={eventFormData.routeDescription}
+                      onChange={(e) => setEventFormData({ ...eventFormData, routeDescription: e.target.value })}
+                    />
+                  </div>
+
+                  <div className="form-row">
+                    <div className="form-group">
+                      <label className="form-label">จำนวนจุดบริการน้ำดื่ม (จุด)</label>
+                      <input 
+                        type="number" 
+                        className="form-control"
+                        value={eventFormData.waterStations}
+                        onChange={(e) => setEventFormData({ ...eventFormData, waterStations: Number(e.target.value) })}
+                      />
+                    </div>
+                    <div className="form-group">
+                      <label className="form-label">จำนวนหน่วยปฐมพยาบาล (จุด)</label>
+                      <input 
+                        type="number" 
+                        className="form-control"
+                        value={eventFormData.firstAidPoints}
+                        onChange={(e) => setEventFormData({ ...eventFormData, firstAidPoints: Number(e.target.value) })}
+                      />
+                    </div>
+                  </div>
+
+                  <div className="form-group">
+                    <label className="form-label">ระดับความชัน / สภาพพื้นที่ (Elevation)</label>
+                    <input 
+                      type="text" 
+                      className="form-control"
+                      placeholder="เช่น +12 ม. (ทางราบ 95%)"
+                      value={eventFormData.elevationGain}
+                      onChange={(e) => setEventFormData({ ...eventFormData, elevationGain: e.target.value })}
+                    />
+                  </div>
+
+                  <div className="form-group">
+                    <label className="form-label">ไฮไลต์สถานที่ในเส้นทาง (คั่นด้วยเครื่องหมายจุลภาค ,)</label>
+                    <input 
+                      type="text" 
+                      className="form-control"
+                      placeholder="เช่น สะพาน 200 ปี, ศาลสมเด็จพระเจ้าตากสิน, ตลาดเก่าริมปิง"
+                      value={eventFormData.routeHighlightsText}
+                      onChange={(e) => setEventFormData({ ...eventFormData, routeHighlightsText: e.target.value })}
+                    />
+                  </div>
+                </div>
+              )}
+
+              {/* TAB 4: Schedule */}
+              {modalActiveTab === 'schedule' && (
+                <div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px' }}>
+                    <label className="form-label" style={{ margin: 0 }}>ตารางเวลากิจกรรมเช้าวันงาน</label>
+                    <button type="button" className="btn btn-secondary btn-sm" onClick={handleAddScheduleRow}>
+                      <Plus size={14} /> เพิ่มเวลา
+                    </button>
+                  </div>
+
+                  {eventFormData.schedule?.map((item, idx) => (
+                    <div key={idx} style={{ display: 'grid', gridTemplateColumns: '120px 1fr auto', gap: '10px', marginBottom: '10px', alignItems: 'center' }}>
+                      <input 
+                        type="text" 
+                        className="form-control"
+                        placeholder="05:30 น."
+                        value={item.time}
+                        onChange={(e) => {
+                          const updated = [...eventFormData.schedule];
+                          updated[idx].time = e.target.value;
+                          setEventFormData({ ...eventFormData, schedule: updated });
+                        }}
+                      />
+                      <input 
+                        type="text" 
+                        className="form-control"
+                        placeholder="รายละเอียดกิจกรรม เช่น รวมพล Warm-up"
+                        value={item.title}
+                        onChange={(e) => {
+                          const updated = [...eventFormData.schedule];
+                          updated[idx].title = e.target.value;
+                          setEventFormData({ ...eventFormData, schedule: updated });
+                        }}
+                      />
+                      {eventFormData.schedule.length > 1 && (
+                        <button 
+                          type="button" 
+                          className="btn btn-secondary btn-sm" 
+                          style={{ color: '#F87171' }}
+                          onClick={() => handleRemoveScheduleRow(idx)}
+                        >
+                          <Trash2 size={14} />
+                        </button>
+                      )}
+                    </div>
+                  ))}
+
+                  {/* Past Event Stats */}
+                  {eventFormData.status === 'completed' && (
+                    <div style={{ marginTop: '24px', padding: '16px', background: 'rgba(0, 240, 255, 0.05)', borderRadius: 'var(--radius-sm)', border: '1px solid rgba(0, 240, 255, 0.2)' }}>
+                      <h4 style={{ fontSize: '0.95rem', color: 'var(--cyan)', marginBottom: '10px' }}>สถิติความสำเร็จของงาน (สำหรับคลังประวัติ)</h4>
+                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '10px' }}>
+                        <div>
+                          <label className="form-label" style={{ fontSize: '0.8rem' }}>นักวิ่งเข้าร่วม (คน)</label>
+                          <input 
+                            type="number" 
+                            className="form-control"
+                            value={eventFormData.stats?.runnersJoined || 500}
+                            onChange={(e) => setEventFormData({ ...eventFormData, stats: { ...eventFormData.stats, runnersJoined: Number(e.target.value) } })}
+                          />
+                        </div>
+                        <div>
+                          <label className="form-label" style={{ fontSize: '0.8rem' }}>กิโลเมตรรวม</label>
+                          <input 
+                            type="number" 
+                            className="form-control"
+                            value={eventFormData.stats?.totalKilometers || 2900}
+                            onChange={(e) => setEventFormData({ ...eventFormData, stats: { ...eventFormData.stats, totalKilometers: Number(e.target.value) } })}
+                          />
+                        </div>
+                        <div>
+                          <label className="form-label" style={{ fontSize: '0.8rem' }}>จำนวนภาพถ่าย</label>
+                          <input 
+                            type="text" 
+                            className="form-control"
+                            value={eventFormData.stats?.photosTaken || '1,000+'}
+                            onChange={(e) => setEventFormData({ ...eventFormData, stats: { ...eventFormData.stats, photosTaken: e.target.value } })}
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* Modal Buttons */}
+              <div style={{ display: 'flex', gap: '12px', marginTop: '28px', paddingTop: '16px', borderTop: '1px solid var(--dark-border)' }}>
+                <button type="submit" className="btn btn-primary" style={{ flex: 1, padding: '14px', fontSize: '1.05rem' }}>
+                  {isEditingEvent ? '💾 บันทึกการแก้ไขงานวิ่ง & แผนที่' : '✓ ยืนยันสร้างงานวิ่งใหม่'}
+                </button>
+                <button type="button" className="btn btn-secondary" onClick={() => setEventModalOpen(false)}>
+                  ยกเลิก
+                </button>
+              </div>
             </form>
           </div>
         </div>

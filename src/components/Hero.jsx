@@ -152,23 +152,24 @@ export function Hero({ activeEvent, registrationsCount = 0, onOpenRegister, onOp
             </div>
 
             <div style={{ background: 'rgba(255, 255, 255, 0.03)', borderRadius: 'var(--radius-md)', padding: '16px', border: '1px solid var(--dark-border)' }}>
-              <span style={{ display: 'block', fontSize: '0.85rem', color: 'var(--text-muted)', marginBottom: '10px' }}>
-                ระยะทางที่เปิดรับใน EP นี้
+              <span style={{ display: 'block', fontSize: '0.85rem', color: 'var(--text-muted)', marginBottom: '8px' }}>
+                ระยะทางอย่างเป็นทางการใน EP นี้
               </span>
-              <div style={{ display: 'flex', justifyContent: 'center', gap: '10px', flexWrap: 'wrap' }}>
-                {activeEvent.distances?.map(dist => (
-                  <span key={dist.id} style={{ 
-                    padding: '6px 14px', 
-                    borderRadius: '999px', 
-                    background: 'rgba(255, 85, 0, 0.15)', 
-                    border: '1px solid rgba(255, 85, 0, 0.3)',
-                    color: '#FFF',
-                    fontWeight: 700,
-                    fontSize: '0.85rem'
-                  }}>
-                    {dist.label}
-                  </span>
-                ))}
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px' }}>
+                <span style={{ 
+                  padding: '8px 18px', 
+                  borderRadius: '999px', 
+                  background: 'rgba(255, 85, 0, 0.2)', 
+                  border: '1.5px solid var(--primary)',
+                  color: '#FFF',
+                  fontWeight: 800,
+                  fontSize: '1rem',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '6px'
+                }}>
+                  🏃 {activeEvent.distanceKm || 5.8} KM • {activeEvent.distanceLabel || 'City Run'}
+                </span>
               </div>
             </div>
           </div>

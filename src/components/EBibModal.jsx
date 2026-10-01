@@ -8,7 +8,7 @@ export function EBibModal({ registration, activeEvent, clubSettings, onClose }) 
   if (!registration) return null;
 
   const eventTitle = activeEvent?.title || 'TAK City Run';
-  const distance = activeEvent?.distances?.find(d => d.id === registration.distanceId)?.label || 'City Run';
+  const distance = registration.distanceLabel || activeEvent?.distanceLabel || `${activeEvent?.distanceKm || 5.8} KM City Run`;
 
   const handlePrint = () => {
     window.print();
