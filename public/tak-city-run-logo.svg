@@ -1,0 +1,28 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" fill="none">
+  <defs>
+    <linearGradient id="takGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#FF5500" />
+      <stop offset="50%" stop-color="#FF7A00" />
+      <stop offset="100%" stop-color="#FFD600" />
+    </linearGradient>
+    <linearGradient id="neonGlow" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#00F0FF" />
+      <stop offset="100%" stop-color="#0072FF" />
+    </linearGradient>
+  </defs>
+  <!-- Background Badge Hexagon -->
+  <polygon points="50,4 92,26 92,74 50,96 8,74 8,26" fill="#0F172A" stroke="url(#takGrad)" stroke-width="4"/>
+  <!-- Mountain & River lines symbolizing Tak (Bhumibol Dam & Ping River) -->
+  <path d="M16 68 Q 35 60 50 68 T 84 68" stroke="url(#neonGlow)" stroke-width="3" fill="none" stroke-linecap="round"/>
+  <path d="M22 75 Q 36 68 50 75 T 78 75" stroke="#38BDF8" stroke-width="2.5" fill="none" stroke-linecap="round" opacity="0.7"/>
+  <!-- Dynamic Runner Figure -->
+  <circle cx="58" cy="28" r="6" fill="#FFF"/>
+  <!-- Torso & Arms -->
+  <path d="M54 36 L44 48 L32 44" stroke="#FFF" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M54 36 L64 42 L72 38" stroke="url(#takGrad)" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+  <!-- Legs -->
+  <path d="M44 48 L52 60 L62 66" stroke="#FFF" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M44 48 L36 56 L26 54" stroke="url(#takGrad)" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+  <!-- Tak City text -->
+  <text x="50" y="89" fill="#FFF" font-family="'Kanit', sans-serif" font-weight="900" font-size="9" text-anchor="middle" letter-spacing="2">TAK CITY RUN</text>
+</svg>
