@@ -173,6 +173,22 @@ export default function App() {
         onOpenAdmin={() => setIsAdminView(true)}
       />
 
+      {/* Sticky Mobile Registration Bar for Instant Thumb-Access */}
+      {!isAdminView && activeEvent?.status === 'open' && !isRegisterOpen && !isCheckBibOpen && !selectedRegistration && (
+        <div className="mobile-sticky-register-bar">
+          <div className="sticky-bar-info">
+            <span className="sticky-ep-badge">EP.{String(activeEvent.epNumber).padStart(2, '0')}</span>
+            <span className="sticky-distance-text">{activeEvent.distanceKm || 5.8} KM (ฟรี)</span>
+          </div>
+          <button 
+            className="btn btn-primary btn-sm sticky-register-btn"
+            onClick={() => setIsRegisterOpen(true)}
+          >
+            🏃 ลงทะเบียนด่วน ➔
+          </button>
+        </div>
+      )}
+
       {/* MODALS */}
       {isRegisterOpen && (
         <RegistrationModal 

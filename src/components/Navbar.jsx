@@ -26,10 +26,10 @@ export function Navbar({
             alt={clubSettings?.clubName || 'TAK City Run'} 
             className="brand-icon-img"
           />
-          <div>
+          <div className="brand-text-block">
             <span className="brand-title-accent">{clubSettings?.clubName || 'TAK City Run'}</span>
             {activeEvent && (
-              <span style={{ display: 'block', fontSize: '0.75rem', fontWeight: 500, color: 'var(--text-muted)' }}>
+              <span className="brand-ep-subtext">
                 EP.{String(activeEvent.epNumber).padStart(2, '0')} เมืองตาก
               </span>
             )}
@@ -42,7 +42,7 @@ export function Navbar({
               <ShieldCheck size={14} /> แอดมินชมรม
             </span>
             <button className="btn btn-secondary btn-sm" onClick={onExitAdmin}>
-              กลับสู่หน้าเว็บหลัก
+              กลับสู่หน้าหลัก
             </button>
           </div>
         ) : (
@@ -57,8 +57,9 @@ export function Navbar({
             </ul>
 
             <div className="nav-actions">
+              {/* Hidden on small mobile screens to keep navbar clean and prevent wrapping */}
               <button 
-                className="btn btn-secondary btn-sm" 
+                className="btn btn-secondary btn-sm nav-hide-mobile" 
                 onClick={onOpenCheckBib}
                 title="ค้นหาคูปองลุ้นรางวัล หรือตรวจสอบสิทธิ์"
               >
@@ -67,7 +68,7 @@ export function Navbar({
 
               {activeEvent?.status === 'open' && (
                 <button 
-                  className="btn btn-primary btn-sm"
+                  className="btn btn-primary btn-sm nav-reg-btn"
                   onClick={onOpenRegister}
                 >
                   ลงทะเบียนฟรี
@@ -75,7 +76,7 @@ export function Navbar({
               )}
 
               <button 
-                className="btn btn-secondary btn-sm" 
+                className="btn btn-secondary btn-sm nav-hide-mobile" 
                 onClick={onOpenAdmin}
                 style={{ padding: '8px 12px' }}
                 title="เข้าสู่ระบบผู้ดูแลชมรม"
@@ -97,37 +98,41 @@ export function Navbar({
 
       {/* Mobile Drawer */}
       {mobileMenuOpen && !isAdminActive && (
-        <div style={{
-          background: 'rgba(8, 12, 21, 0.98)',
-          borderBottom: '1px solid var(--dark-border)',
-          padding: '20px 24px',
-          display: 'flex',
-          flexDirection: 'column',
-          gap: '14px'
-        }}>
+        <div className="mobile-drawer">
           <a href="#event-details" className="nav-link" onClick={() => setMobileMenuOpen(false)}>ข้อมูลงานวิ่ง</a>
           <a href="#routes" className="nav-link" onClick={() => setMobileMenuOpen(false)}>เส้นทางวิ่ง</a>
           <a href="#schedule" className="nav-link" onClick={() => setMobileMenuOpen(false)}>กำหนดการ</a>
           <a href="#market" className="nav-link" onClick={() => setMobileMenuOpen(false)}>ร้านค้า & กิจกรรม</a>
           <a href="#past-events" className="nav-link" onClick={() => setMobileMenuOpen(false)}>ประวัติงานเก่า</a>
           <a href="#sponsors" className="nav-link" onClick={() => setMobileMenuOpen(false)}>ผู้สนับสนุน</a>
-          <hr style={{ borderColor: 'var(--dark-border)', margin: '4px 0' }} />
           
+          <hr style={{ borderColor: 'var(--dark-border)', margin: '8px 0' }} />
+          
+          {activeEvent?.status === 'open' && (
+            <button 
+              className="btn btn-primary"
+              style={{ width: '100%', padding: '14px', fontSize: '1rem', fontWeight: 800 }}
+              onClick={() => { setMobileMenuOpen(false); onOpenRegister(); }}
+            >
+              🏃 ลงทะเบียนฟรี EP.{String(activeEvent.epNumber).padStart(2, '0')}
+            </button>
+          )}
+
           <button 
             className="btn btn-secondary" 
+            style={{ width: '100%', padding: '12px' }}
             onClick={() => { setMobileMenuOpen(false); onOpenCheckBib(); }}
           >
             🎟️ ค้นหาคูปอง / ใบประกาศของฉัน
           </button>
 
-          {activeEvent?.status === 'open' && (
-            <button 
-              className="btn btn-primary"
-              onClick={() => { setMobileMenuOpen(false); onOpenRegister(); }}
-            >
-              ลงทะเบียนฟรี EP.{String(activeEvent.epNumber).padStart(2, '0')}
-            </button>
-          )}
+          <button 
+            className="btn btn-secondary" 
+            style={{ width: '100%', padding: '10px', color: 'var(--text-muted)', fontSize: '0.88rem' }}
+            onClick={() => { setMobileMenuOpen(false); onOpenAdmin(); }}
+          >
+            <ShieldCheck size={16} /> เข้าสู่ระบบผู้ดูแล (Admin Portal)
+          </button>
         </div>
       )}
     </header>
