@@ -95,6 +95,16 @@ function setLocalItem(key, value) {
         }
       }
     }
+
+    // Auto-migrate legacy cached settings logoUrl in browser
+    const rawSettings = localStorage.getItem(LS_KEYS.SETTINGS);
+    if (rawSettings) {
+      const parsedSettings = JSON.parse(rawSettings);
+      if (!parsedSettings.logoUrl || parsedSettings.logoUrl === '/tak-city-run-logo.svg') {
+        parsedSettings.logoUrl = '/tak-logo-white.png';
+        localStorage.setItem(LS_KEYS.SETTINGS, JSON.stringify(parsedSettings));
+      }
+    }
   } catch (e) {
     // Non-browser or JSON error
   }
@@ -234,7 +244,7 @@ const mapSettingsFromDB = (s) => ({
   clubName: s.club_name,
   tagline: s.tagline,
   description: s.description,
-  logoUrl: s.logo_url,
+  logoUrl: (!s.logo_url || s.logo_url === '/tak-city-run-logo.svg') ? '/tak-logo-white.png' : s.logo_url,
   themeColor: s.theme_color,
   facebookUrl: s.facebook_url,
   lineUrl: s.line_url,
@@ -261,15 +271,22 @@ const mapSettingsToDB = (s) => ({
 export const DataService = {
   // 1. Club Settings
   async getSettings() {
+    let settings = null;
     if (isSupabaseConfigured) {
       try {
         const { data, error } = await supabase.from('club_settings').select('*').single();
-        if (!error && data) return mapSettingsFromDB(data);
+        if (!error && data) settings = mapSettingsFromDB(data);
       } catch (err) {
         console.warn('Supabase settings query error, falling back to local:', err);
       }
     }
-    return getLocalItem(LS_KEYS.SETTINGS, initialClubSettings);
+    if (!settings) {
+      settings = getLocalItem(LS_KEYS.SETTINGS, initialClubSettings);
+    }
+    if (!settings.logoUrl || settings.logoUrl === '/tak-city-run-logo.svg') {
+      settings.logoUrl = '/tak-logo-white.png';
+    }
+    return settings;
   },
 
   async updateSettings(newSettings) {

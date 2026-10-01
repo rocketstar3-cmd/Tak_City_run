@@ -1,24 +1,28 @@
 import React, { useState } from 'react';
-import { Trophy, Search, ShieldCheck, Menu, X, Calendar, MapPin, Camera } from 'lucide-react';
+import { Trophy, Search, ShieldCheck, Menu, X, Calendar, MapPin } from 'lucide-react';
 
 export function Navbar({ 
   clubSettings, 
   activeEvent, 
   onOpenRegister, 
   onOpenCheckBib, 
-  onOpenPhotoFrame,
   onOpenAdmin,
   isAdminActive,
   onExitAdmin
 }) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
+  // Normalize legacy logoUrl to the official brush logo
+  const logoSrc = (!clubSettings?.logoUrl || clubSettings.logoUrl === '/tak-city-run-logo.svg')
+    ? '/tak-logo-white.png'
+    : clubSettings.logoUrl;
+
   return (
     <header className="navbar">
       <div className="container nav-container">
         <a href="#" className="brand-logo-group" onClick={(e) => { if(isAdminActive) { e.preventDefault(); onExitAdmin(); } }}>
           <img 
-            src={clubSettings?.logoUrl || '/tak-logo-white.png'} 
+            src={logoSrc} 
             alt={clubSettings?.clubName || 'TAK City Run'} 
             className="brand-icon-img"
           />
@@ -53,15 +57,6 @@ export function Navbar({
             </ul>
 
             <div className="nav-actions">
-              <button 
-                className="btn btn-secondary btn-sm" 
-                onClick={onOpenPhotoFrame}
-                title="ตกแต่งรูปภาพนักวิ่งพร้อมประทับตรา Logo แชร์ลงโซเชียล"
-                style={{ borderColor: 'rgba(245, 158, 11, 0.4)', color: '#FFB03A' }}
-              >
-                <Camera size={14} /> 📸 กรอบรูป
-              </button>
-
               <button 
                 className="btn btn-secondary btn-sm" 
                 onClick={onOpenCheckBib}
@@ -118,14 +113,6 @@ export function Navbar({
           <a href="#sponsors" className="nav-link" onClick={() => setMobileMenuOpen(false)}>ผู้สนับสนุน</a>
           <hr style={{ borderColor: 'var(--dark-border)', margin: '4px 0' }} />
           
-          <button 
-            className="btn btn-secondary" 
-            onClick={() => { setMobileMenuOpen(false); onOpenPhotoFrame(); }}
-            style={{ color: '#FFB03A', borderColor: 'rgba(245, 158, 11, 0.4)' }}
-          >
-            📸 ทำกรอบรูปนักวิ่ง (Photo Booth)
-          </button>
-
           <button 
             className="btn btn-secondary" 
             onClick={() => { setMobileMenuOpen(false); onOpenCheckBib(); }}

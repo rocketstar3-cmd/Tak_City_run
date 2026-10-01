@@ -16,11 +16,10 @@ import {
   MapPin, 
   HeartHandshake, 
   ShieldCheck,
-  Check,
-  Camera
+  Check
 } from 'lucide-react';
 
-export function EBibModal({ registration, activeEvent, clubSettings, onClose, onOpenPhotoFrame }) {
+export function EBibModal({ registration, activeEvent, clubSettings, onClose }) {
   const cardRef = useRef(null);
   const [activeTab, setActiveTab] = useState('coupon'); // 'coupon' | 'certificate'
   const [downloading, setDownloading] = useState(false);
@@ -469,20 +468,6 @@ export function EBibModal({ registration, activeEvent, clubSettings, onClose, on
               </>
             )}
           </button>
-
-          {onOpenPhotoFrame && (
-            <button 
-              className="btn btn-secondary"
-              onClick={() => {
-                onClose();
-                onOpenPhotoFrame(registration);
-              }}
-              title="ใส่ชื่อและ BIB ในกรอบรูปนักวิ่ง"
-              style={{ color: 'var(--cyan)', borderColor: 'rgba(0, 240, 255, 0.4)' }}
-            >
-              <Camera size={16} /> 📸 ทำกรอบรูป
-            </button>
-          )}
 
           <button className="btn btn-secondary" onClick={handlePrint} title="พิมพ์เอกสาร">
             <Printer size={16} /> พิมพ์

@@ -9,7 +9,6 @@ import { SponsorsSection } from './components/SponsorsSection';
 import { RegistrationModal } from './components/RegistrationModal';
 import { EBibModal } from './components/EBibModal';
 import { CheckBibModal } from './components/CheckBibModal';
-import { RunnerPhotoModal } from './components/RunnerPhotoModal';
 import { AdminPortal } from './components/AdminPortal';
 import { Footer } from './components/Footer';
 
@@ -26,8 +25,6 @@ export default function App() {
   // Modals & Navigation Views
   const [isRegisterOpen, setIsRegisterOpen] = useState(false);
   const [isCheckBibOpen, setIsCheckBibOpen] = useState(false);
-  const [isPhotoFrameOpen, setIsPhotoFrameOpen] = useState(false);
-  const [selectedRunnerForFrame, setSelectedRunnerForFrame] = useState(null);
   const [selectedRegistration, setSelectedRegistration] = useState(null);
   const [isAdminView, setIsAdminView] = useState(false);
 
@@ -79,11 +76,6 @@ export default function App() {
     setRegistrationsCount(prev => prev + 1);
   };
 
-  const handleOpenPhotoFrame = (runnerData = null) => {
-    setSelectedRunnerForFrame(runnerData);
-    setIsPhotoFrameOpen(true);
-  };
-
   if (loading) {
     return (
       <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'var(--dark-bg)' }}>
@@ -120,7 +112,6 @@ export default function App() {
         activeEvent={activeEvent}
         onOpenRegister={() => setIsRegisterOpen(true)}
         onOpenCheckBib={() => setIsCheckBibOpen(true)}
-        onOpenPhotoFrame={() => handleOpenPhotoFrame(null)}
         onOpenAdmin={() => setIsAdminView(true)}
         isAdminActive={isAdminView}
         onExitAdmin={() => setIsAdminView(false)}
@@ -154,7 +145,6 @@ export default function App() {
             registrationsCount={registrationsCount}
             onOpenRegister={() => setIsRegisterOpen(true)}
             onOpenCheckBib={() => setIsCheckBibOpen(true)}
-            onOpenPhotoFrame={() => handleOpenPhotoFrame(null)}
           />
 
           {/* Event Details: Distances, Routes, Schedule */}
@@ -209,19 +199,6 @@ export default function App() {
           activeEvent={activeEvent}
           clubSettings={clubSettings}
           onClose={() => setSelectedRegistration(null)}
-          onOpenPhotoFrame={(reg) => handleOpenPhotoFrame(reg)}
-        />
-      )}
-
-      {isPhotoFrameOpen && (
-        <RunnerPhotoModal 
-          activeEvent={activeEvent}
-          initialRunnerName={selectedRunnerForFrame?.fullName || ''}
-          initialBibNumber={selectedRunnerForFrame?.bibNumber || ''}
-          onClose={() => {
-            setIsPhotoFrameOpen(false);
-            setSelectedRunnerForFrame(null);
-          }}
         />
       )}
     </div>
