@@ -9,6 +9,7 @@ import { SponsorsSection } from './components/SponsorsSection';
 import { RegistrationModal } from './components/RegistrationModal';
 import { EBibModal } from './components/EBibModal';
 import { CheckBibModal } from './components/CheckBibModal';
+import { RunnerPhotoModal } from './components/RunnerPhotoModal';
 import { AdminPortal } from './components/AdminPortal';
 import { Footer } from './components/Footer';
 
@@ -25,6 +26,8 @@ export default function App() {
   // Modals & Navigation Views
   const [isRegisterOpen, setIsRegisterOpen] = useState(false);
   const [isCheckBibOpen, setIsCheckBibOpen] = useState(false);
+  const [isPhotoFrameOpen, setIsPhotoFrameOpen] = useState(false);
+  const [selectedRunnerForFrame, setSelectedRunnerForFrame] = useState(null);
   const [selectedRegistration, setSelectedRegistration] = useState(null);
   const [isAdminView, setIsAdminView] = useState(false);
 
@@ -76,12 +79,27 @@ export default function App() {
     setRegistrationsCount(prev => prev + 1);
   };
 
+  const handleOpenPhotoFrame = (runnerData = null) => {
+    setSelectedRunnerForFrame(runnerData);
+    setIsPhotoFrameOpen(true);
+  };
+
   if (loading) {
     return (
       <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'var(--dark-bg)' }}>
         <div style={{ textAlign: 'center' }}>
-          <img src="/tak-city-run-logo.svg" alt="TAK City Run" style={{ width: '64px', height: '64px', animation: 'pulse 1.5s infinite' }} />
-          <div style={{ marginTop: '16px', fontFamily: 'var(--font-heading)', fontSize: '1.2rem', color: '#FFF' }}>
+          <img 
+            src="/tak-logo-white.png" 
+            alt="TAK City Run" 
+            style={{ 
+              width: '80px', 
+              height: '80px', 
+              objectFit: 'contain',
+              animation: 'pulse 1.5s infinite',
+              filter: 'drop-shadow(0 0 16px rgba(255, 85, 0, 0.6))'
+            }} 
+          />
+          <div style={{ marginTop: '16px', fontFamily: 'var(--font-heading)', fontSize: '1.25rem', color: '#FFF', fontWeight: 800, letterSpacing: '0.04em' }}>
             TAK CITY RUN
           </div>
           <div style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginTop: '4px' }}>
@@ -102,6 +120,7 @@ export default function App() {
         activeEvent={activeEvent}
         onOpenRegister={() => setIsRegisterOpen(true)}
         onOpenCheckBib={() => setIsCheckBibOpen(true)}
+        onOpenPhotoFrame={() => handleOpenPhotoFrame(null)}
         onOpenAdmin={() => setIsAdminView(true)}
         isAdminActive={isAdminView}
         onExitAdmin={() => setIsAdminView(false)}
@@ -135,6 +154,7 @@ export default function App() {
             registrationsCount={registrationsCount}
             onOpenRegister={() => setIsRegisterOpen(true)}
             onOpenCheckBib={() => setIsCheckBibOpen(true)}
+            onOpenPhotoFrame={() => handleOpenPhotoFrame(null)}
           />
 
           {/* Event Details: Distances, Routes, Schedule */}
@@ -189,6 +209,19 @@ export default function App() {
           activeEvent={activeEvent}
           clubSettings={clubSettings}
           onClose={() => setSelectedRegistration(null)}
+          onOpenPhotoFrame={(reg) => handleOpenPhotoFrame(reg)}
+        />
+      )}
+
+      {isPhotoFrameOpen && (
+        <RunnerPhotoModal 
+          activeEvent={activeEvent}
+          initialRunnerName={selectedRunnerForFrame?.fullName || ''}
+          initialBibNumber={selectedRunnerForFrame?.bibNumber || ''}
+          onClose={() => {
+            setIsPhotoFrameOpen(false);
+            setSelectedRunnerForFrame(null);
+          }}
         />
       )}
     </div>

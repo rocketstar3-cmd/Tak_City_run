@@ -1239,3 +1239,11 @@ button, input, select, textarea {
     left: 16px;
   }
 }
+
+/* Photobooth & Finisher Responsive Grid */
+@media (max-width: 820px) {
+  .photobooth-grid {
+    grid-template-columns: 1fr !important;
+  }
+}
+

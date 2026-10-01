@@ -1,7 +1,13 @@
 import React, { useState, useEffect } from 'react';
-import { Calendar, MapPin, Users, HeartHandshake, ArrowRight, Clock, Award } from 'lucide-react';
+import { Calendar, MapPin, Users, HeartHandshake, ArrowRight, Clock, Award, Camera } from 'lucide-react';
 
-export function Hero({ activeEvent, registrationsCount = 0, onOpenRegister, onOpenCheckBib }) {
+export function Hero({ 
+  activeEvent, 
+  registrationsCount = 0, 
+  onOpenRegister, 
+  onOpenCheckBib,
+  onOpenPhotoFrame 
+}) {
   // Countdown Timer
   const [timeLeft, setTimeLeft] = useState({ days: 0, hours: 0, minutes: 0, seconds: 0 });
 
@@ -62,9 +68,22 @@ export function Hero({ activeEvent, registrationsCount = 0, onOpenRegister, onOp
       <div className="container hero-grid">
         {/* Left Column: Event Hero Pitch */}
         <div>
-          <div className="hero-ep-badge">
-            <span className="pulse-dot"></span>
-            <span>เปิดรับสมัครแล้ว • EP.{String(activeEvent.epNumber).padStart(2, '0')}</span>
+          {/* Official Logo Banner & Status Tag */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '16px', marginBottom: '18px', flexWrap: 'wrap' }}>
+            <img 
+              src="/tak-logo-white.png" 
+              alt="TAK City Run Official Logo" 
+              style={{ 
+                height: '68px', 
+                width: 'auto', 
+                objectFit: 'contain',
+                filter: 'drop-shadow(0 0 20px rgba(255, 85, 0, 0.5))'
+              }} 
+            />
+            <div className="hero-ep-badge" style={{ margin: 0 }}>
+              <span className="pulse-dot"></span>
+              <span>เปิดรับสมัครแล้ว • EP.{String(activeEvent.epNumber).padStart(2, '0')}</span>
+            </div>
           </div>
 
           <h1 className="hero-title">
@@ -89,7 +108,7 @@ export function Hero({ activeEvent, registrationsCount = 0, onOpenRegister, onOp
             </div>
           </div>
 
-          <div className="hero-cta-group">
+          <div className="hero-cta-group" style={{ display: 'flex', flexWrap: 'wrap', gap: '12px' }}>
             {activeEvent.status === 'open' ? (
               <button className="btn btn-primary btn-lg" onClick={onOpenRegister}>
                 ลงทะเบียนเข้าร่วม (ฟรี) <ArrowRight size={20} />
@@ -101,12 +120,21 @@ export function Hero({ activeEvent, registrationsCount = 0, onOpenRegister, onOp
             )}
 
             <button className="btn btn-secondary btn-lg" onClick={onOpenCheckBib}>
-              🎟️ ตรวจสอบคูปองของฉัน
+              🎟️ คูปอง & ใบประกาศ
+            </button>
+
+            <button 
+              className="btn btn-secondary btn-lg" 
+              onClick={onOpenPhotoFrame}
+              style={{ borderColor: 'rgba(245, 158, 11, 0.45)', color: '#FFB03A' }}
+              title="แต่งรูปภาพนักวิ่งพร้อมประทับตรา Logo แชร์ลง Social"
+            >
+              <Camera size={18} /> 📸 ทำกรอบรูปนักวิ่ง
             </button>
           </div>
 
           {/* Social Proof */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '20px', marginTop: '28px', color: 'var(--text-muted)', fontSize: '0.9rem' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '20px', marginTop: '28px', color: 'var(--text-muted)', fontSize: '0.9rem', flexWrap: 'wrap' }}>
             <span style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
               <Users size={16} color="var(--primary)" />
               ลงทะเบียนแล้ว <strong style={{ color: '#FFF' }}>{registrationsCount}</strong> / {totalQuota} คน
@@ -121,7 +149,21 @@ export function Hero({ activeEvent, registrationsCount = 0, onOpenRegister, onOp
 
         {/* Right Column: Countdown Box & Distances summary */}
         <div>
-          <div className="countdown-box">
+          <div className="countdown-box" style={{ position: 'relative', overflow: 'hidden' }}>
+            {/* Subtle logo watermark inside countdown card */}
+            <img 
+              src="/tak-logo-white.png" 
+              alt="" 
+              style={{
+                position: 'absolute',
+                right: '-30px',
+                bottom: '-30px',
+                width: '180px',
+                opacity: 0.05,
+                pointerEvents: 'none'
+              }}
+            />
+
             <div style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', color: 'var(--primary)', marginBottom: '8px' }}>
               <Clock size={18} />
               <span style={{ fontWeight: 700, fontSize: '0.85rem', letterSpacing: '0.08em', textTransform: 'uppercase' }}>

@@ -1,11 +1,12 @@
 import React, { useState } from 'react';
-import { Trophy, Search, ShieldCheck, Menu, X, Calendar, MapPin } from 'lucide-react';
+import { Trophy, Search, ShieldCheck, Menu, X, Calendar, MapPin, Camera } from 'lucide-react';
 
 export function Navbar({ 
   clubSettings, 
   activeEvent, 
   onOpenRegister, 
   onOpenCheckBib, 
+  onOpenPhotoFrame,
   onOpenAdmin,
   isAdminActive,
   onExitAdmin
@@ -17,7 +18,7 @@ export function Navbar({
       <div className="container nav-container">
         <a href="#" className="brand-logo-group" onClick={(e) => { if(isAdminActive) { e.preventDefault(); onExitAdmin(); } }}>
           <img 
-            src={clubSettings?.logoUrl || '/tak-city-run-logo.svg'} 
+            src={clubSettings?.logoUrl || '/tak-logo-white.png'} 
             alt={clubSettings?.clubName || 'TAK City Run'} 
             className="brand-icon-img"
           />
@@ -54,6 +55,15 @@ export function Navbar({
             <div className="nav-actions">
               <button 
                 className="btn btn-secondary btn-sm" 
+                onClick={onOpenPhotoFrame}
+                title="ตกแต่งรูปภาพนักวิ่งพร้อมประทับตรา Logo แชร์ลงโซเชียล"
+                style={{ borderColor: 'rgba(245, 158, 11, 0.4)', color: '#FFB03A' }}
+              >
+                <Camera size={14} /> 📸 กรอบรูป
+              </button>
+
+              <button 
+                className="btn btn-secondary btn-sm" 
                 onClick={onOpenCheckBib}
                 title="ค้นหาคูปองลุ้นรางวัล หรือตรวจสอบสิทธิ์"
               >
@@ -70,7 +80,7 @@ export function Navbar({
               )}
 
               <button 
-                className="btn btn-secondary btn-sm"
+                className="btn btn-secondary btn-sm" 
                 onClick={onOpenAdmin}
                 style={{ padding: '8px 12px' }}
                 title="เข้าสู่ระบบผู้ดูแลชมรม"
@@ -107,12 +117,22 @@ export function Navbar({
           <a href="#past-events" className="nav-link" onClick={() => setMobileMenuOpen(false)}>ประวัติงานเก่า</a>
           <a href="#sponsors" className="nav-link" onClick={() => setMobileMenuOpen(false)}>ผู้สนับสนุน</a>
           <hr style={{ borderColor: 'var(--dark-border)', margin: '4px 0' }} />
+          
+          <button 
+            className="btn btn-secondary" 
+            onClick={() => { setMobileMenuOpen(false); onOpenPhotoFrame(); }}
+            style={{ color: '#FFB03A', borderColor: 'rgba(245, 158, 11, 0.4)' }}
+          >
+            📸 ทำกรอบรูปนักวิ่ง (Photo Booth)
+          </button>
+
           <button 
             className="btn btn-secondary" 
             onClick={() => { setMobileMenuOpen(false); onOpenCheckBib(); }}
           >
-            🎟️ ค้นหาคูปองของฉัน
+            🎟️ ค้นหาคูปอง / ใบประกาศของฉัน
           </button>
+
           {activeEvent?.status === 'open' && (
             <button 
               className="btn btn-primary"

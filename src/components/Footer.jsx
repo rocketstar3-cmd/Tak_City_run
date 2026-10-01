@@ -10,9 +10,9 @@ export function Footer({ clubSettings, onOpenAdmin }) {
           <div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '14px' }}>
               <img 
-                src={clubSettings?.logoUrl || '/tak-city-run-logo.svg'} 
+                src={clubSettings?.logoUrl || '/tak-logo-white.png'} 
                 alt="TAK City Run" 
-                style={{ width: '40px', height: '40px' }}
+                style={{ width: '44px', height: '44px', objectFit: 'contain' }}
               />
               <span style={{ fontFamily: 'var(--font-heading)', fontSize: '1.35rem', fontWeight: 800, color: '#FFF' }}>
                 {clubSettings?.clubName || 'TAK City Run'}

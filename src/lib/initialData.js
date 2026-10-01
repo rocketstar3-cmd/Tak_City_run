@@ -3,7 +3,7 @@ export const initialClubSettings = {
   clubName: "TAK City Run",
   tagline: "วิ่งเปิดเมืองตาก เชื่อมสัมพันธ์ ชุมชนสุขภาพดีไปด้วยกัน",
   description: "ชมรมวิ่ง TAK City Run จัดตั้งขึ้นเพื่อส่งเสริมสุขภาพและกระตุ้นการท่องเที่ยวในจังหวัดตาก โดยการจัดกิจกรรมวิ่งฟรี ไม่มีค่าใช้จ่ายในแต่ละ Episode พร้อมแนะนำร้านค้าและวิถีชีวิตท้องถิ่น",
-  logoUrl: "/tak-city-run-logo.svg",
+  logoUrl: "/tak-logo-white.png",
   themeColor: "#FF5500", // Vibrant Sporty Orange
   facebookUrl: "https://facebook.com",
   lineUrl: "https://line.me",
