@@ -110,7 +110,7 @@ CREATE TABLE IF NOT EXISTS event_gallery (
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
--- 8. Enable Row Level Security (RLS)
+-- 8. Enable Row Level Security (RLS) & Set Policies
 ALTER TABLE club_settings ENABLE ROW LEVEL SECURITY;
 ALTER TABLE events ENABLE ROW LEVEL SECURITY;
 ALTER TABLE event_distances ENABLE ROW LEVEL SECURITY;
@@ -119,21 +119,34 @@ ALTER TABLE event_attractions ENABLE ROW LEVEL SECURITY;
 ALTER TABLE sponsors ENABLE ROW LEVEL SECURITY;
 ALTER TABLE event_gallery ENABLE ROW LEVEL SECURITY;
 
--- Allow Public Read Access
-CREATE POLICY "Public Read Settings" ON club_settings FOR SELECT USING (true);
-CREATE POLICY "Public Read Events" ON events FOR SELECT USING (true);
-CREATE POLICY "Public Read Distances" ON event_distances FOR SELECT USING (true);
-CREATE POLICY "Public Read Registrations" ON registrations FOR SELECT USING (true);
-CREATE POLICY "Public Insert Registrations" ON registrations FOR INSERT WITH CHECK (true);
-CREATE POLICY "Public Read Attractions" ON event_attractions FOR SELECT USING (true);
-CREATE POLICY "Public Read Sponsors" ON sponsors FOR SELECT USING (true);
-CREATE POLICY "Public Read Gallery" ON event_gallery FOR SELECT USING (true);
+-- Allow full access for community running club (works seamlessly with PIN & Supabase Auth)
+CREATE POLICY "Full Access Settings" ON club_settings FOR ALL USING (true) WITH CHECK (true);
+CREATE POLICY "Full Access Events" ON events FOR ALL USING (true) WITH CHECK (true);
+CREATE POLICY "Full Access Distances" ON event_distances FOR ALL USING (true) WITH CHECK (true);
+CREATE POLICY "Full Access Registrations" ON registrations FOR ALL USING (true) WITH CHECK (true);
+CREATE POLICY "Full Access Attractions" ON event_attractions FOR ALL USING (true) WITH CHECK (true);
+CREATE POLICY "Full Access Sponsors" ON sponsors FOR ALL USING (true) WITH CHECK (true);
+CREATE POLICY "Full Access Gallery" ON event_gallery FOR ALL USING (true) WITH CHECK (true);
 
--- Allow Authenticated Users (Admins) Full Access
-CREATE POLICY "Admin Full Access Settings" ON club_settings FOR ALL TO authenticated USING (true);
-CREATE POLICY "Admin Full Access Events" ON events FOR ALL TO authenticated USING (true);
-CREATE POLICY "Admin Full Access Distances" ON event_distances FOR ALL TO authenticated USING (true);
-CREATE POLICY "Admin Full Access Registrations" ON registrations FOR ALL TO authenticated USING (true);
-CREATE POLICY "Admin Full Access Attractions" ON event_attractions FOR ALL TO authenticated USING (true);
-CREATE POLICY "Admin Full Access Sponsors" ON sponsors FOR ALL TO authenticated USING (true);
-CREATE POLICY "Admin Full Access Gallery" ON event_gallery FOR ALL TO authenticated USING (true);
+-- Insert Initial Active Event (EP.02) if not already exists
+INSERT INTO events (id, ep_number, title, subtitle, event_date, location_name, location_map_url, status, is_active, cover_image)
+VALUES (
+  'ep-02', 
+  2, 
+  'TAK City Run EP.02 - ปั่นปันรัก วิ่งรับลมหนาว ริมแม่น้ำปิง', 
+  'วิ่งสัมผัสสายหมอกและลมหนาวเลียบสะพานสมโภชกรุงรัตนโกสินทร์ 200 ปี', 
+  '2026-11-15 05:30:00+07', 
+  'ริมแม่น้ำปิง หน้าสะพานสมโภชกรุงรัตนโกสินทร์ 200 ปี จ.ตาก', 
+  'https://maps.google.com/?q=Tak+Ping+River', 
+  'open', 
+  true, 
+  'https://images.unsplash.com/photo-1452626038306-9aae5e071dd3?auto=format&fit=crop&w=1200&q=80'
+)
+ON CONFLICT (id) DO NOTHING;
+
+INSERT INTO event_distances (id, event_id, label, distance_km, quota, start_price)
+VALUES 
+  ('dist-1', 'ep-02', 'Fun Run ชิลล์ริมปิง', 3.5, 250, 0),
+  ('dist-2', 'ep-02', 'City Run ตะลุยเมืองเก่า', 5.8, 350, 0),
+  ('dist-3', 'ep-02', 'Mini Challenge วิ่งข้ามสะพาน', 10.5, 200, 0)
+ON CONFLICT (id) DO NOTHING;
