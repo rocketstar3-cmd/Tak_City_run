@@ -18,12 +18,14 @@ export function RegistrationModal({ activeEvent, onClose, onSuccessRegistration 
 
   const [loading, setLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
+  const [duplicateRunner, setDuplicateRunner] = useState(null);
 
   if (!activeEvent) return null;
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setErrorMessage('');
+    setDuplicateRunner(null);
 
     if (!formData.fullName.trim()) {
       setErrorMessage('กรุณากรอกชื่อ-นามสกุล');
@@ -60,7 +62,12 @@ export function RegistrationModal({ activeEvent, onClose, onSuccessRegistration 
       const res = await DataService.registerRunner(payload);
 
       if (!res.success) {
-        setErrorMessage(res.error || 'ไม่สามารถลงทะเบียนได้');
+        if (res.isDuplicate && res.data) {
+          setDuplicateRunner(res.data);
+          setErrorMessage(res.error || 'ตรวจพบว่าเคยลงทะเบียนไว้แล้ว');
+        } else {
+          setErrorMessage(res.error || 'ไม่สามารถลงทะเบียนได้');
+        }
         setLoading(false);
         return;
       }
@@ -84,7 +91,7 @@ export function RegistrationModal({ activeEvent, onClose, onSuccessRegistration 
   return (
     <div className="modal-overlay" onClick={onClose}>
       <div 
-        className="modal-content"
+        className="modal-content" 
         onClick={(e) => e.stopPropagation()}
       >
         <div className="modal-header">
@@ -104,7 +111,38 @@ export function RegistrationModal({ activeEvent, onClose, onSuccessRegistration 
           </button>
         </div>
 
-        {errorMessage && (
+        {/* Duplicate Registration Notice with Instant Open Button */}
+        {duplicateRunner && (
+          <div style={{
+            background: 'linear-gradient(135deg, rgba(245, 158, 11, 0.2) 0%, rgba(255, 85, 0, 0.15) 100%)',
+            border: '2px solid #F59E0B',
+            borderRadius: 'var(--radius-md)',
+            padding: '18px 20px',
+            marginBottom: '20px',
+            textAlign: 'center'
+          }}>
+            <div style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', color: '#F59E0B', fontWeight: 800, fontSize: '1rem', marginBottom: '6px' }}>
+              <AlertTriangle size={20} /> ตรวจพบการลงทะเบียนในระบบแล้ว!
+            </div>
+            <p style={{ color: '#FFF', fontSize: '0.9rem', marginBottom: '12px', lineHeight: 1.5 }}>
+              คุณ <strong>{duplicateRunner.fullName}</strong> ได้ลงทะเบียนไว้แล้ว<br />
+              หมายเลขคูปองของคุณคือ: <strong style={{ color: '#F59E0B', fontSize: '1.25rem', fontFamily: 'var(--font-heading)' }}>{duplicateRunner.bibNumber}</strong>
+            </p>
+            <button 
+              type="button"
+              className="btn btn-primary"
+              style={{ width: '100%', padding: '12px', fontSize: '1rem' }}
+              onClick={() => {
+                onClose();
+                onSuccessRegistration(duplicateRunner);
+              }}
+            >
+              🎟️ เปิดดูคูปองของฉันทันที
+            </button>
+          </div>
+        )}
+
+        {errorMessage && !duplicateRunner && (
           <div style={{
             background: 'rgba(239, 68, 68, 0.15)',
             border: '1px solid rgba(239, 68, 68, 0.4)',

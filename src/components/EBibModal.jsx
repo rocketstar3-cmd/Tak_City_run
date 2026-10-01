@@ -1,14 +1,84 @@
-import React, { useRef } from 'react';
-import { QRCodeSVG } from 'qrcode.react';
-import { X, Printer, CheckCircle, Gift, Coffee, ShoppingBag, Award, Sparkles, Phone, AlertCircle, Heart } from 'lucide-react';
+import React, { useRef, useState } from 'react';
+import html2canvas from 'html2canvas';
+import { 
+  X, 
+  Download, 
+  Printer, 
+  CheckCircle, 
+  Gift, 
+  Coffee, 
+  ShoppingBag, 
+  Award, 
+  Sparkles, 
+  Phone, 
+  User, 
+  Calendar, 
+  MapPin, 
+  HeartHandshake, 
+  ShieldCheck,
+  Check
+} from 'lucide-react';
 
 export function EBibModal({ registration, activeEvent, clubSettings, onClose }) {
   const ticketRef = useRef(null);
+  const [downloading, setDownloading] = useState(false);
+  const [downloadSuccess, setDownloadSuccess] = useState(false);
 
   if (!registration) return null;
 
   const eventTitle = activeEvent?.title || 'TAK City Run';
   const distance = registration.distanceLabel || activeEvent?.distanceLabel || `${activeEvent?.distanceKm || 5.8} KM City Run`;
+  const location = activeEvent?.locationName || 'ริมแม่น้ำปิง หน้าสะพานสมโภชกรุงรัตนโกสินทร์ 200 ปี จ.ตาก';
+  const eventDateFormatted = activeEvent?.eventDate ? new Date(activeEvent.eventDate).toLocaleDateString('th-TH', {
+    day: 'numeric',
+    month: 'long',
+    year: 'numeric'
+  }) : '15 พฤศจิกายน 2569';
+
+  // Customizable settings from admin with smart fallbacks
+  const couponConfig = {
+    badgeText: clubSettings?.couponSettings?.badgeText || '🎟️ LUCKY DRAW PASS',
+    headline: clubSettings?.couponSettings?.headline || 'คูปองลุ้นรางวัล & สิทธิประโยชน์นักวิ่ง',
+    subheadline: clubSettings?.couponSettings?.subheadline || 'บัตรดิจิทัลประจำตัวสำหรับลุ้นของรางวัลท้ายงาน และรับอาหารเช้าหน้างาน',
+    perksTitle: clubSettings?.couponSettings?.perksTitle || 'สิทธิประโยชน์สำหรับผู้ถือคูปองนี้:',
+    perk1Title: clubSettings?.couponSettings?.perk1Title || 'สิทธิ์ลุ้นรับรางวัล Lucky Draw ท้ายงาน',
+    perk1Desc: clubSettings?.couponSettings?.perk1Desc || 'จับสลากแจกของรางวัล & ของที่ระลึกจากผู้สนับสนุนหลังเข้าเส้นชัย',
+    perk2Title: clubSettings?.couponSettings?.perk2Title || 'อาหารเช้าชุมชน & กาแฟดอยฟรี',
+    perk2Desc: clubSettings?.couponSettings?.perk2Desc || 'อิ่มอร่อยกับเมนูท้องถิ่นเมืองตาก ณ ซุ้มอาหารบริการนักวิ่ง',
+    perk3Title: clubSettings?.couponSettings?.perk3Title || 'ส่วนลดพิเศษร้านค้าชุมชน',
+    perk3Desc: clubSettings?.couponSettings?.perk3Desc || 'แสดงคูปองเพื่อรับส่วนลดและโปรโมชั่นพิเศษจากร้านค้าที่ร่วมรายการ',
+    noticeText: clubSettings?.couponSettings?.noticeText || 'แสดงคูปองนี้ต่อเจ้าหน้าที่หน้างานเพื่อรับอาหารเช้าและสิทธิ์ร่วมจับสลาก Lucky Draw'
+  };
+
+  // 1-Click Save as Image
+  const handleSaveAsImage = async () => {
+    if (!ticketRef.current || downloading) return;
+    try {
+      setDownloading(true);
+      setDownloadSuccess(false);
+
+      const canvas = await html2canvas(ticketRef.current, {
+        scale: 2, // High resolution retina display
+        backgroundColor: '#0d1322',
+        useCORS: true,
+        logging: false
+      });
+
+      const image = canvas.toDataURL('image/png');
+      const link = document.createElement('a');
+      link.href = image;
+      link.download = `tak-city-run-coupon-${registration.bibNumber || 'ticket'}.png`;
+      link.click();
+
+      setDownloadSuccess(true);
+      setTimeout(() => setDownloadSuccess(false), 3000);
+    } catch (err) {
+      console.error('Save image error:', err);
+      alert('ไม่สามารถดาวน์โหลดรูปภาพได้ กรุณาใช้วิธีแคปหน้าจอ (Screenshot) แทน');
+    } finally {
+      setDownloading(false);
+    }
+  };
 
   const handlePrint = () => {
     window.print();
@@ -29,10 +99,10 @@ export function EBibModal({ registration, activeEvent, clubSettings, onClose }) 
               </span>
             </div>
             <h3 style={{ fontSize: '1.3rem', color: '#FFF', marginTop: '6px' }}>
-              คูปองลุ้นรางวัล & สิทธิประโยชน์นักวิ่ง
+              {couponConfig.headline}
             </h3>
             <span style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>
-              บัตรดิจิทัลประจำตัวสำหรับจับสลาก Lucky Draw และรับอาหารเช้าหน้างาน
+              {couponConfig.subheadline}
             </span>
           </div>
           <button className="modal-close-btn" onClick={onClose} aria-label="Close">
@@ -40,7 +110,7 @@ export function EBibModal({ registration, activeEvent, clubSettings, onClose }) 
           </button>
         </div>
 
-        {/* Printable Coupon Ticket */}
+        {/* Printable & Downloadable Coupon Ticket */}
         <div className="coupon-container" ref={ticketRef} id="printable-ticket">
           <div className="coupon-ticket">
             {/* Ticket Header */}
@@ -60,7 +130,7 @@ export function EBibModal({ registration, activeEvent, clubSettings, onClose }) 
               </div>
               <div style={{ textAlign: 'right' }}>
                 <span className="coupon-pass-badge">
-                  🎟️ LUCKY PASS
+                  {couponConfig.badgeText}
                 </span>
               </div>
             </div>
@@ -76,23 +146,47 @@ export function EBibModal({ registration, activeEvent, clubSettings, onClose }) 
                 {registration.bibNumber}
               </div>
 
-              <div className="coupon-runner-name">
-                {registration.fullName}
-                {registration.nickname && (
-                  <span style={{ color: 'var(--primary)', marginLeft: '8px', fontWeight: 600 }}>
-                    ({registration.nickname})
+              {/* Verified Runner Identity */}
+              <div style={{ 
+                background: 'rgba(255, 255, 255, 0.05)', 
+                border: '1.5px solid rgba(245, 158, 11, 0.35)', 
+                borderRadius: '14px', 
+                padding: '14px 18px', 
+                margin: '12px 0 16px 0',
+                textAlign: 'left'
+              }}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '6px' }}>
+                  <span style={{ fontSize: '0.75rem', color: '#F59E0B', fontWeight: 800, letterSpacing: '0.06em', textTransform: 'uppercase', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                    <ShieldCheck size={14} /> ผู้สมัครที่ได้รับการยืนยัน
                   </span>
-                )}
-              </div>
-              <div style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginBottom: '14px' }}>
-                เบอร์โทรศัพท์: {registration.phone}
+                  <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+                    {registration.createdAt ? new Date(registration.createdAt).toLocaleDateString('th-TH', { day: 'numeric', month: 'short' }) : 'ยืนยันแล้ว'}
+                  </span>
+                </div>
+
+                <div style={{ fontSize: '1.4rem', fontWeight: 800, color: '#FFF', lineHeight: 1.2 }}>
+                  {registration.fullName}
+                  {registration.nickname && (
+                    <span style={{ color: '#F59E0B', marginLeft: '8px', fontSize: '1.1rem', fontWeight: 600 }}>
+                      ({registration.nickname})
+                    </span>
+                  )}
+                </div>
+
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '14px', marginTop: '10px', fontSize: '0.86rem', color: 'var(--text-secondary)' }}>
+                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: '5px' }}>
+                    <Phone size={14} color="var(--primary)" /> <strong>{registration.phone}</strong>
+                  </span>
+                  <span>•</span>
+                  <span>ไซส์เสื้อ: <strong style={{ color: '#FFF' }}>{registration.shirtSize || 'Free Size'}</strong></span>
+                </div>
               </div>
 
               {/* Perforated Divider with Cutout Notches */}
               <div className="coupon-perforated-wrap">
                 <div className="coupon-notch-left"></div>
                 <div className="coupon-perforated-line">
-                  <span>✂️ รอยปรุ • หางบัตรจับรางวัล & คูปองสิทธิพิเศษ</span>
+                  <span>✂️ รอยปรุ • หางบัตรจับรางวัล & สิทธิประโยชน์</span>
                 </div>
                 <div className="coupon-notch-right"></div>
               </div>
@@ -100,7 +194,7 @@ export function EBibModal({ registration, activeEvent, clubSettings, onClose }) 
               {/* Stub / Perks Section */}
               <div className="coupon-stub-section">
                 <div className="coupon-perks-title">
-                  <Sparkles size={14} color="var(--primary)" /> สิทธิประโยชน์สำหรับผู้ถือคูปองนี้:
+                  <Sparkles size={14} color="#F59E0B" /> {couponConfig.perksTitle}
                 </div>
                 <div className="coupon-perks-list">
                   <div className="coupon-perk-item">
@@ -108,8 +202,8 @@ export function EBibModal({ registration, activeEvent, clubSettings, onClose }) 
                       <Gift size={16} />
                     </div>
                     <div>
-                      <strong>สิทธิ์ลุ้นรับรางวัล Lucky Draw ท้ายงาน</strong>
-                      <p>จับสลากแจกของรางวัล & ของที่ระลึกจากผู้สนับสนุนหลังเข้าเส้นชัย</p>
+                      <strong>{couponConfig.perk1Title}</strong>
+                      <p>{couponConfig.perk1Desc}</p>
                     </div>
                   </div>
 
@@ -118,8 +212,8 @@ export function EBibModal({ registration, activeEvent, clubSettings, onClose }) 
                       <Coffee size={16} />
                     </div>
                     <div>
-                      <strong>อาหารเช้าชุมชน & กาแฟดอยฟรี</strong>
-                      <p>อิ่มอร่อยกับเมนูท้องถิ่นเมืองตาก ณ ซุ้มอาหารบริการนักวิ่ง</p>
+                      <strong>{couponConfig.perk2Title}</strong>
+                      <p>{couponConfig.perk2Desc}</p>
                     </div>
                   </div>
 
@@ -128,36 +222,25 @@ export function EBibModal({ registration, activeEvent, clubSettings, onClose }) 
                       <ShoppingBag size={16} />
                     </div>
                     <div>
-                      <strong>ส่วนลดพิเศษร้านค้าชุมชน</strong>
-                      <p>แสดงคูปองเพื่อรับส่วนลดและโปรโมชั่นพิเศษจากร้านค้าที่ร่วมรายการ</p>
+                      <strong>{couponConfig.perk3Title}</strong>
+                      <p>{couponConfig.perk3Desc}</p>
                     </div>
                   </div>
                 </div>
 
-                {/* QR Code for Staff Verification */}
-                <div style={{ marginTop: '20px', textAlign: 'center' }}>
-                  <div className="coupon-qr-wrap">
-                    <QRCodeSVG 
-                      value={`TAK-RUN:${registration.bibNumber}:${registration.phone}`} 
-                      size={120} 
-                      level="H" 
-                      fgColor="#0F172A"
-                    />
-                  </div>
-                  <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '6px' }}>
-                    สแกนเพื่อยืนยันสิทธิ์ & ลงทะเบียนจับรางวัลหน้างานโดยทีมงาน
-                  </div>
-                </div>
-
-                {/* Runner Meta Details */}
+                {/* Additional Event & Runner Details */}
                 <div className="coupon-details-grid">
                   <div>
-                    <span style={{ color: 'var(--text-muted)', display: 'block', fontSize: '0.72rem' }}>ไซส์เสื้อที่ระลึก (ถ้ามี)</span>
-                    <strong>{registration.shirtSize || 'Free Size'}</strong>
+                    <span style={{ color: 'var(--text-muted)', display: 'block', fontSize: '0.72rem' }}>วันจัดงาน</span>
+                    <strong style={{ color: '#FFF' }}>{eventDateFormatted}</strong>
                   </div>
                   <div>
                     <span style={{ color: 'var(--text-muted)', display: 'block', fontSize: '0.72rem' }}>ผู้ติดต่อฉุกเฉิน</span>
                     <strong>{registration.emergencyContact || '-'} ({registration.emergencyPhone || '-'})</strong>
+                  </div>
+                  <div style={{ gridColumn: 'span 2' }}>
+                    <span style={{ color: 'var(--text-muted)', display: 'block', fontSize: '0.72rem' }}>สถานที่นัดพบ</span>
+                    <span style={{ fontSize: '0.82rem', color: '#CBD5E1' }}>{location}</span>
                   </div>
                   {registration.medicalNotes && registration.medicalNotes !== '-' && (
                     <div style={{ gridColumn: 'span 2', color: '#F87171' }}>
@@ -174,8 +257,8 @@ export function EBibModal({ registration, activeEvent, clubSettings, onClose }) 
                       <CheckCircle size={15} /> ยืนยันสิทธิ์ & เช็คอินหน้างานแล้ว
                     </span>
                   ) : (
-                    <span className="badge-tag" style={{ margin: 0, padding: '6px 14px', fontSize: '0.85rem' }}>
-                      ⏳ ลงทะเบียนสำเร็จ (รอยืนยันสิทธิ์หน้างาน)
+                    <span className="badge-tag gold" style={{ margin: 0, padding: '6px 14px', fontSize: '0.85rem' }}>
+                      🎟️ แสดงคูปองนี้ให้เจ้าหน้าที่หน้างานเพื่อรับอาหารเช้า & สิทธิ์ลุ้นรางวัล
                     </span>
                   )}
                 </div>
@@ -184,18 +267,38 @@ export function EBibModal({ registration, activeEvent, clubSettings, onClose }) 
           </div>
         </div>
 
-        {/* Action Buttons */}
-        <div style={{ display: 'flex', gap: '12px', marginTop: '20px' }}>
-          <button className="btn btn-primary" style={{ flex: 1 }} onClick={handlePrint}>
-            <Printer size={18} /> พิมพ์ / บันทึกเป็น PDF
+        {/* Action Buttons: 1-Click Save Image & Print */}
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '12px', marginTop: '20px' }}>
+          <button 
+            className="btn btn-primary" 
+            style={{ flex: 1, minWidth: '180px', padding: '12px 18px', fontSize: '0.98rem' }} 
+            onClick={handleSaveAsImage}
+            disabled={downloading}
+          >
+            {downloading ? (
+              '⏳ กำลังสร้างรูปภาพ...'
+            ) : downloadSuccess ? (
+              <>
+                <Check size={18} /> บันทึกรูปภาพเรียบร้อย!
+              </>
+            ) : (
+              <>
+                <Download size={18} /> 📸 บันทึกเป็นรูปภาพ
+              </>
+            )}
           </button>
+
+          <button className="btn btn-secondary" onClick={handlePrint} title="พิมพ์เอกสารหรือบันทึกเป็น PDF">
+            <Printer size={18} /> พิมพ์
+          </button>
+
           <button className="btn btn-secondary" onClick={onClose}>
             ปิด
           </button>
         </div>
 
         <p style={{ textAlign: 'center', fontSize: '0.82rem', color: 'var(--text-muted)', marginTop: '14px', lineHeight: 1.5 }}>
-          💡 <strong>คำแนะนำ:</strong> บันทึกภาพหน้าจอ (Screenshot) คูปองนี้เก็บไว้ในโทรศัพท์ เพื่อความสะดวกรวดเร็วในการแสดงต่อเจ้าหน้าที่รับของและร้านค้าในเช้าวันงาน
+          💡 <strong>บันทึกง่าย:</strong> กดปุ่ม <em>"📸 บันทึกเป็นรูปภาพ"</em> หรือแคปหน้าจอ (Screenshot) หน้านี้เก็บไว้ในมือถือ เพื่อแสดงต่อเจ้าหน้าที่รับของและร้านค้าในเช้าวันงาน
         </p>
       </div>
     </div>

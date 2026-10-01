@@ -216,6 +216,20 @@ const mapEventFromDB = (e) => {
   };
 };
 
+const defaultCouponSettings = {
+  badgeText: "🎟️ LUCKY PASS",
+  headline: "คูปองลุ้นรางวัล & สิทธิประโยชน์นักวิ่ง",
+  subheadline: "บัตรดิจิทัลประจำตัวสำหรับลุ้นของรางวัลท้ายงาน และรับอาหารเช้าหน้างาน",
+  perksTitle: "สิทธิประโยชน์สำหรับผู้ถือคูปองนี้:",
+  perk1Title: "สิทธิ์ลุ้นรับรางวัล Lucky Draw ท้ายงาน",
+  perk1Desc: "จับสลากแจกของรางวัล & ของที่ระลึกจากผู้สนับสนุนหลังเข้าเส้นชัย",
+  perk2Title: "อาหารเช้าชุมชน & กาแฟดอยฟรี",
+  perk2Desc: "อิ่มอร่อยกับเมนูท้องถิ่นเมืองตาก ณ ซุ้มอาหารบริการนักวิ่ง",
+  perk3Title: "ส่วนลดพิเศษร้านค้าชุมชน",
+  perk3Desc: "แสดงคูปองเพื่อรับส่วนลดและโปรโมชั่นพิเศษจากร้านค้าที่ร่วมรายการ",
+  noticeText: "แสดงคูปองนี้ต่อเจ้าหน้าที่หน้างานเพื่อรับอาหารเช้าและสิทธิ์ร่วมจับสลาก Lucky Draw"
+};
+
 const mapSettingsFromDB = (s) => ({
   clubName: s.club_name,
   tagline: s.tagline,
@@ -224,7 +238,8 @@ const mapSettingsFromDB = (s) => ({
   themeColor: s.theme_color,
   facebookUrl: s.facebook_url,
   lineUrl: s.line_url,
-  adminPin: s.admin_pin || '1234'
+  adminPin: s.admin_pin || '1234',
+  couponSettings: s.coupon_settings || defaultCouponSettings
 });
 
 const mapSettingsToDB = (s) => ({
@@ -236,7 +251,8 @@ const mapSettingsToDB = (s) => ({
   theme_color: s.themeColor,
   facebook_url: s.facebookUrl,
   line_url: s.lineUrl,
-  admin_pin: s.adminPin || '1234'
+  admin_pin: s.adminPin || '1234',
+  coupon_settings: s.couponSettings || defaultCouponSettings
 });
 
 // ==========================================
@@ -479,45 +495,75 @@ export const DataService = {
 
   // 3. Registrations (CRUD)
   async getRegistrations(eventId = null) {
+    let dbRegs = [];
     if (isSupabaseConfigured) {
       try {
         let query = supabase.from('registrations').select('*').order('created_at', { ascending: false });
         if (eventId) query = query.eq('event_id', eventId);
         const { data, error } = await query;
-        if (!error && data) {
-          return data.map(mapRegFromDB);
+        if (!error && Array.isArray(data)) {
+          dbRegs = data.map(mapRegFromDB);
+        } else if (error) {
+          console.warn('Supabase getRegistrations query returned error:', error.message || error);
         }
       } catch (err) {
-        console.warn('Supabase getRegistrations error:', err);
+        console.warn('Supabase getRegistrations exception:', err);
       }
     }
-    const regs = getLocalItem(LS_KEYS.REGISTRATIONS, initialRegistrations);
-    if (eventId) return regs.filter(r => r.eventId === eventId);
-    return regs;
+
+    const localRegs = getLocalItem(LS_KEYS.REGISTRATIONS, initialRegistrations);
+    const filteredLocal = eventId ? localRegs.filter(r => r.eventId === eventId) : localRegs;
+
+    // Combine DB records and Local records (deduplicating by id, bibNumber, or phone)
+    const combined = [...dbRegs];
+    for (const lr of filteredLocal) {
+      const lrCleanPhone = (lr.phone || '').replace(/[^0-9]/g, '');
+      const alreadyIn = combined.some(r => {
+        const rCleanPhone = (r.phone || '').replace(/[^0-9]/g, '');
+        return r.id === lr.id || 
+               r.bibNumber === lr.bibNumber || 
+               (lrCleanPhone && rCleanPhone && lrCleanPhone === rCleanPhone && r.eventId === lr.eventId);
+      });
+      if (!alreadyIn) {
+        combined.push(lr);
+      }
+    }
+
+    // Sort by created_at descending
+    combined.sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0));
+    return combined;
   },
 
   async registerRunner(runnerData) {
-    const regs = getLocalItem(LS_KEYS.REGISTRATIONS, initialRegistrations);
-    
-    // Check if phone already registered for this event
-    const cleanPhone = runnerData.phone.replace(/[^0-9]/g, '');
-    const existing = regs.find(r => r.eventId === runnerData.eventId && r.phone === cleanPhone);
+    const cleanPhone = (runnerData.phone || '').replace(/[^0-9]/g, '');
+    const cleanName = (runnerData.fullName || '').trim().toLowerCase();
+
+    // 1. Fetch current registrations to check duplicates (both DB & Local)
+    const allRegs = await this.getRegistrations(runnerData.eventId);
+    const existing = allRegs.find(r => {
+      const p = (r.phone || '').replace(/[^0-9]/g, '');
+      const n = (r.fullName || '').trim().toLowerCase();
+      const samePhone = cleanPhone && p && p === cleanPhone;
+      const sameName = cleanName && n && n === cleanName && n.length > 2;
+      return samePhone || sameName;
+    });
+
     if (existing) {
       return { 
         success: false, 
-        error: 'เบอร์โทรศัพท์นี้ได้ลงทะเบียนใน EP นี้แล้ว สามารถตรวจสอบคูปองได้ที่เมนู "คูปองของฉัน"', 
+        isDuplicate: true,
+        error: `เบอร์โทรศัพท์นี้ (${runnerData.phone}) หรือชื่อนี้ได้ลงทะเบียนในกิจกรรมนี้เรียบร้อยแล้ว`, 
         data: existing 
       };
     }
 
-    // Auto-generate BIB Number: e.g. TK02-004
-    const eventRegs = regs.filter(r => r.eventId === runnerData.eventId);
-    const nextBibSeq = (eventRegs.length + 1).toString().padStart(3, '0');
+    // 2. Auto-generate Coupon / BIB Number
+    const nextBibSeq = (allRegs.length + 1).toString().padStart(3, '0');
     const epNum = runnerData.epNumber || '02';
     const bibNumber = `TK${String(epNum).padStart(2, '0')}-${nextBibSeq}`;
 
     const newRegistration = {
-      id: `reg-${Date.now()}`,
+      id: `reg-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
       bibNumber,
       checkedIn: false,
       checkedInAt: null,
@@ -526,15 +572,20 @@ export const DataService = {
       phone: cleanPhone
     };
 
-    const updated = [newRegistration, ...regs];
-    setLocalItem(LS_KEYS.REGISTRATIONS, updated);
+    // 3. Save to local storage cache immediately
+    const localRegs = getLocalItem(LS_KEYS.REGISTRATIONS, initialRegistrations);
+    setLocalItem(LS_KEYS.REGISTRATIONS, [newRegistration, ...localRegs]);
 
+    // 4. Save to Supabase DB if configured
     if (isSupabaseConfigured) {
       try {
         const dbPayload = mapRegToDB(newRegistration);
-        await supabase.from('registrations').insert([dbPayload]);
+        const { error } = await supabase.from('registrations').insert([dbPayload]);
+        if (error) {
+          console.warn('Supabase runner insert error:', error.message || error);
+        }
       } catch (err) {
-        console.warn('Supabase runner insert error, kept in local store:', err);
+        console.warn('Supabase runner insert exception, kept in local store:', err);
       }
     }
 

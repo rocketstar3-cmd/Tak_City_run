@@ -14,8 +14,11 @@ CREATE TABLE IF NOT EXISTS club_settings (
   facebook_url TEXT,
   line_url TEXT,
   admin_pin TEXT DEFAULT '1234',
+  coupon_settings JSONB DEFAULT '{}'::jsonb,
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
+
+ALTER TABLE club_settings ADD COLUMN IF NOT EXISTS coupon_settings JSONB DEFAULT '{}'::jsonb;
 
 -- Insert default settings row
 INSERT INTO club_settings (id, club_name, tagline, theme_color)

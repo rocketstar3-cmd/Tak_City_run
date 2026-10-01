@@ -7,7 +7,20 @@ export const initialClubSettings = {
   themeColor: "#FF5500", // Vibrant Sporty Orange
   facebookUrl: "https://facebook.com",
   lineUrl: "https://line.me",
-  adminPin: "1234"
+  adminPin: "1234",
+  couponSettings: {
+    badgeText: "🎟️ LUCKY PASS",
+    headline: "คูปองลุ้นรางวัล & สิทธิประโยชน์นักวิ่ง",
+    subheadline: "บัตรดิจิทัลประจำตัวสำหรับลุ้นของรางวัลท้ายงาน และรับอาหารเช้าหน้างาน",
+    perksTitle: "สิทธิประโยชน์สำหรับผู้ถือคูปองนี้:",
+    perk1Title: "สิทธิ์ลุ้นรับรางวัล Lucky Draw ท้ายงาน",
+    perk1Desc: "จับสลากแจกของรางวัล & ของที่ระลึกจากผู้สนับสนุนหลังเข้าเส้นชัย",
+    perk2Title: "อาหารเช้าชุมชน & กาแฟดอยฟรี",
+    perk2Desc: "อิ่มอร่อยกับเมนูท้องถิ่นเมืองตาก ณ ซุ้มอาหารบริการนักวิ่ง",
+    perk3Title: "ส่วนลดพิเศษร้านค้าชุมชน",
+    perk3Desc: "แสดงคูปองเพื่อรับส่วนลดและโปรโมชั่นพิเศษจากร้านค้าที่ร่วมรายการ",
+    noticeText: "แสดงคูปองนี้ต่อเจ้าหน้าที่หน้างานเพื่อรับอาหารเช้าและสิทธิ์ร่วมจับสลาก Lucky Draw"
+  }
 };
 
 export const initialAdminUsers = [
