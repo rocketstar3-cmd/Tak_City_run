@@ -56,7 +56,7 @@ export const initialEvents = [
 
     // Schedule Timeline
     schedule: [
-      { time: "05:00 น.", title: "เปิดโต๊ะลงทะเบียน & รับหมายเลข BIB หน้างาน" },
+      { time: "05:00 น.", title: "เปิดโต๊ะรายงานตัว & ยืนยันสิทธิ์คูปองหน้างาน" },
       { time: "05:30 น.", title: "รวมพล Warm-up ยืดเหยียดกล้ามเนื้อโดยโค้ชชมรม" },
       { time: "05:45 น.", title: "ชี้แจงเส้นทางวิ่ง จุดให้น้ำ และข้อควรระวัง" },
       { time: "06:00 น.", title: "ปล่อยตัวนักวิ่งระยะ 5.8K อย่างเป็นทางการ" },
@@ -170,7 +170,7 @@ export const initialShopsAndActivities = [
     category: "เครื่องดื่ม & กาแฟดริป",
     description: "กาแฟคั่วบดสดใหม่จากเกษตรกรชาวดอย จิบกาแฟอุ่นๆ ริมปิงยามเช้า",
     image: "https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?auto=format&fit=crop&w=600&q=80",
-    badge: "ลด 10% เมื่อโชว์ E-BIB"
+    badge: "ลด 10% เมื่อโชว์คูปองนักวิ่ง"
   },
   {
     id: "shop-3",

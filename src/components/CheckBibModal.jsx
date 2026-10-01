@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Search, X, User, Phone, CheckCircle, ArrowRight } from 'lucide-react';
+import { Search, X, User, Phone, CheckCircle, ArrowRight, Gift, Sparkles } from 'lucide-react';
 import { DataService } from '../lib/supabase';
 
 export function CheckBibModal({ activeEvent, onClose, onSelectRegistration }) {
@@ -33,12 +33,19 @@ export function CheckBibModal({ activeEvent, onClose, onSelectRegistration }) {
       >
         <div className="modal-header">
           <div>
-            <h3 style={{ fontSize: '1.3rem', color: '#FFF' }}>ค้นหาบัตรวิ่ง E-BIB ของฉัน</h3>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <span className="badge-tag gold" style={{ margin: 0, padding: '3px 10px', fontSize: '0.78rem' }}>
+                <Gift size={13} /> คูปองของฉัน
+              </span>
+            </div>
+            <h3 style={{ fontSize: '1.3rem', color: '#FFF', marginTop: '6px' }}>
+              ค้นหาคูปองลุ้นรางวัล & สิทธิพิเศษ
+            </h3>
             <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>
-              กรอกเบอร์โทรศัพท์ หรือหมายเลข BIB เพื่อดูบัตรและบันทึกรูปภาพ
+              กรอกเบอร์โทรศัพท์ หรือเลขคูปอง เพื่อดูคูปองและบันทึกรูปภาพ
             </p>
           </div>
-          <button className="modal-close-btn" onClick={onClose}>
+          <button className="modal-close-btn" onClick={onClose} aria-label="Close">
             <X size={20} />
           </button>
         </div>
@@ -47,7 +54,7 @@ export function CheckBibModal({ activeEvent, onClose, onSelectRegistration }) {
           <input 
             type="text" 
             className="form-control"
-            placeholder="กรอกเบอร์โทร หรือเลข BIB (เช่น 0812345678)"
+            placeholder="กรอกเบอร์โทร หรือเลขคูปอง (เช่น 0812345678, TK02-001)"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             autoFocus
@@ -93,14 +100,18 @@ export function CheckBibModal({ activeEvent, onClose, onSelectRegistration }) {
                         <span style={{ 
                           fontFamily: 'var(--font-heading)', 
                           fontWeight: 800, 
-                          color: 'var(--primary)',
-                          fontSize: '1.2rem' 
+                          color: '#F59E0B',
+                          fontSize: '1.25rem' 
                         }}>
                           {reg.bibNumber}
                         </span>
-                        {reg.checkedIn && (
+                        {reg.checkedIn ? (
                           <span style={{ fontSize: '0.75rem', color: 'var(--green)', display: 'flex', alignItems: 'center', gap: '4px' }}>
                             <CheckCircle size={12} /> เช็คอินแล้ว
+                          </span>
+                        ) : (
+                          <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+                            รอเช็คอิน
                           </span>
                         )}
                       </div>
@@ -109,7 +120,7 @@ export function CheckBibModal({ activeEvent, onClose, onSelectRegistration }) {
                     </div>
 
                     <button className="btn btn-outline btn-sm">
-                      ดูบัตร E-BIB <ArrowRight size={14} />
+                      ดูคูปองของฉัน 🎟️ <ArrowRight size={14} />
                     </button>
                   </div>
                 ))}
@@ -121,3 +132,6 @@ export function CheckBibModal({ activeEvent, onClose, onSelectRegistration }) {
     </div>
   );
 }
+
+// Re-export for compatibility
+export { CheckBibModal as CheckCouponModal };

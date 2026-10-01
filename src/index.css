@@ -727,72 +727,59 @@ button, input, select, textarea {
   object-fit: cover;
 }
 
-/* E-BIB DIGITAL PASS */
+/* LUCKY DRAW COUPON & PERKS PASS */
+.coupon-container,
 .bib-container {
   max-width: 480px;
   margin: 0 auto;
 }
 
+.coupon-ticket,
 .bib-ticket {
-  background: linear-gradient(135deg, #111827 0%, #1e293b 100%);
-  border: 2px solid var(--primary);
-  border-radius: 20px;
+  background: linear-gradient(145deg, #131b2e 0%, #0d1322 100%);
+  border: 2px solid #F59E0B;
+  border-radius: 22px;
   overflow: hidden;
-  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.6), 0 0 30px var(--primary-glow);
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.7), 0 0 30px rgba(245, 158, 11, 0.25);
   position: relative;
 }
 
+.coupon-header,
 .bib-header {
-  background: linear-gradient(90deg, var(--primary) 0%, #FF8533 100%);
+  background: linear-gradient(90deg, #F59E0B 0%, var(--primary) 100%);
   color: #FFF;
-  padding: 18px 24px;
+  padding: 16px 22px;
   display: flex;
   align-items: center;
   justify-content: space-between;
 }
 
+.coupon-header-title,
 .bib-header-title {
   font-size: 1.15rem;
   font-weight: 800;
   letter-spacing: 0.05em;
+  line-height: 1.2;
 }
 
-.bib-notch-left, .bib-notch-right {
-  position: absolute;
-  top: 190px;
-  width: 24px;
-  height: 24px;
-  background: var(--dark-bg);
-  border-radius: 50%;
-  z-index: 2;
+.coupon-pass-badge {
+  font-size: 0.75rem;
+  font-weight: 800;
+  background: rgba(0, 0, 0, 0.45);
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  padding: 5px 10px;
+  border-radius: 999px;
+  letter-spacing: 0.04em;
+  display: inline-block;
 }
 
-.bib-notch-left { left: -12px; }
-.bib-notch-right { right: -12px; }
-
+.coupon-body,
 .bib-body {
-  padding: 28px 24px;
+  padding: 24px 20px;
   text-align: center;
 }
 
-.bib-number-display {
-  font-family: var(--font-heading);
-  font-size: 3.6rem;
-  font-weight: 900;
-  letter-spacing: 2px;
-  color: #FFF;
-  line-height: 1;
-  text-shadow: 0 0 15px rgba(255, 255, 255, 0.3);
-  margin: 10px 0;
-}
-
-.bib-runner-name {
-  font-size: 1.4rem;
-  font-weight: 700;
-  color: #FFF;
-  margin-bottom: 4px;
-}
-
+.coupon-distance-pill,
 .bib-distance-pill {
   display: inline-block;
   padding: 4px 18px;
@@ -800,28 +787,174 @@ button, input, select, textarea {
   background: var(--cyan);
   color: #080C15;
   font-weight: 800;
-  font-size: 0.95rem;
-  margin-bottom: 20px;
+  font-size: 0.9rem;
+  margin-bottom: 14px;
 }
 
+.coupon-number-label {
+  font-size: 0.75rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  color: #F59E0B;
+  text-transform: uppercase;
+  margin-bottom: 4px;
+}
+
+.coupon-number-display,
+.bib-number-display {
+  font-family: var(--font-heading);
+  font-size: 3.4rem;
+  font-weight: 900;
+  letter-spacing: 2px;
+  color: #FFF;
+  line-height: 1;
+  text-shadow: 0 0 20px rgba(245, 158, 11, 0.4), 0 0 40px rgba(255, 85, 0, 0.25);
+  margin: 6px 0 10px 0;
+}
+
+.coupon-runner-name,
+.bib-runner-name {
+  font-size: 1.35rem;
+  font-weight: 700;
+  color: #FFF;
+  margin-bottom: 4px;
+}
+
+/* Perforated divider & ticket notches */
+.coupon-perforated-wrap {
+  position: relative;
+  margin: 20px -20px;
+  display: flex;
+  align-items: center;
+}
+
+.coupon-notch-left,
+.coupon-notch-right,
+.bib-notch-left,
+.bib-notch-right {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 22px;
+  height: 22px;
+  background: var(--dark-surface);
+  border-radius: 50%;
+  z-index: 2;
+  box-shadow: inset 0 0 6px rgba(0, 0, 0, 0.5);
+}
+
+.coupon-notch-left,
+.bib-notch-left { 
+  left: -11px; 
+  border-right: 2px solid #F59E0B;
+}
+
+.coupon-notch-right,
+.bib-notch-right { 
+  right: -11px; 
+  border-left: 2px solid #F59E0B;
+}
+
+.coupon-perforated-line {
+  flex: 1;
+  border-top: 2px dashed rgba(245, 158, 11, 0.35);
+  text-align: center;
+  position: relative;
+}
+
+.coupon-perforated-line span {
+  background: #0e1526;
+  padding: 0 12px;
+  font-size: 0.72rem;
+  color: #F59E0B;
+  display: inline-block;
+  transform: translateY(-50%);
+  letter-spacing: 0.03em;
+  font-weight: 600;
+}
+
+/* Stub Section & Perks */
+.coupon-stub-section {
+  text-align: left;
+  padding-top: 6px;
+}
+
+.coupon-perks-title {
+  font-size: 0.86rem;
+  font-weight: 700;
+  color: #FFF;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 10px;
+}
+
+.coupon-perks-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.coupon-perk-item {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  padding: 9px 12px;
+  border-radius: var(--radius-sm);
+}
+
+.coupon-perk-icon {
+  width: 30px;
+  height: 30px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.coupon-perk-item strong {
+  display: block;
+  font-size: 0.84rem;
+  color: #FFF;
+  margin-bottom: 2px;
+}
+
+.coupon-perk-item p {
+  margin: 0;
+  font-size: 0.76rem;
+  color: var(--text-secondary);
+  line-height: 1.35;
+}
+
+.coupon-qr-wrap,
 .bib-qr-wrap {
   background: #FFF;
   padding: 12px;
   border-radius: var(--radius-md);
   display: inline-block;
-  margin: 12px 0;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
 }
 
+.coupon-details-grid,
 .bib-details-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 12px;
-  margin-top: 16px;
+  gap: 10px;
+  margin-top: 14px;
   text-align: left;
-  background: rgba(0, 0, 0, 0.3);
-  padding: 14px;
+  background: rgba(0, 0, 0, 0.35);
+  padding: 12px 14px;
   border-radius: var(--radius-sm);
-  font-size: 0.88rem;
+  font-size: 0.85rem;
+}
+
+.badge-tag.gold {
+  background: rgba(245, 158, 11, 0.15);
+  color: #F59E0B;
+  border: 1px solid rgba(245, 158, 11, 0.35);
 }
 
 /* Modals */

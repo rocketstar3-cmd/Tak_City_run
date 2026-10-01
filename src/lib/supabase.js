@@ -505,7 +505,7 @@ export const DataService = {
     if (existing) {
       return { 
         success: false, 
-        error: 'เบอร์โทรศัพท์นี้ได้ลงทะเบียนใน EP นี้แล้ว สามารถค้นหาบัตร E-BIB ได้ที่เมนู "ค้นหา E-BIB"', 
+        error: 'เบอร์โทรศัพท์นี้ได้ลงทะเบียนใน EP นี้แล้ว สามารถตรวจสอบคูปองได้ที่เมนู "คูปองของฉัน"', 
         data: existing 
       };
     }

@@ -55,9 +55,9 @@ export function Navbar({
               <button 
                 className="btn btn-secondary btn-sm" 
                 onClick={onOpenCheckBib}
-                title="ค้นหาบัตร BIB หรือตรวจสอบสถานะ"
+                title="ค้นหาคูปองลุ้นรางวัล หรือตรวจสอบสิทธิ์"
               >
-                <Search size={16} /> ค้นหา E-BIB
+                🎟️ คูปองของฉัน
               </button>
 
               {activeEvent?.status === 'open' && (
@@ -111,7 +111,7 @@ export function Navbar({
             className="btn btn-secondary" 
             onClick={() => { setMobileMenuOpen(false); onOpenCheckBib(); }}
           >
-            <Search size={16} /> ค้นหาบัตร E-BIB
+            🎟️ ค้นหาคูปองของฉัน
           </button>
           {activeEvent?.status === 'open' && (
             <button 

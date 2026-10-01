@@ -101,7 +101,7 @@ export function Hero({ activeEvent, registrationsCount = 0, onOpenRegister, onOp
             )}
 
             <button className="btn btn-secondary btn-lg" onClick={onOpenCheckBib}>
-              ค้นหาบัตร E-BIB ของฉัน
+              🎟️ ตรวจสอบคูปองของฉัน
             </button>
           </div>
 

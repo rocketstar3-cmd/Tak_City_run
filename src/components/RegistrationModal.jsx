@@ -268,7 +268,7 @@ export function RegistrationModal({ activeEvent, onClose, onSuccessRegistration 
             style={{ width: '100%', padding: '16px', fontSize: '1.1rem' }}
             disabled={loading}
           >
-            {loading ? 'กำลังบันทึกข้อมูล...' : 'ยืนยันลงทะเบียน & รับบัตร E-BIB ทันที'}
+            {loading ? 'กำลังบันทึกข้อมูล...' : 'ยืนยันลงทะเบียน & รับคูปองลุ้นรางวัลทันที'}
           </button>
         </form>
       </div>

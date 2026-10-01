@@ -136,7 +136,7 @@ export function EventDetails({ activeEvent, onOpenRegister }) {
                   ลงทะเบียนวิ่งระยะ {distanceKm}K (ฟรี)
                 </button>
                 <div style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginTop: '10px' }}>
-                  ไม่มีค่าใช้จ่ายในการสมัคร ได้รับบัตร E-BIB ประจำตัวทันที
+                  ไม่มีค่าใช้จ่ายในการสมัคร ได้รับคูปองลุ้นรางวัล & สิทธิประโยชน์ทันที
                 </div>
               </div>
             </div>

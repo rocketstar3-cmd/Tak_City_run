@@ -106,7 +106,7 @@ export function AdminPortal({
 
     // Schedule Timeline
     schedule: [
-      { time: '05:00 น.', title: 'เปิดโต๊ะลงทะเบียน & รับหมายเลข BIB หน้างาน' },
+      { time: '05:00 น.', title: 'เปิดโต๊ะรายงานตัว & ยืนยันสิทธิ์คูปองหน้างาน' },
       { time: '05:30 น.', title: 'รวมพล Warm-up ยืดเหยียดกล้ามเนื้อโดยโค้ชชมรม' },
       { time: '05:45 น.', title: 'ชี้แจงเส้นทางวิ่ง จุดให้น้ำ และข้อควรระวัง' },
       { time: '06:00 น.', title: 'ปล่อยตัวนักวิ่งอย่างเป็นทางการ' },
@@ -337,7 +337,7 @@ export function AdminPortal({
       routeHighlightsText: 'สะพานสมโภช 200 ปี, ศาลสมเด็จพระเจ้าตากสิน, เลียบหาดทรายริมปิง',
 
       schedule: [
-        { time: '05:00 น.', title: 'เปิดโต๊ะลงทะเบียน & รับหมายเลข BIB หน้างาน' },
+        { time: '05:00 น.', title: 'เปิดโต๊ะรายงานตัว & ยืนยันสิทธิ์คูปองหน้างาน' },
         { time: '05:30 น.', title: 'รวมพล Warm-up ยืดเหยียดกล้ามเนื้อโดยโค้ชชมรม' },
         { time: '06:00 น.', title: 'ปล่อยตัวนักวิ่งอย่างเป็นทางการ' },
         { time: '07:15 น.', title: 'Finish Line! ทานอาหารเช้าชุมชน & ถ่ายรูปเช็คอิน' }
@@ -372,7 +372,7 @@ export function AdminPortal({
       elevationGain: event.elevationGain || '+12 ม. (ทางราบ 95%)',
       routeHighlightsText: highlightsText,
       schedule: event.schedule && event.schedule.length > 0 ? event.schedule : [
-        { time: '05:00 น.', title: 'เปิดโต๊ะลงทะเบียน & รับหมายเลข BIB' },
+        { time: '05:00 น.', title: 'เปิดโต๊ะรายงานตัว & ยืนยันสิทธิ์คูปอง' },
         { time: '06:00 น.', title: 'ปล่อยตัวนักวิ่ง' },
         { time: '07:15 น.', title: 'เข้าเส้นชัย รับอาหารเช้า' }
       ],
@@ -500,7 +500,7 @@ export function AdminPortal({
       return;
     }
 
-    const headers = ['ลำดับ', 'หมายเลข BIB', 'ชื่อ-นามสกุล', 'ชื่อเล่น', 'เบอร์โทรศัพท์', 'ระยะทาง', 'ไซส์เสื้อ', 'ผู้ติดต่อฉุกเฉิน', 'เบอร์ฉุกเฉิน', 'โรคประจำตัว', 'สถานะเช็คอิน', 'เวลาลงทะเบียน'];
+    const headers = ['ลำดับ', 'หมายเลขคูปอง', 'ชื่อ-นามสกุล', 'ชื่อเล่น', 'เบอร์โทรศัพท์', 'ระยะทาง', 'ไซส์เสื้อ', 'ผู้ติดต่อฉุกเฉิน', 'เบอร์ฉุกเฉิน', 'โรคประจำตัว', 'สถานะเช็คอิน', 'เวลาลงทะเบียน'];
     const rows = filteredRunners.map((r, index) => {
       return [
         index + 1,
@@ -1008,7 +1008,7 @@ export function AdminPortal({
                   type="text" 
                   className="form-control"
                   style={{ paddingLeft: '38px' }}
-                  placeholder="ค้นหาชื่อ, เบอร์โทร, หรือเลข BIB..."
+                  placeholder="ค้นหาชื่อ, เบอร์โทร, หรือเลขคูปอง..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                 />
@@ -1037,7 +1037,7 @@ export function AdminPortal({
             <table className="data-table">
               <thead>
                 <tr>
-                  <th>BIB</th>
+                  <th>เลขคูปอง</th>
                   <th>ชื่อ-นามสกุล (ชื่อเล่น)</th>
                   <th>เบอร์โทร</th>
                   <th>ระยะทาง</th>
@@ -1132,10 +1132,10 @@ export function AdminPortal({
           </div>
 
           <h2 style={{ fontSize: '1.6rem', color: '#FFF', marginBottom: '8px' }}>
-            โต๊ะเช็คอินรับเบอร์วิ่งหน้างาน
+            โต๊ะเช็คอิน & ยืนยันสิทธิ์คูปองหน้างาน
           </h2>
           <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem', marginBottom: '28px' }}>
-            พิมพ์หรือสแกนหมายเลข BIB (เช่น TK02-001) หรือกรอกเบอร์โทรศัพท์ 10 หลักเพื่อเช็คชื่อรับของทันที
+            พิมพ์หรือสแกนหมายเลขคูปอง (เช่น TK02-001) หรือกรอกเบอร์โทรศัพท์ 10 หลักเพื่อเช็คชื่อรับสิทธิ์และร่วมจับรางวัลทันที
           </p>
 
           <form onSubmit={handleQuickCheckIn} style={{ display: 'flex', gap: '10px', marginBottom: '24px' }}>
@@ -1143,7 +1143,7 @@ export function AdminPortal({
               type="text" 
               className="form-control"
               style={{ fontSize: '1.25rem', textAlign: 'center', letterSpacing: '1px' }}
-              placeholder="พิมพ์เลข BIB หรือ เบอร์โทร..."
+              placeholder="พิมพ์เลขคูปอง หรือ เบอร์โทร..."
               value={quickBib}
               onChange={(e) => setQuickBib(e.target.value)}
               autoFocus
@@ -2012,7 +2012,7 @@ export function AdminPortal({
                 <input 
                   type="text" 
                   className="form-control"
-                  placeholder="เช่น ลด 10% เมื่อโชว์ E-BIB"
+                  placeholder="เช่น ลด 10% เมื่อโชว์คูปองนักวิ่ง"
                   value={shopFormData.badge}
                   onChange={(e) => setShopFormData({ ...shopFormData, badge: e.target.value })}
                 />
