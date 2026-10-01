@@ -833,63 +833,63 @@ export function AdminPortal({
           className={`admin-tab ${activeTab === 'events' ? 'active' : ''}`}
           onClick={() => setActiveTab('events')}
         >
-          <Calendar size={18} /> จัดการ EP & แผนที่รูทวิ่ง ({events.length})
+          <Calendar size={16} /> งานวิ่ง & แผนที่ ({events.length})
         </button>
 
         <button 
           className={`admin-tab ${activeTab === 'runners' ? 'active' : ''}`}
           onClick={() => setActiveTab('runners')}
         >
-          <Users size={18} /> รายชื่อนักวิ่ง ({registrations.length})
+          <Users size={16} /> รายชื่อนักวิ่ง ({registrations.length})
         </button>
 
         <button 
           className={`admin-tab ${activeTab === 'scanner' ? 'active' : ''}`}
           onClick={() => setActiveTab('scanner')}
         >
-          <QrCode size={18} /> โต๊ะเช็คอินหน้างาน (Check-in)
-        </button>
-
-        <button 
-          className={`admin-tab ${activeTab === 'sponsors' ? 'active' : ''}`}
-          onClick={() => setActiveTab('sponsors')}
-        >
-          <HeartHandshake size={18} /> ผู้สนับสนุน ({sponsorsList.length})
-        </button>
-
-        <button 
-          className={`admin-tab ${activeTab === 'market' ? 'active' : ''}`}
-          onClick={() => setActiveTab('market')}
-        >
-          <Store size={18} /> ร้านค้า & กิจกรรม ({shopsList.length})
-        </button>
-
-        <button 
-          className={`admin-tab ${activeTab === 'gallery' ? 'active' : ''}`}
-          onClick={() => setActiveTab('gallery')}
-        >
-          <ImageIcon size={18} /> แกลเลอรีภาพ ({galleryList.length})
-        </button>
-
-        <button 
-          className={`admin-tab ${activeTab === 'admins' ? 'active' : ''}`}
-          onClick={() => setActiveTab('admins')}
-        >
-          <Key size={18} /> จัดการแอดมิน ({adminUsersList.length})
+          <QrCode size={16} /> โต๊ะเช็คอิน
         </button>
 
         <button 
           className={`admin-tab ${activeTab === 'coupon' ? 'active' : ''}`}
           onClick={() => setActiveTab('coupon')}
         >
-          <Gift size={18} /> 🎟️ ปรับแต่งคูปอง
+          <Gift size={16} /> 🎟️ ปรับแต่งคูปอง
+        </button>
+
+        <button 
+          className={`admin-tab ${activeTab === 'sponsors' ? 'active' : ''}`}
+          onClick={() => setActiveTab('sponsors')}
+        >
+          <HeartHandshake size={16} /> ผู้สนับสนุน ({sponsorsList.length})
+        </button>
+
+        <button 
+          className={`admin-tab ${activeTab === 'market' ? 'active' : ''}`}
+          onClick={() => setActiveTab('market')}
+        >
+          <Store size={16} /> ร้านค้า & กิจกรรม ({shopsList.length})
+        </button>
+
+        <button 
+          className={`admin-tab ${activeTab === 'gallery' ? 'active' : ''}`}
+          onClick={() => setActiveTab('gallery')}
+        >
+          <ImageIcon size={16} /> แกลเลอรีภาพ ({galleryList.length})
+        </button>
+
+        <button 
+          className={`admin-tab ${activeTab === 'admins' ? 'active' : ''}`}
+          onClick={() => setActiveTab('admins')}
+        >
+          <Key size={16} /> จัดการแอดมิน ({adminUsersList.length})
         </button>
 
         <button 
           className={`admin-tab ${activeTab === 'settings' ? 'active' : ''}`}
           onClick={() => setActiveTab('settings')}
         >
-          <Palette size={18} /> ปรับแต่ง Logo & สไตล์
+          <Palette size={16} /> สไตล์เว็บไซต์
         </button>
       </div>
 
@@ -1077,7 +1077,7 @@ export function AdminPortal({
             display: 'flex', 
             alignItems: 'center', 
             gap: '8px', 
-            overflowX: 'auto', 
+            flexWrap: 'wrap', 
             paddingBottom: '10px', 
             marginBottom: '18px', 
             borderBottom: '1px solid rgba(255, 255, 255, 0.08)' 
