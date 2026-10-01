@@ -22,7 +22,7 @@ export const supabase = isSupabaseConfigured
   ? createClient(supabaseUrl, supabaseAnonKey)
   : null;
 
-// Local Storage Keys for offline / demo mode
+// Local Storage Keys
 const LS_KEYS = {
   SETTINGS: 'tak_city_run_settings',
   EVENTS: 'tak_city_run_events',
@@ -94,26 +94,27 @@ const mapRegToDB = (r) => ({
 
 const mapEventFromDB = (e) => ({
   id: e.id,
-  epNumber: e.ep_number,
+  epNumber: Number(e.ep_number),
   title: e.title,
-  subtitle: e.subtitle,
-  description: e.description,
+  subtitle: e.subtitle || '',
+  description: e.description || '',
   eventDate: e.event_date,
   registrationStart: e.registration_start,
   registrationEnd: e.registration_end,
   locationName: e.location_name,
-  locationMapUrl: e.location_map_url,
-  coverImage: e.cover_image,
-  status: e.status,
+  locationMapUrl: e.location_map_url || '',
+  coverImage: e.cover_image || 'https://images.unsplash.com/photo-1452626038306-9aae5e071dd3?auto=format&fit=crop&w=1200&q=80',
+  status: e.status || 'open',
   isActive: Boolean(e.is_active),
   schedule: Array.isArray(e.schedule) ? e.schedule : [],
   routeDetails: Array.isArray(e.route_details) ? e.route_details : [],
+  stats: e.stats || null,
   distances: Array.isArray(e.event_distances) ? e.event_distances.map(d => ({
     id: d.id,
     label: d.label,
     distanceKm: Number(d.distance_km),
-    quota: d.quota,
-    startPrice: Number(d.start_price)
+    quota: d.quota || 0,
+    startPrice: Number(d.start_price || 0)
   })) : []
 });
 
@@ -171,7 +172,7 @@ export const DataService = {
     return updated;
   },
 
-  // 2. Events
+  // 2. Events (CRUD)
   async getEvents() {
     if (isSupabaseConfigured) {
       try {
@@ -198,10 +199,10 @@ export const DataService = {
     const events = getLocalItem(LS_KEYS.EVENTS, initialEvents);
     const newEvent = {
       ...eventData,
-      id: `ep-${Date.now()}`,
-      epNumber: events.length + 1,
-      status: 'open',
-      isActive: false
+      id: eventData.id || `ep-${Date.now()}`,
+      epNumber: Number(eventData.epNumber) || events.length + 1,
+      status: eventData.status || 'open',
+      isActive: Boolean(eventData.isActive)
     };
 
     if (isSupabaseConfigured) {
@@ -216,8 +217,22 @@ export const DataService = {
           location_map_url: newEvent.locationMapUrl || '',
           cover_image: newEvent.coverImage || '',
           status: newEvent.status,
-          is_active: newEvent.isActive
+          is_active: newEvent.isActive,
+          schedule: newEvent.schedule || [],
+          route_details: newEvent.routeDetails || []
         }]);
+
+        if (newEvent.distances?.length) {
+          const distancesPayload = newEvent.distances.map(d => ({
+            id: d.id || `dist-${Date.now()}-${Math.random()}`,
+            event_id: newEvent.id,
+            label: d.label,
+            distance_km: Number(d.distanceKm),
+            quota: Number(d.quota || 0),
+            start_price: 0
+          }));
+          await supabase.from('event_distances').insert(distancesPayload);
+        }
       } catch (err) {
         console.warn('Supabase event insert error:', err);
       }
@@ -226,6 +241,64 @@ export const DataService = {
     const updated = [newEvent, ...events];
     setLocalItem(LS_KEYS.EVENTS, updated);
     return newEvent;
+  },
+
+  async updateEvent(id, eventData) {
+    const events = getLocalItem(LS_KEYS.EVENTS, initialEvents);
+    const updated = events.map(e => (e.id === id ? { ...e, ...eventData } : e));
+    setLocalItem(LS_KEYS.EVENTS, updated);
+
+    if (isSupabaseConfigured) {
+      try {
+        await supabase.from('events').update({
+          ep_number: Number(eventData.epNumber),
+          title: eventData.title,
+          subtitle: eventData.subtitle || '',
+          event_date: eventData.eventDate,
+          location_name: eventData.locationName,
+          location_map_url: eventData.locationMapUrl || '',
+          cover_image: eventData.coverImage || '',
+          status: eventData.status,
+          is_active: Boolean(eventData.isActive),
+          schedule: eventData.schedule || [],
+          route_details: eventData.routeDetails || []
+        }).eq('id', id);
+
+        if (eventData.distances) {
+          await supabase.from('event_distances').delete().eq('event_id', id);
+          if (eventData.distances.length) {
+            const distPayload = eventData.distances.map(d => ({
+              id: d.id || `dist-${Date.now()}-${Math.random()}`,
+              event_id: id,
+              label: d.label,
+              distance_km: Number(d.distanceKm),
+              quota: Number(d.quota || 0),
+              start_price: 0
+            }));
+            await supabase.from('event_distances').insert(distPayload);
+          }
+        }
+      } catch (err) {
+        console.warn('Supabase event update error:', err);
+      }
+    }
+
+    return updated.find(e => e.id === id);
+  },
+
+  async deleteEvent(id) {
+    const events = getLocalItem(LS_KEYS.EVENTS, initialEvents);
+    const updated = events.filter(e => e.id !== id);
+    setLocalItem(LS_KEYS.EVENTS, updated);
+
+    if (isSupabaseConfigured) {
+      try {
+        await supabase.from('events').delete().eq('id', id);
+      } catch (err) {
+        console.warn('Supabase delete event error:', err);
+      }
+    }
+    return true;
   },
 
   async setActiveEvent(eventId) {
@@ -246,7 +319,7 @@ export const DataService = {
     return updated;
   },
 
-  // 3. Registrations
+  // 3. Registrations (CRUD)
   async getRegistrations(eventId = null) {
     if (isSupabaseConfigured) {
       try {
@@ -307,6 +380,21 @@ export const DataService = {
     const updated = [newRegistration, ...regs];
     setLocalItem(LS_KEYS.REGISTRATIONS, updated);
     return { success: true, data: newRegistration };
+  },
+
+  async deleteRegistration(registrationId) {
+    const regs = getLocalItem(LS_KEYS.REGISTRATIONS, initialRegistrations);
+    const updated = regs.filter(r => r.id !== registrationId);
+    setLocalItem(LS_KEYS.REGISTRATIONS, updated);
+
+    if (isSupabaseConfigured) {
+      try {
+        await supabase.from('registrations').delete().eq('id', registrationId);
+      } catch (err) {
+        console.warn('Supabase delete registration error:', err);
+      }
+    }
+    return true;
   },
 
   async toggleCheckIn(registrationId) {
@@ -370,19 +458,168 @@ export const DataService = {
     );
   },
 
-  // 4. Shops and Activities
+  // 4. Shops and Activities (CRUD)
   async getShopsAndActivities(eventId = null) {
+    if (isSupabaseConfigured) {
+      try {
+        const { data, error } = await supabase.from('event_attractions').select('*');
+        if (!error && data?.length) {
+          return data.map(s => ({
+            id: s.id,
+            eventId: s.event_id,
+            type: s.type,
+            name: s.name,
+            category: s.category,
+            description: s.description,
+            image: s.image,
+            badge: s.badge
+          }));
+        }
+      } catch (e) {}
+    }
     return getLocalItem(LS_KEYS.SHOPS, initialShopsAndActivities);
   },
 
-  // 5. Sponsors
+  async addShopOrActivity(item) {
+    const list = getLocalItem(LS_KEYS.SHOPS, initialShopsAndActivities);
+    const newItem = { id: `item-${Date.now()}`, ...item };
+    const updated = [newItem, ...list];
+    setLocalItem(LS_KEYS.SHOPS, updated);
+
+    if (isSupabaseConfigured) {
+      try {
+        await supabase.from('event_attractions').insert([{
+          id: newItem.id,
+          event_id: newItem.eventId || null,
+          type: newItem.type || 'food',
+          name: newItem.name,
+          category: newItem.category || '',
+          description: newItem.description || '',
+          image: newItem.image || '',
+          badge: newItem.badge || ''
+        }]);
+      } catch (e) {}
+    }
+    return newItem;
+  },
+
+  async deleteShopOrActivity(id) {
+    const list = getLocalItem(LS_KEYS.SHOPS, initialShopsAndActivities);
+    const updated = list.filter(item => item.id !== id);
+    setLocalItem(LS_KEYS.SHOPS, updated);
+
+    if (isSupabaseConfigured) {
+      try {
+        await supabase.from('event_attractions').delete().eq('id', id);
+      } catch (e) {}
+    }
+    return true;
+  },
+
+  // 5. Sponsors (CRUD)
   async getSponsors() {
+    if (isSupabaseConfigured) {
+      try {
+        const { data, error } = await supabase.from('sponsors').select('*');
+        if (!error && data?.length) {
+          return data.map(s => ({
+            id: s.id,
+            name: s.name,
+            tier: s.tier,
+            role: s.role,
+            logo: s.logo,
+            websiteUrl: s.website_url
+          }));
+        }
+      } catch (e) {}
+    }
     return getLocalItem(LS_KEYS.SPONSORS, initialSponsors);
   },
 
-  // 6. Past Galleries
+  async addSponsor(sponsor) {
+    const list = getLocalItem(LS_KEYS.SPONSORS, initialSponsors);
+    const newItem = { id: `sp-${Date.now()}`, ...sponsor };
+    const updated = [newItem, ...list];
+    setLocalItem(LS_KEYS.SPONSORS, updated);
+
+    if (isSupabaseConfigured) {
+      try {
+        await supabase.from('sponsors').insert([{
+          id: newItem.id,
+          name: newItem.name,
+          tier: newItem.tier || 'supporter',
+          role: newItem.role || '',
+          logo: newItem.logo || '',
+          website_url: newItem.websiteUrl || ''
+        }]);
+      } catch (e) {}
+    }
+    return newItem;
+  },
+
+  async deleteSponsor(id) {
+    const list = getLocalItem(LS_KEYS.SPONSORS, initialSponsors);
+    const updated = list.filter(s => s.id !== id);
+    setLocalItem(LS_KEYS.SPONSORS, updated);
+
+    if (isSupabaseConfigured) {
+      try {
+        await supabase.from('sponsors').delete().eq('id', id);
+      } catch (e) {}
+    }
+    return true;
+  },
+
+  // 6. Past Galleries (CRUD)
   async getPastGalleries() {
+    if (isSupabaseConfigured) {
+      try {
+        const { data, error } = await supabase.from('event_gallery').select('*').order('created_at', { ascending: false });
+        if (!error && data?.length) {
+          return data.map(g => ({
+            id: g.id,
+            epNumber: g.ep_number,
+            title: g.title,
+            image: g.image,
+            caption: g.caption
+          }));
+        }
+      } catch (e) {}
+    }
     return getLocalItem(LS_KEYS.GALLERY, initialPastGalleries);
+  },
+
+  async addGalleryItem(item) {
+    const list = getLocalItem(LS_KEYS.GALLERY, initialPastGalleries);
+    const newItem = { id: `gal-${Date.now()}`, ...item };
+    const updated = [newItem, ...list];
+    setLocalItem(LS_KEYS.GALLERY, updated);
+
+    if (isSupabaseConfigured) {
+      try {
+        await supabase.from('event_gallery').insert([{
+          id: newItem.id,
+          ep_number: Number(newItem.epNumber) || 1,
+          title: newItem.title,
+          image: newItem.image,
+          caption: newItem.caption || ''
+        }]);
+      } catch (e) {}
+    }
+    return newItem;
+  },
+
+  async deleteGalleryItem(id) {
+    const list = getLocalItem(LS_KEYS.GALLERY, initialPastGalleries);
+    const updated = list.filter(item => item.id !== id);
+    setLocalItem(LS_KEYS.GALLERY, updated);
+
+    if (isSupabaseConfigured) {
+      try {
+        await supabase.from('event_gallery').delete().eq('id', id);
+      } catch (e) {}
+    }
+    return true;
   },
 
   // 7. Admin Auth
