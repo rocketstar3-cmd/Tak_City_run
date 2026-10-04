@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { DataService } from './lib/supabase';
+import { DataService, supabase, isSupabaseConfigured } from './lib/supabase';
 import { Navbar } from './components/Navbar';
 import { Hero } from './components/Hero';
 import { EventDetails } from './components/EventDetails';
@@ -31,6 +31,27 @@ export default function App() {
   useEffect(() => {
     loadAllData();
   }, []);
+
+  // Realtime subscription to registrations table to keep registrationsCount live
+  useEffect(() => {
+    if (!isSupabaseConfigured || !supabase || !activeEvent?.id) return;
+
+    const channel = supabase
+      .channel('app_registrations_channel')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'registrations' },
+        async () => {
+          const regs = await DataService.getRegistrations(activeEvent.id);
+          setRegistrationsCount(regs.length);
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [activeEvent?.id]);
 
   const loadAllData = async () => {
     try {

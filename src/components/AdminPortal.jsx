@@ -36,9 +36,8 @@ import {
   Gift,
   RefreshCw,
   Coffee,
-  ShoppingBag
 } from 'lucide-react';
-import { DataService } from '../lib/supabase';
+import { DataService, supabase, isSupabaseConfigured } from '../lib/supabase';
 
 export function AdminPortal({ 
   clubSettings, 
@@ -186,6 +185,29 @@ export function AdminPortal({
   useEffect(() => {
     if (isAuthenticated) {
       loadAllAdminData();
+
+      // Realtime auto-sync for instant runner updates across all devices
+      let channel = null;
+      if (isSupabaseConfigured && supabase) {
+        channel = supabase
+          .channel('admin_registrations_channel')
+          .on(
+            'postgres_changes',
+            { event: '*', schema: 'public', table: 'registrations' },
+            () => {
+              DataService.getRegistrations(null).then(regs => {
+                setRegistrations(regs);
+              });
+            }
+          )
+          .subscribe();
+      }
+
+      return () => {
+        if (channel && supabase) {
+          supabase.removeChannel(channel);
+        }
+      };
     }
   }, [isAuthenticated, activeEvent, activeTab]);
 

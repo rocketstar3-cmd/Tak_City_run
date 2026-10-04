@@ -136,17 +136,15 @@ const mapRegToDB = (r) => ({
   event_id: r.eventId,
   bib_number: r.bibNumber,
   full_name: r.fullName,
-  nickname: r.nickname,
+  nickname: r.nickname || null,
   phone: r.phone,
-  emergency_contact: r.emergencyContact,
-  emergency_phone: r.emergencyPhone,
-  shirt_size: r.shirtSize,
-  medical_notes: r.medicalNotes,
-  distance_km: Number(r.distanceKm || 5.8),
-  distance_label: r.distanceLabel || 'City Run',
+  emergency_contact: r.emergencyContact || null,
+  emergency_phone: r.emergencyPhone || null,
+  shirt_size: r.shirtSize || null,
+  medical_notes: r.medicalNotes || null,
   checked_in: Boolean(r.checkedIn),
-  checked_in_at: r.checkedInAt,
-  created_at: r.createdAt
+  checked_in_at: r.checkedInAt || null,
+  created_at: r.createdAt || new Date().toISOString()
 });
 
 const mapEventFromDB = (e) => {
@@ -512,7 +510,7 @@ export const DataService = {
 
   // 3. Registrations (CRUD)
   async getRegistrations(eventId = null) {
-    let dbRegs = [];
+    let dbRegs = null;
     if (isSupabaseConfigured) {
       try {
         let query = supabase.from('registrations').select('*').order('created_at', { ascending: false });
@@ -531,24 +529,46 @@ export const DataService = {
     const localRegs = getLocalItem(LS_KEYS.REGISTRATIONS, initialRegistrations);
     const filteredLocal = (eventId && eventId !== 'all') ? localRegs.filter(r => r.eventId === eventId) : localRegs;
 
-    // Combine DB records and Local records (deduplicating by id, bibNumber, or phone)
-    const combined = [...dbRegs];
-    for (const lr of filteredLocal) {
-      const lrCleanPhone = (lr.phone || '').replace(/[^0-9]/g, '');
-      const alreadyIn = combined.some(r => {
-        const rCleanPhone = (r.phone || '').replace(/[^0-9]/g, '');
-        return r.id === lr.id || 
-               r.bibNumber === lr.bibNumber || 
-               (lrCleanPhone && rCleanPhone && lrCleanPhone === rCleanPhone && r.eventId === lr.eventId);
-      });
-      if (!alreadyIn) {
-        combined.push(lr);
+    if (dbRegs !== null) {
+      // Auto sync any local registrations that were created offline or before DB fix
+      const unSynced = filteredLocal.filter(lr => 
+        !lr.id.startsWith('reg-00') &&
+        !dbRegs.some(dr => dr.id === lr.id || dr.bibNumber === lr.bibNumber || (dr.phone && lr.phone && dr.phone === lr.phone))
+      );
+
+      if (unSynced.length > 0) {
+        for (const r of unSynced) {
+          try {
+            const dbPayload = mapRegToDB(r);
+            const { error: insErr } = await supabase.from('registrations').insert([dbPayload]);
+            if (!insErr) {
+              dbRegs.unshift(r);
+            }
+          } catch (e) {
+            console.warn('Failed to sync offline registration:', e);
+          }
+        }
       }
+
+      // If DB is completely empty and initial mock data exists, seed initial registrations to DB
+      if (dbRegs.length === 0 && (!eventId || eventId === 'all' || eventId === 'ep-02')) {
+        for (const initReg of initialRegistrations) {
+          try {
+            await supabase.from('registrations').insert([mapRegToDB(initReg)]);
+            dbRegs.push(initReg);
+          } catch (e) {
+            console.warn('Seeding initial registration error:', e);
+          }
+        }
+      }
+
+      // Keep local store synchronized with DB truth
+      setLocalItem(LS_KEYS.REGISTRATIONS, dbRegs);
+      return dbRegs;
     }
 
-    // Sort by created_at descending
-    combined.sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0));
-    return combined;
+    // Fallback if Supabase is offline
+    return filteredLocal;
   },
 
   async registerRunner(runnerData) {
@@ -589,31 +609,35 @@ export const DataService = {
       phone: cleanPhone
     };
 
-    // 3. Save to local storage cache immediately
-    const localRegs = getLocalItem(LS_KEYS.REGISTRATIONS, initialRegistrations);
-    setLocalItem(LS_KEYS.REGISTRATIONS, [newRegistration, ...localRegs]);
-
-    // 4. Save to Supabase DB if configured
+    // 3. Save to Supabase DB if configured
     if (isSupabaseConfigured) {
       try {
         const dbPayload = mapRegToDB(newRegistration);
         const { error } = await supabase.from('registrations').insert([dbPayload]);
         if (error) {
-          console.warn('Supabase runner insert error:', error.message || error);
+          console.error('Supabase runner insert error:', error.message || error);
+          return {
+            success: false,
+            error: `ไม่สามารถบันทึกข้อมูลไปยังเซิร์ฟเวอร์ได้: ${error.message || 'เกิดข้อผิดพลาด'}`
+          };
         }
       } catch (err) {
-        console.warn('Supabase runner insert exception, kept in local store:', err);
+        console.error('Supabase runner insert exception:', err);
+        return {
+          success: false,
+          error: 'เกิดข้อผิดพลาดในการเชื่อมต่อเซิร์ฟเวอร์ กรุณาลองใหม่อีกครั้ง'
+        };
       }
     }
+
+    // 4. Save to local storage cache immediately
+    const localRegs = getLocalItem(LS_KEYS.REGISTRATIONS, []);
+    setLocalItem(LS_KEYS.REGISTRATIONS, [newRegistration, ...localRegs]);
 
     return { success: true, data: newRegistration };
   },
 
   async deleteRegistration(registrationId) {
-    const regs = getLocalItem(LS_KEYS.REGISTRATIONS, initialRegistrations);
-    const updated = regs.filter(r => r.id !== registrationId);
-    setLocalItem(LS_KEYS.REGISTRATIONS, updated);
-
     if (isSupabaseConfigured) {
       try {
         await supabase.from('registrations').delete().eq('id', registrationId);
@@ -621,11 +645,15 @@ export const DataService = {
         console.warn('Supabase delete registration error:', err);
       }
     }
+
+    const regs = getLocalItem(LS_KEYS.REGISTRATIONS, []);
+    const updated = regs.filter(r => r.id !== registrationId);
+    setLocalItem(LS_KEYS.REGISTRATIONS, updated);
     return true;
   },
 
   async toggleCheckIn(registrationId) {
-    const regs = getLocalItem(LS_KEYS.REGISTRATIONS, initialRegistrations);
+    const regs = getLocalItem(LS_KEYS.REGISTRATIONS, []);
     let target = null;
 
     const updated = regs.map(r => {
@@ -651,7 +679,7 @@ export const DataService = {
             checked_in: target.checkedIn,
             checked_in_at: target.checkedInAt
           })
-          .or(`id.eq.${target.id},bib_number.eq.${target.bibNumber}`);
+          .eq('id', target.id);
       } catch (err) {
         console.warn('Supabase toggleCheckIn error:', err);
       }
@@ -668,7 +696,7 @@ export const DataService = {
           .from('registrations')
           .select('*')
           .or(`phone.ilike.%${q}%,bib_number.ilike.%${q}%,full_name.ilike.%${q}%`);
-        if (!error && data?.length) {
+        if (!error && Array.isArray(data) && data.length > 0) {
           return data.map(mapRegFromDB);
         }
       } catch (err) {
