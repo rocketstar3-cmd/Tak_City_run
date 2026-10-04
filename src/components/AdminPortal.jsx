@@ -36,6 +36,7 @@ import {
   Gift,
   RefreshCw,
   Coffee,
+  ShoppingBag,
 } from 'lucide-react';
 import { DataService, supabase, isSupabaseConfigured } from '../lib/supabase';
 
@@ -1737,9 +1738,20 @@ export function AdminPortal({
                 </div>
               </div>
 
-              <button type="submit" className="btn btn-primary btn-lg" style={{ width: '100%' }}>
-                <Check size={18} /> บันทึกการปรับแต่งคูปอง
-              </button>
+              <div style={{ display: 'flex', gap: '10px' }}>
+                <button type="submit" className="btn btn-primary btn-lg" style={{ flex: 1 }}>
+                  <Check size={18} /> บันทึกการปรับแต่งคูปอง
+                </button>
+                <button 
+                  type="button" 
+                  className="btn btn-secondary"
+                  onClick={() => setCouponConfigForm(defaultCouponConfig)}
+                  title="คืนค่าเป็นค่าเริ่มต้น"
+                  style={{ display: 'flex', alignItems: 'center', gap: '6px' }}
+                >
+                  <RefreshCw size={16} /> รีเซ็ต
+                </button>
+              </div>
             </form>
           </div>
 
