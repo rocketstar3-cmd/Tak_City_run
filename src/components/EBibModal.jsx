@@ -3,7 +3,6 @@ import html2canvas from 'html2canvas';
 import { 
   X, 
   Download, 
-  Printer, 
   CheckCircle, 
   Gift, 
   Coffee, 
@@ -81,10 +80,6 @@ export function EBibModal({ registration, activeEvent, clubSettings, onClose }) 
     } finally {
       setDownloading(false);
     }
-  };
-
-  const handlePrint = () => {
-    window.print();
   };
 
   return (
@@ -448,7 +443,7 @@ export function EBibModal({ registration, activeEvent, clubSettings, onClose }) 
           </div>
         )}
 
-        {/* Action Buttons: 1-Click Save Image & Print */}
+        {/* Action Buttons: 1-Click Save Image & Close */}
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: '10px', marginTop: '18px' }}>
           <button 
             className="btn btn-primary" 
@@ -469,11 +464,11 @@ export function EBibModal({ registration, activeEvent, clubSettings, onClose }) 
             )}
           </button>
 
-          <button className="btn btn-secondary" onClick={handlePrint} title="พิมพ์เอกสาร">
-            <Printer size={16} /> พิมพ์
-          </button>
-
-          <button className="btn btn-secondary" onClick={onClose}>
+          <button 
+            className="btn btn-secondary" 
+            onClick={onClose}
+            style={{ padding: '12px 24px', fontWeight: 600 }}
+          >
             ปิด
           </button>
         </div>
