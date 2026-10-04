@@ -936,7 +936,7 @@ export function AdminPortal({
          ======================================================== */}
       {activeTab === 'events' && (
         <div>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px', flexWrap: 'wrap', gap: '14px' }}>
+          <div className="admin-section-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px', flexWrap: 'wrap', gap: '14px' }}>
             <div>
               <h2 style={{ fontSize: '1.45rem', color: '#FFF' }}>จัดการงานวิ่ง Episode & แผนที่เส้นทางวิ่ง</h2>
               <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem' }}>
@@ -944,7 +944,7 @@ export function AdminPortal({
               </p>
             </div>
 
-            <div style={{ display: 'flex', gap: '10px' }}>
+            <div className="admin-header-actions">
               <button className="btn btn-secondary btn-sm" onClick={() => handleOpenCreateEvent(true)}>
                 <History size={16} /> + เพิ่มประวัติงานเก่า (Past EP)
               </button>
@@ -954,7 +954,7 @@ export function AdminPortal({
             </div>
           </div>
 
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(380px, 1fr))', gap: '24px' }}>
+          <div className="admin-events-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 340px), 1fr))', gap: '24px' }}>
             {events.map((ev) => (
               <div 
                 key={ev.id} 
@@ -1157,13 +1157,13 @@ export function AdminPortal({
             })}
           </div>
 
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '14px', alignItems: 'center', justifyContent: 'space-between', marginBottom: '20px' }}>
-            <div style={{ display: 'flex', gap: '10px', flex: 1, minWidth: '280px' }}>
+          <div className="runners-toolbar" style={{ display: 'flex', flexWrap: 'wrap', gap: '14px', alignItems: 'center', justifyContent: 'space-between', marginBottom: '20px' }}>
+            <div className="runners-search-group" style={{ display: 'flex', gap: '10px', flex: 1, minWidth: '280px' }}>
               <div style={{ position: 'relative', flex: 1 }}>
                 <Search size={18} style={{ position: 'absolute', left: '12px', top: '12px', color: 'var(--text-muted)' }} />
                 <input 
                   type="text" 
-                  className="form-control"
+                  className="form-control" 
                   style={{ paddingLeft: '38px' }}
                   placeholder="ค้นหาชื่อ, เบอร์โทร, หรือเลขคูปอง..."
                   value={searchQuery}
@@ -1172,7 +1172,7 @@ export function AdminPortal({
               </div>
 
               <select 
-                className="form-control" 
+                className="form-control runners-filter-select" 
                 style={{ width: '160px' }}
                 value={filterCheckIn}
                 onChange={(e) => setFilterCheckIn(e.target.value)}
@@ -1183,7 +1183,7 @@ export function AdminPortal({
               </select>
             </div>
 
-            <div style={{ display: 'flex', gap: '10px' }}>
+            <div className="runners-action-buttons" style={{ display: 'flex', gap: '10px' }}>
               <button 
                 type="button" 
                 className="btn btn-secondary" 
@@ -1196,6 +1196,10 @@ export function AdminPortal({
                 <Download size={16} /> ส่งออก Excel (CSV)
               </button>
             </div>
+          </div>
+
+          <div className="mobile-table-hint">
+            <span>👈 เลื่อนซ้าย-ขวา เพื่อดูตารางข้อมูล 👉</span>
           </div>
 
           <div className="data-table-container">

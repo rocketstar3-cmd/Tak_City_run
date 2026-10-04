@@ -44,98 +44,70 @@ export function EventDetails({ activeEvent, onOpenRegister }) {
           </div>
 
           {/* Premium Centered Single Distance Card */}
-          <div style={{ maxWidth: '820px', margin: '0 auto' }}>
-            <div 
-              className="glass-card" 
-              style={{ 
-                border: '2px solid var(--primary)', 
-                boxShadow: '0 0 40px var(--primary-glow)',
-                padding: '40px 36px',
-                position: 'relative'
-              }}
-            >
-              <div style={{
-                position: 'absolute',
-                top: '20px',
-                right: '24px',
-                background: 'linear-gradient(135deg, var(--primary) 0%, #FF8533 100%)',
-                color: '#FFF',
-                fontSize: '0.8rem',
-                fontWeight: 800,
-                padding: '6px 14px',
-                borderRadius: '999px',
-                textTransform: 'uppercase',
-                letterSpacing: '0.05em'
-              }}>
-                ระยะเดียวประจำงาน (Official Distance)
+          <div className="official-distance-card-wrap">
+            <div className="glass-card official-distance-card">
+              <div className="official-distance-badge-wrap">
+                <span className="official-distance-badge">
+                  ระยะเดียวประจำงาน (Official Distance)
+                </span>
               </div>
 
-              <div style={{ display: 'grid', gridTemplateColumns: 'auto 1fr', gap: '28px', alignItems: 'center', marginBottom: '24px' }}>
-                <div style={{ textAlign: 'center', background: 'rgba(255, 85, 0, 0.12)', border: '1.5px solid rgba(255, 85, 0, 0.4)', borderRadius: 'var(--radius-lg)', padding: '24px 32px' }}>
-                  <div style={{ fontFamily: 'var(--font-heading)', fontSize: '4.5rem', fontWeight: 900, lineHeight: 1, color: 'var(--primary)' }}>
+              <div className="official-distance-hero">
+                <div className="official-distance-km-box">
+                  <div className="distance-km-number">
                     {distanceKm}
                   </div>
-                  <div style={{ fontFamily: 'var(--font-heading)', fontSize: '1.3rem', fontWeight: 800, color: '#FFF', letterSpacing: '2px' }}>
+                  <div className="distance-km-unit">
                     KILOMETERS
                   </div>
                 </div>
 
-                <div>
-                  <h3 style={{ fontSize: '1.8rem', color: '#FFF', marginBottom: '8px' }}>
+                <div className="official-distance-info">
+                  <h3 className="official-distance-title">
                     {distanceLabel}
                   </h3>
-                  <p style={{ color: 'var(--text-secondary)', fontSize: '1.05rem', lineHeight: 1.6 }}>
+                  <p className="official-distance-subtitle">
                     {activeEvent.subtitle || 'เส้นทางวิ่งเพื่อสุขภาพ ลัดเลาะสัมผัสธรรมชาติและวิถีชุมชนเมืองตาก เหมาะกับนักวิ่งทุกคน'}
                   </p>
                 </div>
               </div>
 
               {/* Specs Grid */}
-              <div style={{
-                display: 'grid',
-                gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))',
-                gap: '16px',
-                background: 'rgba(8, 12, 21, 0.6)',
-                border: '1px solid var(--dark-border)',
-                borderRadius: 'var(--radius-md)',
-                padding: '20px',
-                margin: '24px 0'
-              }}>
-                <div>
-                  <span style={{ fontSize: '0.82rem', color: 'var(--text-muted)', display: 'block' }}>ค่าธรรมเนียมการสมัคร</span>
-                  <strong style={{ color: 'var(--green)', fontSize: '1.15rem' }}>ฟรี (0 บาท)</strong>
+              <div className="official-distance-specs">
+                <div className="distance-spec-item">
+                  <span className="spec-label">ค่าธรรมเนียมการสมัคร</span>
+                  <strong className="spec-value" style={{ color: 'var(--green)' }}>ฟรี (0 บาท)</strong>
                 </div>
 
-                <div>
-                  <span style={{ fontSize: '0.82rem', color: 'var(--text-muted)', display: 'block' }}>จุดบริการน้ำดื่ม</span>
-                  <strong style={{ color: 'var(--cyan)', fontSize: '1.15rem' }}>{waterStations} จุด</strong>
+                <div className="distance-spec-item">
+                  <span className="spec-label">จุดบริการน้ำดื่ม</span>
+                  <strong className="spec-value" style={{ color: 'var(--cyan)' }}>{waterStations} จุด</strong>
                 </div>
 
-                <div>
-                  <span style={{ fontSize: '0.82rem', color: 'var(--text-muted)', display: 'block' }}>หน่วยพยาบาล/ปฐมพยาบาล</span>
-                  <strong style={{ color: '#F87171', fontSize: '1.15rem' }}>{firstAidPoints} จุด</strong>
+                <div className="distance-spec-item">
+                  <span className="spec-label">หน่วยพยาบาล/ปฐมพยาบาล</span>
+                  <strong className="spec-value" style={{ color: '#F87171' }}>{firstAidPoints} จุด</strong>
                 </div>
 
-                <div>
-                  <span style={{ fontSize: '0.82rem', color: 'var(--text-muted)', display: 'block' }}>ระดับความชัน</span>
-                  <strong style={{ color: '#FFF', fontSize: '1.15rem' }}>{elevation}</strong>
+                <div className="distance-spec-item">
+                  <span className="spec-label">ระดับความชัน</span>
+                  <strong className="spec-value" style={{ color: '#FFF' }}>{elevation}</strong>
                 </div>
 
-                <div>
-                  <span style={{ fontSize: '0.82rem', color: 'var(--text-muted)', display: 'block' }}>โควตาผู้เข้าร่วม</span>
-                  <strong style={{ color: 'var(--primary)', fontSize: '1.15rem' }}>{quota} ท่าน</strong>
+                <div className="distance-spec-item">
+                  <span className="spec-label">โควตาผู้เข้าร่วม</span>
+                  <strong className="spec-value" style={{ color: 'var(--primary)' }}>{quota} ท่าน</strong>
                 </div>
               </div>
 
-              <div style={{ textAlign: 'center', marginTop: '28px' }}>
+              <div className="official-distance-actions">
                 <button 
-                  className="btn btn-primary btn-lg"
-                  style={{ width: '100%', maxWidth: '380px', fontSize: '1.2rem', padding: '16px 36px' }}
+                  className="btn btn-primary btn-lg distance-reg-btn"
                   onClick={onOpenRegister}
                 >
                   ลงทะเบียนวิ่งระยะ {distanceKm}K (ฟรี)
                 </button>
-                <div style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginTop: '10px' }}>
+                <div className="distance-reg-note">
                   ไม่มีค่าใช้จ่ายในการสมัคร ได้รับคูปองลุ้นรางวัล & สิทธิประโยชน์ทันที
                 </div>
               </div>
