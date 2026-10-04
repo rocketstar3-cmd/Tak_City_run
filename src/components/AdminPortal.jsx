@@ -174,9 +174,10 @@ export function AdminPortal({
     noticeText: 'แสดงคูปองนี้ต่อเจ้าหน้าที่หน้างานเพื่อรับอาหารเช้าและสิทธิ์ร่วมจับสลาก Lucky Draw'
   };
 
-  const [couponConfigForm, setCouponConfigForm] = useState(
-    clubSettings?.couponSettings || defaultCouponConfig
-  );
+  const [couponConfigForm, setCouponConfigForm] = useState(() => ({
+    ...defaultCouponConfig,
+    ...(clubSettings?.couponSettings || {})
+  }));
 
   useEffect(() => {
     checkAuth();
@@ -209,13 +210,17 @@ export function AdminPortal({
         }
       };
     }
-  }, [isAuthenticated, activeEvent, activeTab]);
+  }, [isAuthenticated]);
 
   useEffect(() => {
     if (clubSettings) {
       setSettingsForm(clubSettings);
-      if (clubSettings.couponSettings) {
-        setCouponConfigForm(clubSettings.couponSettings);
+      if (clubSettings.couponSettings && typeof clubSettings.couponSettings === 'object') {
+        setCouponConfigForm(prev => ({
+          ...defaultCouponConfig,
+          ...prev,
+          ...clubSettings.couponSettings
+        }));
       }
     }
   }, [clubSettings]);
@@ -657,12 +662,22 @@ export function AdminPortal({
 
   const handleSaveCouponConfig = async (e) => {
     e.preventDefault();
+    const finalCoupon = {
+      ...defaultCouponConfig,
+      ...(couponConfigForm || {})
+    };
     const updated = await DataService.updateSettings({
-      ...clubSettings,
-      couponSettings: couponConfigForm
+      ...(clubSettings || {}),
+      ...settingsForm,
+      couponSettings: finalCoupon
     });
     onSettingsUpdate(updated);
     showToast('บันทึกการปรับแต่งคูปองเรียบร้อยแล้ว!');
+  };
+
+  const currentCouponConfig = {
+    ...defaultCouponConfig,
+    ...(couponConfigForm || {})
   };
 
   // Filter Runners by Event Round + Search + Check-in
@@ -1573,77 +1588,77 @@ export function AdminPortal({
           TAB 7.5: COUPON & PERKS CUSTOMIZER
          ======================================================== */}
       {activeTab === 'coupon' && (
-        <div style={{ display: 'grid', gridTemplateColumns: 'minmax(320px, 1.25fr) minmax(320px, 1fr)', gap: '24px', alignItems: 'start' }}>
-          {/* Left Form */}
-          <div className="glass-card" style={{ padding: '28px' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '8px' }}>
-              <span className="badge-tag gold" style={{ margin: 0 }}>
-                <Gift size={14} /> ปรับแต่งคูปอง
-              </span>
-              <span style={{ fontSize: '0.82rem', color: 'var(--text-muted)' }}>
-                มีผลต่อคูปองของนักวิ่งทุกคนทันที
-              </span>
-            </div>
-            <h2 style={{ fontSize: '1.4rem', color: '#FFF', marginBottom: '8px' }}>
-              ตั้งค่ารายละเอียดคูปองลุ้นรางวัล & สิทธิประโยชน์
-            </h2>
-            <p style={{ color: 'var(--text-muted)', fontSize: '0.88rem', marginBottom: '24px', lineHeight: 1.5 }}>
-              ปรับแต่งข้อความสิทธิประโยชน์ ของรางวัล Lucky Draw จุดบริการอาหารเช้า และเงื่อนไขที่นักวิ่งจะเห็นบนคูปอง
-            </p>
-
-            <form onSubmit={handleSaveCouponConfig}>
-              {/* Section 1: Header & Badge */}
-              <div style={{ background: 'rgba(255, 255, 255, 0.03)', padding: '16px', borderRadius: 'var(--radius-sm)', border: '1px solid var(--dark-border)', marginBottom: '18px' }}>
-                <h4 style={{ fontSize: '0.95rem', color: 'var(--primary)', marginBottom: '12px', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                  <Award size={16} /> 1. ข้อความส่วนหัวคูปอง
-                </h4>
-                <div className="form-group">
-                  <label className="form-label">ป้ายมุมบนขวา (Badge Tag)</label>
-                  <input 
-                    type="text" 
-                    className="form-control"
-                    placeholder="เช่น 🎟️ LUCKY DRAW PASS"
-                    value={couponConfigForm.badgeText || ''}
-                    onChange={(e) => setCouponConfigForm({ ...couponConfigForm, badgeText: e.target.value })}
-                  />
-                </div>
-                <div className="form-group">
-                  <label className="form-label">ชื่อหัวข้อคูปอง (Headline)</label>
-                  <input 
-                    type="text" 
-                    className="form-control"
-                    placeholder="เช่น คูปองลุ้นรางวัล & สิทธิประโยชน์นักวิ่ง"
-                    value={couponConfigForm.headline || ''}
-                    onChange={(e) => setCouponConfigForm({ ...couponConfigForm, headline: e.target.value })}
-                  />
-                </div>
-                <div className="form-group" style={{ marginBottom: 0 }}>
-                  <label className="form-label">คำบรรยายใต้หัวข้อ (Subheadline)</label>
-                  <input 
-                    type="text" 
-                    className="form-control"
-                    placeholder="เช่น บัตรดิจิทัลประจำตัวสำหรับลุ้นของรางวัลท้ายงาน และรับอาหารเช้าหน้างาน"
-                    value={couponConfigForm.subheadline || ''}
-                    onChange={(e) => setCouponConfigForm({ ...couponConfigForm, subheadline: e.target.value })}
-                  />
-                </div>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '24px', alignItems: 'start' }}>
+            {/* Left Form */}
+            <div className="glass-card" style={{ padding: '28px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '8px' }}>
+                <span className="badge-tag gold" style={{ margin: 0 }}>
+                  <Gift size={14} /> ปรับแต่งคูปอง
+                </span>
+                <span style={{ fontSize: '0.82rem', color: 'var(--text-muted)' }}>
+                  มีผลต่อคูปองของนักวิ่งทุกคนทันที
+                </span>
               </div>
+              <h2 style={{ fontSize: '1.4rem', color: '#FFF', marginBottom: '8px' }}>
+                ตั้งค่ารายละเอียดคูปองลุ้นรางวัล & สิทธิประโยชน์
+              </h2>
+              <p style={{ color: 'var(--text-muted)', fontSize: '0.88rem', marginBottom: '24px', lineHeight: 1.5 }}>
+                ปรับแต่งข้อความสิทธิประโยชน์ ของรางวัล Lucky Draw จุดบริการอาหารเช้า และเงื่อนไขที่นักวิ่งจะเห็นบนคูปอง
+              </p>
 
-              {/* Section 2: Perks Breakdown */}
-              <div style={{ background: 'rgba(255, 255, 255, 0.03)', padding: '16px', borderRadius: 'var(--radius-sm)', border: '1px solid var(--dark-border)', marginBottom: '18px' }}>
-                <h4 style={{ fontSize: '0.95rem', color: '#F59E0B', marginBottom: '12px', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                  <Sparkles size={16} /> 2. รายการสิทธิประโยชน์ 3 ข้อ
-                </h4>
-
-                <div className="form-group">
-                  <label className="form-label">หัวข้อส่วนสิทธิประโยชน์</label>
-                  <input 
-                    type="text" 
-                    className="form-control"
-                    value={couponConfigForm.perksTitle || ''}
-                    onChange={(e) => setCouponConfigForm({ ...couponConfigForm, perksTitle: e.target.value })}
-                  />
+              <form onSubmit={handleSaveCouponConfig}>
+                {/* Section 1: Header & Badge */}
+                <div style={{ background: 'rgba(255, 255, 255, 0.03)', padding: '16px', borderRadius: 'var(--radius-sm)', border: '1px solid var(--dark-border)', marginBottom: '18px' }}>
+                  <h4 style={{ fontSize: '0.95rem', color: 'var(--primary)', marginBottom: '12px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                    <Award size={16} /> 1. ข้อความส่วนหัวคูปอง
+                  </h4>
+                  <div className="form-group">
+                    <label className="form-label">ป้ายมุมบนขวา (Badge Tag)</label>
+                    <input 
+                      type="text" 
+                      className="form-control"
+                      placeholder="เช่น 🎟️ LUCKY DRAW PASS"
+                      value={currentCouponConfig.badgeText || ''}
+                      onChange={(e) => setCouponConfigForm(prev => ({ ...defaultCouponConfig, ...(prev || {}), badgeText: e.target.value }))}
+                    />
+                  </div>
+                  <div className="form-group">
+                    <label className="form-label">ชื่อหัวข้อคูปอง (Headline)</label>
+                    <input 
+                      type="text" 
+                      className="form-control"
+                      placeholder="เช่น คูปองลุ้นรางวัล & สิทธิประโยชน์นักวิ่ง"
+                      value={currentCouponConfig.headline || ''}
+                      onChange={(e) => setCouponConfigForm(prev => ({ ...defaultCouponConfig, ...(prev || {}), headline: e.target.value }))}
+                    />
+                  </div>
+                  <div className="form-group" style={{ marginBottom: 0 }}>
+                    <label className="form-label">คำบรรยายใต้หัวข้อ (Subheadline)</label>
+                    <input 
+                      type="text" 
+                      className="form-control"
+                      placeholder="เช่น บัตรดิจิทัลประจำตัวสำหรับลุ้นของรางวัลท้ายงาน และรับอาหารเช้าหน้างาน"
+                      value={currentCouponConfig.subheadline || ''}
+                      onChange={(e) => setCouponConfigForm(prev => ({ ...defaultCouponConfig, ...(prev || {}), subheadline: e.target.value }))}
+                    />
+                  </div>
                 </div>
+
+                {/* Section 2: Perks Breakdown */}
+                <div style={{ background: 'rgba(255, 255, 255, 0.03)', padding: '16px', borderRadius: 'var(--radius-sm)', border: '1px solid var(--dark-border)', marginBottom: '18px' }}>
+                  <h4 style={{ fontSize: '0.95rem', color: '#F59E0B', marginBottom: '12px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                    <Sparkles size={16} /> 2. รายการสิทธิประโยชน์ 3 ข้อ
+                  </h4>
+
+                  <div className="form-group">
+                    <label className="form-label">หัวข้อส่วนสิทธิประโยชน์</label>
+                    <input 
+                      type="text" 
+                      className="form-control"
+                      value={currentCouponConfig.perksTitle || ''}
+                      onChange={(e) => setCouponConfigForm(prev => ({ ...defaultCouponConfig, ...(prev || {}), perksTitle: e.target.value }))}
+                    />
+                  </div>
 
                 {/* Perk 1 */}
                 <div style={{ borderLeft: '3px solid #F59E0B', paddingLeft: '12px', marginBottom: '14px' }}>
@@ -1653,15 +1668,15 @@ export function AdminPortal({
                     className="form-control"
                     style={{ marginBottom: '6px' }}
                     placeholder="ชื่อสิทธิประโยชน์ 1"
-                    value={couponConfigForm.perk1Title || ''}
-                    onChange={(e) => setCouponConfigForm({ ...couponConfigForm, perk1Title: e.target.value })}
+                    value={currentCouponConfig.perk1Title || ''}
+                    onChange={(e) => setCouponConfigForm(prev => ({ ...defaultCouponConfig, ...(prev || {}), perk1Title: e.target.value }))}
                   />
                   <input 
                     type="text" 
                     className="form-control"
                     placeholder="รายละเอียดเพิ่มเติม"
-                    value={couponConfigForm.perk1Desc || ''}
-                    onChange={(e) => setCouponConfigForm({ ...couponConfigForm, perk1Desc: e.target.value })}
+                    value={currentCouponConfig.perk1Desc || ''}
+                    onChange={(e) => setCouponConfigForm(prev => ({ ...defaultCouponConfig, ...(prev || {}), perk1Desc: e.target.value }))}
                   />
                 </div>
 
@@ -1673,15 +1688,15 @@ export function AdminPortal({
                     className="form-control"
                     style={{ marginBottom: '6px' }}
                     placeholder="ชื่อสิทธิประโยชน์ 2"
-                    value={couponConfigForm.perk2Title || ''}
-                    onChange={(e) => setCouponConfigForm({ ...couponConfigForm, perk2Title: e.target.value })}
+                    value={currentCouponConfig.perk2Title || ''}
+                    onChange={(e) => setCouponConfigForm(prev => ({ ...defaultCouponConfig, ...(prev || {}), perk2Title: e.target.value }))}
                   />
                   <input 
                     type="text" 
                     className="form-control"
                     placeholder="รายละเอียดเพิ่มเติม"
-                    value={couponConfigForm.perk2Desc || ''}
-                    onChange={(e) => setCouponConfigForm({ ...couponConfigForm, perk2Desc: e.target.value })}
+                    value={currentCouponConfig.perk2Desc || ''}
+                    onChange={(e) => setCouponConfigForm(prev => ({ ...defaultCouponConfig, ...(prev || {}), perk2Desc: e.target.value }))}
                   />
                 </div>
 
@@ -1693,15 +1708,15 @@ export function AdminPortal({
                     className="form-control"
                     style={{ marginBottom: '6px' }}
                     placeholder="ชื่อสิทธิประโยชน์ 3"
-                    value={couponConfigForm.perk3Title || ''}
-                    onChange={(e) => setCouponConfigForm({ ...couponConfigForm, perk3Title: e.target.value })}
+                    value={currentCouponConfig.perk3Title || ''}
+                    onChange={(e) => setCouponConfigForm(prev => ({ ...defaultCouponConfig, ...(prev || {}), perk3Title: e.target.value }))}
                   />
                   <input 
                     type="text" 
                     className="form-control"
                     placeholder="รายละเอียดเพิ่มเติม"
-                    value={couponConfigForm.perk3Desc || ''}
-                    onChange={(e) => setCouponConfigForm({ ...couponConfigForm, perk3Desc: e.target.value })}
+                    value={currentCouponConfig.perk3Desc || ''}
+                    onChange={(e) => setCouponConfigForm(prev => ({ ...defaultCouponConfig, ...(prev || {}), perk3Desc: e.target.value }))}
                   />
                 </div>
               </div>
@@ -1716,8 +1731,8 @@ export function AdminPortal({
                     className="form-control" 
                     rows={3}
                     placeholder="แสดงคูปองนี้ต่อเจ้าหน้าที่หน้างานเพื่อรับอาหารเช้าและสิทธิ์ร่วมจับสลาก Lucky Draw"
-                    value={couponConfigForm.noticeText || ''}
-                    onChange={(e) => setCouponConfigForm({ ...couponConfigForm, noticeText: e.target.value })}
+                    value={currentCouponConfig.noticeText || ''}
+                    onChange={(e) => setCouponConfigForm(prev => ({ ...defaultCouponConfig, ...(prev || {}), noticeText: e.target.value }))}
                   />
                 </div>
               </div>
@@ -1737,14 +1752,14 @@ export function AdminPortal({
             <div className="coupon-ticket" style={{ maxWidth: '420px', margin: '0 auto' }}>
               <div className="coupon-header">
                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                  <img src={clubSettings?.logoUrl || '/tak-city-run-logo.svg'} alt="TAK City Run" style={{ width: '32px', height: '32px' }} />
+                  <img src={clubSettings?.logoUrl || '/tak-logo-white.png'} alt="TAK City Run" style={{ width: '32px', height: '32px' }} />
                   <div>
                     <div className="coupon-header-title" style={{ fontSize: '1rem' }}>{clubSettings?.clubName || 'TAK CITY RUN'}</div>
                     <div style={{ fontSize: '0.68rem', opacity: 0.9 }}>EP.02 • FREE COMMUNITY RUN</div>
                   </div>
                 </div>
                 <span className="coupon-pass-badge" style={{ fontSize: '0.7rem' }}>
-                  {couponConfigForm.badgeText || '🎟️ LUCKY PASS'}
+                  {currentCouponConfig.badgeText || '🎟️ LUCKY PASS'}
                 </span>
               </div>
 
@@ -1774,35 +1789,35 @@ export function AdminPortal({
 
                 <div className="coupon-stub-section" style={{ fontSize: '0.8rem' }}>
                   <div className="coupon-perks-title" style={{ fontSize: '0.8rem', color: '#F59E0B' }}>
-                    <Sparkles size={13} /> {couponConfigForm.perksTitle || 'สิทธิประโยชน์:'}
+                    <Sparkles size={13} /> {currentCouponConfig.perksTitle || 'สิทธิประโยชน์:'}
                   </div>
                   <div className="coupon-perks-list" style={{ gap: '6px' }}>
                     <div className="coupon-perk-item" style={{ padding: '6px 8px' }}>
                       <Gift size={14} color="#F59E0B" />
                       <div>
-                        <strong style={{ fontSize: '0.78rem' }}>{couponConfigForm.perk1Title}</strong>
-                        <p style={{ fontSize: '0.7rem' }}>{couponConfigForm.perk1Desc}</p>
+                        <strong style={{ fontSize: '0.78rem' }}>{currentCouponConfig.perk1Title}</strong>
+                        <p style={{ fontSize: '0.7rem' }}>{currentCouponConfig.perk1Desc}</p>
                       </div>
                     </div>
                     <div className="coupon-perk-item" style={{ padding: '6px 8px' }}>
                       <Coffee size={14} color="#10B981" />
                       <div>
-                        <strong style={{ fontSize: '0.78rem' }}>{couponConfigForm.perk2Title}</strong>
-                        <p style={{ fontSize: '0.7rem' }}>{couponConfigForm.perk2Desc}</p>
+                        <strong style={{ fontSize: '0.78rem' }}>{currentCouponConfig.perk2Title}</strong>
+                        <p style={{ fontSize: '0.7rem' }}>{currentCouponConfig.perk2Desc}</p>
                       </div>
                     </div>
                     <div className="coupon-perk-item" style={{ padding: '6px 8px' }}>
                       <ShoppingBag size={14} color="var(--cyan)" />
                       <div>
-                        <strong style={{ fontSize: '0.78rem' }}>{couponConfigForm.perk3Title}</strong>
-                        <p style={{ fontSize: '0.7rem' }}>{couponConfigForm.perk3Desc}</p>
+                        <strong style={{ fontSize: '0.78rem' }}>{currentCouponConfig.perk3Title}</strong>
+                        <p style={{ fontSize: '0.7rem' }}>{currentCouponConfig.perk3Desc}</p>
                       </div>
                     </div>
                   </div>
 
                   <div style={{ marginTop: '12px', textAlign: 'center' }}>
                     <span className="badge-tag gold" style={{ fontSize: '0.74rem', padding: '4px 10px', margin: 0 }}>
-                      🎟️ {couponConfigForm.noticeText || 'แสดงคูปองนี้ต่อเจ้าหน้าที่'}
+                      🎟️ {currentCouponConfig.noticeText || 'แสดงคูปองนี้ต่อเจ้าหน้าที่'}
                     </span>
                   </div>
                 </div>

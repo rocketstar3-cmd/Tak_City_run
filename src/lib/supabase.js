@@ -259,8 +259,7 @@ const mapSettingsToDB = (s) => ({
   theme_color: s.themeColor,
   facebook_url: s.facebookUrl,
   line_url: s.lineUrl,
-  admin_pin: s.adminPin || '1234',
-  coupon_settings: s.couponSettings || defaultCouponSettings
+  admin_pin: s.adminPin || '1234'
 });
 
 // ==========================================
@@ -278,8 +277,19 @@ export const DataService = {
         console.warn('Supabase settings query error, falling back to local:', err);
       }
     }
+    const local = getLocalItem(LS_KEYS.SETTINGS, initialClubSettings);
     if (!settings) {
-      settings = getLocalItem(LS_KEYS.SETTINGS, initialClubSettings);
+      settings = local;
+    } else {
+      settings = {
+        ...local,
+        ...settings,
+        couponSettings: {
+          ...defaultCouponSettings,
+          ...(local?.couponSettings || {}),
+          ...(settings?.couponSettings || {})
+        }
+      };
     }
     if (!settings.logoUrl || settings.logoUrl === '/tak-city-run-logo.svg') {
       settings.logoUrl = '/tak-logo-white.png';
