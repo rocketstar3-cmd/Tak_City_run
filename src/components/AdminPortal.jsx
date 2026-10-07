@@ -39,6 +39,7 @@ import {
   ShoppingBag,
 } from 'lucide-react';
 import { DataService, supabase, isSupabaseConfigured } from '../lib/supabase';
+import { ImageUploadInput } from './ImageUploadInput';
 
 export function AdminPortal({ 
   clubSettings, 
@@ -2045,28 +2046,31 @@ export function AdminPortal({
                     />
                   </div>
 
-                  <div className="form-row">
-                    <div className="form-group">
-                      <label className="form-label">วันและเวลาปล่อยตัว *</label>
-                      <input 
-                        type="datetime-local" 
-                        className="form-control"
-                        value={eventFormData.eventDate ? eventFormData.eventDate.substring(0, 16) : ''}
-                        onChange={(e) => setEventFormData({ ...eventFormData, eventDate: e.target.value })}
-                        required
-                      />
-                    </div>
-                    <div className="form-group">
-                      <label className="form-label">รูปโปสเตอร์หน้าปก (Cover Image URL)</label>
-                      <input 
-                        type="text" 
-                        className="form-control"
-                        placeholder="https://..."
-                        value={eventFormData.coverImage}
-                        onChange={(e) => setEventFormData({ ...eventFormData, coverImage: e.target.value })}
-                      />
-                    </div>
+                  <div className="form-group">
+                    <label className="form-label">วันและเวลาปล่อยตัว *</label>
+                    <input 
+                      type="datetime-local" 
+                      className="form-control"
+                      value={eventFormData.eventDate ? eventFormData.eventDate.substring(0, 16) : ''}
+                      onChange={(e) => setEventFormData({ ...eventFormData, eventDate: e.target.value })}
+                      required
+                    />
                   </div>
+
+                  <ImageUploadInput
+                    label="🖼️ รูปโปสเตอร์หน้าปกงานวิ่ง (Cover Poster)"
+                    value={eventFormData.coverImage}
+                    onChange={(url) => setEventFormData({ ...eventFormData, coverImage: url })}
+                    bucket="event-images"
+                    folder="covers"
+                    placeholder="https://... หรือวางลิงก์ Google Drive"
+                    helpText="อัปโหลดรูปจากเครื่อง หรือวางลิงก์ Google Drive (ระบบจะแปลงลิงก์ให้อัตโนมัติ)"
+                    previewHeight="200px"
+                    samples={[
+                      { label: 'ภาพนักวิ่งยามเช้า', url: 'https://images.unsplash.com/photo-1452626038306-9aae5e071dd3?auto=format&fit=crop&w=1200&q=80' },
+                      { label: 'ภาพริมน้ำปิง', url: 'https://images.unsplash.com/photo-1476480862126-209bfaa8edc8?auto=format&fit=crop&w=1200&q=80' }
+                    ]}
+                  />
 
                   <div className="form-group">
                     <label className="form-label">สถานที่จัดงาน & จุดปล่อยตัว *</label>
@@ -2150,42 +2154,19 @@ export function AdminPortal({
               {/* TAB 3: Route Map & Details */}
               {modalActiveTab === 'route' && (
                 <div>
-                  <div className="form-group">
-                    <label className="form-label">
-                      🗺️ URL รูปภาพแผนที่เส้นทางวิ่ง (Route Map Image URL)
-                    </label>
-                    <input 
-                      type="text" 
-                      className="form-control"
-                      placeholder="วางลิงก์รูปภาพแผนที่รูทวิ่ง / แผนที่ GPX (เช่น https://...)"
-                      value={eventFormData.routeImageUrl}
-                      onChange={(e) => setEventFormData({ ...eventFormData, routeImageUrl: e.target.value })}
-                    />
-                    <div style={{ display: 'flex', gap: '8px', marginTop: '6px', fontSize: '0.8rem' }}>
-                      <span style={{ color: 'var(--text-muted)' }}>ตัวอย่างรูป:</span>
-                      <button 
-                        type="button" 
-                        style={{ background: 'none', border: 'none', color: 'var(--cyan)', cursor: 'pointer', textDecoration: 'underline' }}
-                        onClick={() => setEventFormData({ ...eventFormData, routeImageUrl: 'https://images.unsplash.com/photo-1524850011238-e3d235c7d4c9?auto=format&fit=crop&w=1200&q=80' })}
-                      >
-                        [ใช้รูปตัวอย่างแผนที่เมืองตาก]
-                      </button>
-                    </div>
-                  </div>
-
-                  {/* Live Image Preview */}
-                  {eventFormData.routeImageUrl && (
-                    <div style={{ marginBottom: '18px', textAlign: 'center' }}>
-                      <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)', display: 'block', marginBottom: '6px' }}>
-                        ตัวอย่างรูปแผนที่ปัจจุบัน (Preview):
-                      </span>
-                      <img 
-                        src={eventFormData.routeImageUrl} 
-                        alt="Preview Map" 
-                        style={{ maxWidth: '100%', height: '180px', objectFit: 'cover', borderRadius: 'var(--radius-sm)', border: '1px solid var(--dark-border)' }}
-                      />
-                    </div>
-                  )}
+                  <ImageUploadInput
+                    label="🗺️ รูปภาพแผนที่เส้นทางวิ่ง (Route Map Image)"
+                    value={eventFormData.routeImageUrl}
+                    onChange={(url) => setEventFormData({ ...eventFormData, routeImageUrl: url })}
+                    bucket="event-images"
+                    folder="routes"
+                    placeholder="วางลิงก์แผนที่รูทวิ่ง หรือลิงก์ Google Drive"
+                    helpText="อัปโหลดรูปแผนที่ GPX/กราฟิกเส้นทาง หรือวางลิงก์ Google Drive"
+                    previewHeight="220px"
+                    samples={[
+                      { label: 'ใช้รูปตัวอย่างแผนที่เมืองตาก', url: 'https://images.unsplash.com/photo-1524850011238-e3d235c7d4c9?auto=format&fit=crop&w=1200&q=80' }
+                    ]}
+                  />
 
                   <div className="form-group">
                     <label className="form-label">ลิงก์ Google Maps สำหรับปักหมุดจุดปล่อยตัว</label>
@@ -2403,15 +2384,15 @@ export function AdminPortal({
                   onChange={(e) => setSponsorFormData({ ...sponsorFormData, role: e.target.value })}
                 />
               </div>
-              <div className="form-group">
-                <label className="form-label">URL รูปภาพโลโก้</label>
-                <input 
-                  type="text" 
-                  className="form-control"
-                  value={sponsorFormData.logo}
-                  onChange={(e) => setSponsorFormData({ ...sponsorFormData, logo: e.target.value })}
-                />
-              </div>
+              <ImageUploadInput
+                label="โลโก้ผู้สนับสนุน (Logo Image)"
+                value={sponsorFormData.logo}
+                onChange={(url) => setSponsorFormData({ ...sponsorFormData, logo: url })}
+                bucket="event-images"
+                folder="sponsors"
+                placeholder="https://... หรือลิงก์ Google Drive"
+                previewHeight="120px"
+              />
               <button type="submit" className="btn btn-primary" style={{ width: '100%', padding: '14px', marginTop: '10px' }}>
                 บันทึกผู้สนับสนุน
               </button>
@@ -2468,15 +2449,15 @@ export function AdminPortal({
                   onChange={(e) => setShopFormData({ ...shopFormData, badge: e.target.value })}
                 />
               </div>
-              <div className="form-group">
-                <label className="form-label">URL รูปภาพ</label>
-                <input 
-                  type="text" 
-                  className="form-control"
-                  value={shopFormData.image}
-                  onChange={(e) => setShopFormData({ ...shopFormData, image: e.target.value })}
-                />
-              </div>
+              <ImageUploadInput
+                label="รูปภาพร้านค้า / กิจกรรม"
+                value={shopFormData.image}
+                onChange={(url) => setShopFormData({ ...shopFormData, image: url })}
+                bucket="event-images"
+                folder="shops"
+                placeholder="https://... หรือลิงก์ Google Drive"
+                previewHeight="140px"
+              />
               <button type="submit" className="btn btn-primary" style={{ width: '100%', padding: '14px', marginTop: '10px' }}>
                 บันทึกรายการ
               </button>
@@ -2526,16 +2507,15 @@ export function AdminPortal({
                   onChange={(e) => setGalleryFormData({ ...galleryFormData, caption: e.target.value })}
                 />
               </div>
-              <div className="form-group">
-                <label className="form-label">URL รูปภาพ (Direct Link) *</label>
-                <input 
-                  type="text" 
-                  className="form-control"
-                  value={galleryFormData.image}
-                  onChange={(e) => setGalleryFormData({ ...galleryFormData, image: e.target.value })}
-                  required
-                />
-              </div>
+              <ImageUploadInput
+                label="รูปภาพแกลเลอรี (Direct Link / Upload) *"
+                value={galleryFormData.image}
+                onChange={(url) => setGalleryFormData({ ...galleryFormData, image: url })}
+                bucket="event-images"
+                folder="gallery"
+                placeholder="https://... หรือลิงก์ Google Drive"
+                previewHeight="160px"
+              />
               <button type="submit" className="btn btn-primary" style={{ width: '100%', padding: '14px', marginTop: '10px' }}>
                 บันทึกภาพแกลเลอรี
               </button>

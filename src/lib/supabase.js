@@ -1089,5 +1089,132 @@ export const DataService = {
     localStorage.removeItem(LS_KEYS.CURRENT_ADMIN);
     localStorage.removeItem(LS_KEYS.ADMIN_SESSION);
     return true;
+  },
+
+  // Image Upload & URL Normalization
+  uploadImage(file, bucket, folder) {
+    return uploadImageFile(file, bucket, folder);
+  },
+  normalizeImageUrl(url) {
+    return normalizeImageUrl(url);
   }
 };
+
+/**
+ * Auto-detect and normalize Google Drive image links to Direct Image URLs
+ */
+export function normalizeImageUrl(url) {
+  if (!url || typeof url !== 'string') return url;
+  const trimmed = url.trim();
+
+  // Pattern for Google Drive files
+  const driveRegex = /(?:drive\.google\.com\/(?:file\/d\/|open\?id=|uc\?id=|thumbnail\?id=))([a-zA-Z0-9_-]+)/i;
+  const match = trimmed.match(driveRegex);
+  if (match && match[1]) {
+    const fileId = match[1];
+    // lh3.googleusercontent.com/d/{fileId} is Google's fast direct CDN image URL
+    return `https://lh3.googleusercontent.com/d/${fileId}`;
+  }
+
+  return trimmed;
+}
+
+/**
+ * Helper to read File as Base64 DataURL (for fallback)
+ */
+function readFileAsDataUrl(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result);
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
+}
+
+/**
+ * Upload an image file to Supabase Storage (with graceful Base64 fallback)
+ */
+export async function uploadImageFile(file, bucket = 'event-images', folder = 'events') {
+  if (!file) {
+    throw new Error('กรุณาเลือกไฟล์รูปภาพ');
+  }
+
+  if (!file.type.startsWith('image/')) {
+    throw new Error('กรุณาเลือกไฟล์รูปภาพเท่านั้น (JPG, PNG, WebP, GIF)');
+  }
+
+  if (file.size > 10 * 1024 * 1024) {
+    throw new Error('ขนาดไฟล์รูปภาพเกิน 10MB กรุณาเลือกไฟล์ที่ขนาดเล็กลง');
+  }
+
+  if (isSupabaseConfigured && supabase) {
+    try {
+      const ext = file.name.split('.').pop()?.toLowerCase() || 'jpg';
+      const cleanBaseName = file.name.substring(0, file.name.lastIndexOf('.'))
+        .replace(/[^a-zA-Z0-9]/g, '_')
+        .substring(0, 20);
+      const cleanFileName = `${Date.now()}-${cleanBaseName || 'img'}.${ext}`;
+      const filePath = `${folder}/${cleanFileName}`;
+
+      const { data, error } = await supabase.storage
+        .from(bucket)
+        .upload(filePath, file, {
+          cacheControl: '3600',
+          upsert: true
+        });
+
+      if (error) {
+        console.warn('Supabase storage upload error:', error);
+        const errMsg = error.message || '';
+        const isBucketMissing = errMsg.includes('Bucket not found') || 
+                                errMsg.includes('not found') || 
+                                error.statusCode === '404' ||
+                                error.statusCode === 404;
+        const isPermission = error.statusCode === '403' || 
+                             error.statusCode === 403 || 
+                             errMsg.includes('row-level security') ||
+                             errMsg.includes('AccessDenied');
+
+        const base64 = await readFileAsDataUrl(file);
+        return {
+          success: true,
+          url: base64,
+          isFallback: true,
+          warning: isBucketMissing
+            ? `ยังไม่พบ Storage Bucket '${bucket}' ใน Supabase (สร้างได้ที่ Supabase Dashboard > Storage > New bucket '${bucket}' และเปิด Public)`
+            : isPermission
+            ? `Storage Bucket '${bucket}' ติดสิทธิ์ RLS (แนะนำ: เปิด Public bucket บน Supabase Dashboard)`
+            : `อัปโหลดขึ้น Supabase ไม่สำเร็จ (${errMsg}) จึงใช้รูปในเครื่องชั่วคราว`
+        };
+      }
+
+      const { data: publicUrlData } = supabase.storage
+        .from(bucket)
+        .getPublicUrl(filePath);
+
+      return {
+        success: true,
+        url: publicUrlData.publicUrl,
+        filePath,
+        isFallback: false
+      };
+    } catch (err) {
+      console.warn('Storage upload error caught:', err);
+      const base64 = await readFileAsDataUrl(file);
+      return {
+        success: true,
+        url: base64,
+        isFallback: true,
+        warning: 'เกิดข้อผิดพลาดในการอัปโหลดเข้า Supabase ระบบจึงใช้รูปสำรองชั่วคราว'
+      };
+    }
+  }
+
+  const base64 = await readFileAsDataUrl(file);
+  return {
+    success: true,
+    url: base64,
+    isFallback: true,
+    warning: 'ยังไม่ได้เชื่อมต่อ Supabase จึงใช้รูปสำรองชั่วคราว'
+  };
+}

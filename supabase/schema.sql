@@ -207,3 +207,29 @@ ON CONFLICT (id) DO UPDATE SET
   quota = EXCLUDED.quota,
   route_image_url = EXCLUDED.route_image_url,
   route_description = EXCLUDED.route_description;
+
+-- ====================================================================
+-- 9. SUPABASE STORAGE SETUP (สำหรับเก็บรูปโปสเตอร์, แผนที่, โลโก้)
+-- ====================================================================
+-- สร้าง Storage Bucket ชื่อ 'event-images' และเปิดเป็น Public
+INSERT INTO storage.buckets (id, name, public)
+VALUES ('event-images', 'event-images', true)
+ON CONFLICT (id) DO UPDATE SET public = true;
+
+-- นโยบายเปิดให้ทุกคนอ่านรูปภาพได้ (Public Read)
+DROP POLICY IF EXISTS "Public Storage Read Access" ON storage.objects;
+CREATE POLICY "Public Storage Read Access"
+ON storage.objects FOR SELECT
+USING (bucket_id = 'event-images');
+
+-- นโยบายอนุญาตให้อัปโหลด/แก้ไขรูปภาพได้ (Public/Anon Upload Access)
+DROP POLICY IF EXISTS "Public Storage Upload Access" ON storage.objects;
+CREATE POLICY "Public Storage Upload Access"
+ON storage.objects FOR INSERT
+WITH CHECK (bucket_id = 'event-images');
+
+DROP POLICY IF EXISTS "Public Storage Update Access" ON storage.objects;
+CREATE POLICY "Public Storage Update Access"
+ON storage.objects FOR UPDATE
+USING (bucket_id = 'event-images');
+
