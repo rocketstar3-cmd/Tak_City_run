@@ -48,6 +48,8 @@ export const initialEvents = [
     status: "open", // 'open', 'closed', 'completed'
     isActive: true, // The currently active / promoted event
     coverImage: "https://images.unsplash.com/photo-1452626038306-9aae5e071dd3?auto=format&fit=crop&w=1200&q=80",
+    coverAspectRatio: "16:9",
+    coverFit: "cover",
     
     // Single Official Distance for this EP
     distanceKm: 5.8,

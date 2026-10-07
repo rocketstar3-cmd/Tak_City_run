@@ -11,7 +11,12 @@ export function ImageUploadInput({
   placeholder = 'https://... หรือลิงก์ Google Drive',
   helpText = '',
   previewHeight = '180px',
-  samples = []
+  samples = [],
+  aspectRatio = '16:9',
+  onAspectRatioChange = null,
+  fitMode = 'cover',
+  onFitModeChange = null,
+  showAspectRatioSelector = false
 }) {
   const [inputMode, setInputMode] = useState('upload'); // 'upload' | 'url'
   const [isUploading, setIsUploading] = useState(false);
@@ -301,6 +306,83 @@ export function ImageUploadInput({
         </span>
       )}
 
+      {/* Aspect Ratio & Fit Mode Selector Panel */}
+      {showAspectRatioSelector && (
+        <div style={{
+          marginTop: '10px',
+          padding: '10px 12px',
+          background: 'rgba(255, 255, 255, 0.03)',
+          borderRadius: 'var(--radius-sm)',
+          border: '1px solid var(--dark-border)',
+          display: 'flex',
+          flexDirection: 'column',
+          gap: '8px'
+        }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '8px' }}>
+            {/* 3 Aspect Ratio Presets: 16:9, 1:1, 9:16 */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
+              <span style={{ fontSize: '0.78rem', color: 'var(--text-muted)', fontWeight: 600 }}>
+                📐 สัดส่วนรูป (Preset):
+              </span>
+              {[
+                { id: '16:9', label: '16:9 แนวนอน', icon: '▬' },
+                { id: '1:1', label: '1:1 จัตุรัส', icon: '◼' },
+                { id: '9:16', label: '9:16 แนวตั้ง (Story)', icon: '▮' }
+              ].map(opt => (
+                <button
+                  key={opt.id}
+                  type="button"
+                  onClick={() => onAspectRatioChange && onAspectRatioChange(opt.id)}
+                  style={{
+                    padding: '4px 10px',
+                    borderRadius: '6px',
+                    fontSize: '0.76rem',
+                    fontWeight: 600,
+                    cursor: 'pointer',
+                    border: '1.5px solid',
+                    borderColor: aspectRatio === opt.id ? 'var(--primary)' : 'var(--dark-border)',
+                    background: aspectRatio === opt.id ? 'rgba(255, 85, 0, 0.22)' : 'rgba(255, 255, 255, 0.05)',
+                    color: aspectRatio === opt.id ? '#FFF' : 'var(--text-secondary)',
+                    transition: 'all 0.15s ease'
+                  }}
+                >
+                  <span style={{ marginRight: '4px', opacity: 0.8 }}>{opt.icon}</span> {opt.label}
+                </button>
+              ))}
+            </div>
+
+            {/* Fit Mode Toggle */}
+            {onFitModeChange && (
+              <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>การตัดรูป:</span>
+                <button
+                  type="button"
+                  onClick={() => onFitModeChange(fitMode === 'contain' ? 'cover' : 'contain')}
+                  style={{
+                    padding: '3px 10px',
+                    borderRadius: '6px',
+                    fontSize: '0.74rem',
+                    border: '1px solid var(--dark-border)',
+                    background: fitMode === 'contain' ? 'rgba(0, 240, 255, 0.15)' : 'rgba(255, 255, 255, 0.05)',
+                    color: fitMode === 'contain' ? 'var(--cyan)' : 'var(--text-secondary)',
+                    cursor: 'pointer',
+                    fontWeight: 600,
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '4px'
+                  }}
+                >
+                  {fitMode === 'contain' ? '🔍 พอดีภาพ (ไม่ตัดขอบ)' : '🖼️ เต็มกรอบ (Fill)'}
+                </button>
+              </div>
+            )}
+          </div>
+          <div style={{ fontSize: '0.73rem', color: 'var(--text-muted)' }}>
+            💡 เลือกให้ตรงกับรูปโปสเตอร์เพื่อไม่ให้ตัวหนังสือและรายละเอียดถูกคร็อปตัด
+          </div>
+        </div>
+      )}
+
       {/* Live Preview Box */}
       {value ? (
         <div style={{
@@ -313,7 +395,7 @@ export function ImageUploadInput({
         }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
             <span style={{ fontSize: '0.78rem', color: 'var(--text-secondary)', display: 'flex', alignItems: 'center', gap: '5px' }}>
-              <ImageIcon size={13} color="var(--primary)" /> ตัวอย่างรูปภาพปัจจุบัน (Preview):
+              <ImageIcon size={13} color="var(--primary)" /> ตัวอย่างรูปภาพปัจจุบัน ({aspectRatio}):
             </span>
             <div style={{ display: 'flex', gap: '8px' }}>
               <a
@@ -353,14 +435,16 @@ export function ImageUploadInput({
           <div style={{
             position: 'relative',
             width: '100%',
-            height: previewHeight,
+            aspectRatio: aspectRatio === '1:1' ? '1/1' : aspectRatio === '9:16' ? '9/16' : '16/9',
+            maxHeight: aspectRatio === '9:16' ? '420px' : aspectRatio === '1:1' ? '320px' : previewHeight,
             borderRadius: '6px',
             overflow: 'hidden',
-            background: '#080C15',
+            background: fitMode === 'contain' ? 'radial-gradient(circle, #1E293B 0%, #080C15 100%)' : '#080C15',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            border: '1px solid rgba(255, 255, 255, 0.05)'
+            border: '1px solid rgba(255, 255, 255, 0.08)',
+            margin: '0 auto'
           }}>
             <img
               src={value}
@@ -368,7 +452,7 @@ export function ImageUploadInput({
               style={{
                 width: '100%',
                 height: '100%',
-                objectFit: 'cover'
+                objectFit: fitMode || 'cover'
               }}
               onError={(e) => {
                 e.target.style.display = 'none';

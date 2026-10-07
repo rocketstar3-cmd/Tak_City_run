@@ -240,32 +240,47 @@ export function EventDetails({ activeEvent, onOpenRegister }) {
                   overflow: 'hidden',
                   position: 'relative'
                 }}>
-                  {visualMode === 'poster' && activeEvent.coverImage ? (
-                    <div>
-                      <img 
-                        src={activeEvent.coverImage} 
-                        alt={`โปสเตอร์งานวิ่ง EP.${activeEvent.epNumber} ${activeEvent.title}`}
-                        style={{ width: '100%', height: '360px', objectFit: 'cover' }}
-                      />
+                  {visualMode === 'poster' && activeEvent.coverImage ? (() => {
+                    const posterRatio = activeEvent.coverAspectRatio || '16:9';
+                    const posterFit = activeEvent.coverFit || 'cover';
+                    const posterRatioCss = posterRatio === '1:1' ? '1/1' : posterRatio === '9:16' ? '9/16' : '16/9';
+                    const posterMaxHeightCss = posterRatio === '9:16' ? '540px' : posterRatio === '1:1' ? '400px' : '360px';
+
+                    return (
                       <div style={{
-                        position: 'absolute',
-                        bottom: '12px',
-                        right: '12px',
-                        background: 'rgba(0,0,0,0.85)',
-                        padding: '6px 14px',
-                        borderRadius: '999px',
-                        fontSize: '0.8rem',
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '8px'
+                        position: 'relative',
+                        aspectRatio: posterRatioCss,
+                        maxHeight: posterMaxHeightCss,
+                        width: '100%',
+                        margin: '0 auto',
+                        background: posterFit === 'contain' ? 'radial-gradient(circle, #1E293B 0%, #080C15 100%)' : '#0F172A'
                       }}>
-                        <span style={{ color: '#FFA559', fontWeight: 600 }}>โปสเตอร์ทางการ EP.{String(activeEvent.epNumber).padStart(2, '0')}</span>
-                        <a href={activeEvent.coverImage} target="_blank" rel="noreferrer" style={{ color: 'var(--cyan)', textDecoration: 'none', fontSize: '0.75rem' }}>
-                          ดูรูปเต็ม ↗
-                        </a>
+                        <img 
+                          src={activeEvent.coverImage} 
+                          alt={`โปสเตอร์งานวิ่ง EP.${activeEvent.epNumber} ${activeEvent.title}`}
+                          style={{ width: '100%', height: '100%', objectFit: posterFit, display: 'block' }}
+                        />
+                        <div style={{
+                          position: 'absolute',
+                          bottom: '12px',
+                          right: '12px',
+                          background: 'rgba(0,0,0,0.85)',
+                          backdropFilter: 'blur(8px)',
+                          padding: '6px 14px',
+                          borderRadius: '999px',
+                          fontSize: '0.8rem',
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '8px'
+                        }}>
+                          <span style={{ color: '#FFA559', fontWeight: 600 }}>โปสเตอร์ทางการ EP.{String(activeEvent.epNumber).padStart(2, '0')} ({posterRatio})</span>
+                          <a href={activeEvent.coverImage} target="_blank" rel="noreferrer" style={{ color: 'var(--cyan)', textDecoration: 'none', fontSize: '0.75rem', fontWeight: 600 }}>
+                            ดูรูปเต็ม ↗
+                          </a>
+                        </div>
                       </div>
-                    </div>
-                  ) : activeEvent.routeImageUrl ? (
+                    );
+                  })() : activeEvent.routeImageUrl ? (
                     <div>
                       <img 
                         src={activeEvent.routeImageUrl} 

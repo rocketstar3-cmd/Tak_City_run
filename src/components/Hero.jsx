@@ -161,68 +161,77 @@ export function Hero({
         {/* Right Column: Official Poster Showcase & Countdown Box */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
           {/* Official Event Cover Poster Showcase */}
-          {activeEvent.coverImage && (
-            <div style={{
-              borderRadius: 'var(--radius-lg)',
-              overflow: 'hidden',
-              position: 'relative',
-              boxShadow: '0 16px 40px rgba(0, 0, 0, 0.6), 0 0 24px rgba(255, 85, 0, 0.25)',
-              border: '1.5px solid rgba(255, 255, 255, 0.15)',
-              background: '#0F172A',
-              aspectRatio: '16/9',
-              maxHeight: '250px'
-            }}>
-              <img 
-                src={activeEvent.coverImage} 
-                alt={`โปสเตอร์งานวิ่ง EP.${activeEvent.epNumber} ${activeEvent.title}`}
-                style={{
-                  width: '100%',
-                  height: '100%',
-                  objectFit: 'cover',
-                  display: 'block'
-                }}
-              />
+          {activeEvent.coverImage && (() => {
+            const posterRatio = activeEvent.coverAspectRatio || '16:9';
+            const posterFit = activeEvent.coverFit || 'cover';
+            const ratioCss = posterRatio === '1:1' ? '1/1' : posterRatio === '9:16' ? '9/16' : '16/9';
+            const maxHeightCss = posterRatio === '9:16' ? '460px' : posterRatio === '1:1' ? '340px' : '260px';
+
+            return (
               <div style={{
-                position: 'absolute',
-                top: '12px',
-                left: '12px',
-                background: 'rgba(8, 12, 21, 0.88)',
-                backdropFilter: 'blur(8px)',
-                padding: '4px 12px',
-                borderRadius: '999px',
-                fontSize: '0.75rem',
-                fontWeight: 700,
-                color: 'var(--primary)',
-                border: '1px solid rgba(255, 85, 0, 0.4)',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '5px'
+                borderRadius: 'var(--radius-lg)',
+                overflow: 'hidden',
+                position: 'relative',
+                boxShadow: '0 16px 40px rgba(0, 0, 0, 0.6), 0 0 24px rgba(255, 85, 0, 0.25)',
+                border: '1.5px solid rgba(255, 255, 255, 0.15)',
+                background: posterFit === 'contain' ? 'radial-gradient(circle, #1E293B 0%, #080C15 100%)' : '#0F172A',
+                aspectRatio: ratioCss,
+                maxHeight: maxHeightCss,
+                width: '100%',
+                margin: '0 auto'
               }}>
-                <span>🖼️ โปสเตอร์ทางการ EP.{String(activeEvent.epNumber).padStart(2, '0')}</span>
-              </div>
-              <a 
-                href={activeEvent.coverImage}
-                target="_blank"
-                rel="noreferrer"
-                style={{
+                <img 
+                  src={activeEvent.coverImage} 
+                  alt={`โปสเตอร์งานวิ่ง EP.${activeEvent.epNumber} ${activeEvent.title}`}
+                  style={{
+                    width: '100%',
+                    height: '100%',
+                    objectFit: posterFit,
+                    display: 'block'
+                  }}
+                />
+                <div style={{
                   position: 'absolute',
-                  bottom: '12px',
-                  right: '12px',
-                  background: 'rgba(0, 0, 0, 0.8)',
+                  top: '12px',
+                  left: '12px',
+                  background: 'rgba(8, 12, 21, 0.88)',
                   backdropFilter: 'blur(8px)',
-                  color: '#FFF',
-                  padding: '5px 12px',
-                  borderRadius: '6px',
-                  fontSize: '0.74rem',
-                  textDecoration: 'none',
-                  fontWeight: 600,
-                  border: '1px solid rgba(255, 255, 255, 0.2)'
-                }}
-              >
-                ดูรูปเต็ม ↗
-              </a>
-            </div>
-          )}
+                  padding: '4px 12px',
+                  borderRadius: '999px',
+                  fontSize: '0.75rem',
+                  fontWeight: 700,
+                  color: 'var(--primary)',
+                  border: '1px solid rgba(255, 85, 0, 0.4)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '5px'
+                }}>
+                  <span>🖼️ โปสเตอร์ทางการ EP.{String(activeEvent.epNumber).padStart(2, '0')} ({posterRatio})</span>
+                </div>
+                <a 
+                  href={activeEvent.coverImage}
+                  target="_blank"
+                  rel="noreferrer"
+                  style={{
+                    position: 'absolute',
+                    bottom: '12px',
+                    right: '12px',
+                    background: 'rgba(0, 0, 0, 0.8)',
+                    backdropFilter: 'blur(8px)',
+                    color: '#FFF',
+                    padding: '5px 12px',
+                    borderRadius: '6px',
+                    fontSize: '0.74rem',
+                    textDecoration: 'none',
+                    fontWeight: 600,
+                    border: '1px solid rgba(255, 255, 255, 0.2)'
+                  }}
+                >
+                  ดูรูปเต็ม ↗
+                </a>
+              </div>
+            );
+          })()}
 
           {/* Countdown Box */}
           <div className="countdown-box" style={{ padding: activeEvent.coverImage ? '24px 22px' : '36px 28px' }}>

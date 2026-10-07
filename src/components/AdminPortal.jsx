@@ -1,20 +1,20 @@
 import React, { useState, useEffect } from 'react';
-import { 
-  ShieldCheck, 
-  Users, 
-  Calendar, 
-  Palette, 
-  Store, 
-  HeartHandshake, 
+import {
+  ShieldCheck,
+  Users,
+  Calendar,
+  Palette,
+  Store,
+  HeartHandshake,
   Image as ImageIcon,
-  Search, 
-  Download, 
-  Plus, 
-  Check, 
-  CheckCircle, 
-  X, 
-  Lock, 
-  LogOut, 
+  Search,
+  Download,
+  Plus,
+  Check,
+  CheckCircle,
+  X,
+  Lock,
+  LogOut,
   QrCode,
   Edit,
   Trash2,
@@ -41,13 +41,13 @@ import {
 import { DataService, supabase, isSupabaseConfigured } from '../lib/supabase';
 import { ImageUploadInput } from './ImageUploadInput';
 
-export function AdminPortal({ 
-  clubSettings, 
-  events = [], 
-  activeEvent, 
-  onSettingsUpdate, 
+export function AdminPortal({
+  clubSettings,
+  events = [],
+  activeEvent,
+  onSettingsUpdate,
   onEventsUpdate,
-  onExitAdmin 
+  onExitAdmin
 }) {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [currentAdmin, setCurrentAdmin] = useState(null);
@@ -83,9 +83,8 @@ export function AdminPortal({
   // Event Edit/Create Modal
   const [eventModalOpen, setEventModalOpen] = useState(false);
   const [isEditingEvent, setIsEditingEvent] = useState(false);
-  const [isSavingEvent, setIsSavingEvent] = useState(false);
   const [modalActiveTab, setModalActiveTab] = useState('general'); // 'general', 'distance', 'route', 'schedule'
-  
+
   const [eventFormData, setEventFormData] = useState({
     id: '',
     epNumber: 2,
@@ -95,6 +94,8 @@ export function AdminPortal({
     locationName: 'ริมแม่น้ำปิง หน้าสะพานสมโภชกรุงรัตนโกสินทร์ 200 ปี จ.ตาก',
     locationMapUrl: 'https://maps.google.com/?q=Tak+Ping+River',
     coverImage: 'https://images.unsplash.com/photo-1452626038306-9aae5e071dd3?auto=format&fit=crop&w=1200&q=80',
+    coverAspectRatio: '16:9',
+    coverFit: 'cover',
     status: 'open', // 'open', 'closed', 'completed'
     isActive: false,
 
@@ -239,9 +240,9 @@ export function AdminPortal({
   const handleLogin = async (e) => {
     e.preventDefault();
     setLoginError('');
-    const res = await DataService.loginAdmin({ 
-      username: adminUsername, 
-      password: adminPassword 
+    const res = await DataService.loginAdmin({
+      username: adminUsername,
+      password: adminPassword
     });
     if (res.success) {
       setIsAuthenticated(true);
@@ -371,14 +372,16 @@ export function AdminPortal({
     setEventFormData({
       id: `ep-${Date.now()}`,
       epNumber: nextEp,
-      title: isPast 
-        ? `TAK City Run EP.${String(nextEp).padStart(2, '0')} - งานวิ่งในอดีต` 
+      title: isPast
+        ? `TAK City Run EP.${String(nextEp).padStart(2, '0')} - งานวิ่งในอดีต`
         : `TAK City Run EP.${String(nextEp).padStart(2, '0')} - งานวิ่งใหม่เมืองตาก`,
       subtitle: isPast ? 'บันทึกประวัติความประทับใจงานวิ่งที่ผ่านมา' : 'วิ่งเปิดเมืองตาก เชื่อมสัมพันธ์ ชุมชนสุขภาพดี',
       eventDate: '2026-12-15T05:30',
       locationName: 'ริมแม่น้ำปิง หน้าสะพานสมโภชกรุงรัตนโกสินทร์ 200 ปี จ.ตาก',
       locationMapUrl: 'https://maps.google.com/?q=Tak+Ping+River',
       coverImage: 'https://images.unsplash.com/photo-1452626038306-9aae5e071dd3?auto=format&fit=crop&w=1200&q=80',
+      coverAspectRatio: '16:9',
+      coverFit: 'cover',
       status: isPast ? 'completed' : 'open',
       isActive: false,
 
@@ -411,14 +414,16 @@ export function AdminPortal({
   const handleOpenEditEvent = (event) => {
     setIsEditingEvent(true);
     setModalActiveTab('general');
-    
+
     // Parse highlights text
-    const highlightsText = Array.isArray(event.routeHighlights) 
-      ? event.routeHighlights.join(', ') 
+    const highlightsText = Array.isArray(event.routeHighlights)
+      ? event.routeHighlights.join(', ')
       : (typeof event.routeHighlights === 'string' ? event.routeHighlights : '');
 
     setEventFormData({
       ...event,
+      coverAspectRatio: event.coverAspectRatio || '16:9',
+      coverFit: event.coverFit || 'cover',
       distanceKm: Number(event.distanceKm ?? 5.8),
       distanceLabel: event.distanceLabel || `City Run ${event.distanceKm || 5.8}K`,
       quota: Number(event.quota ?? 500),
@@ -454,6 +459,8 @@ export function AdminPortal({
 
     const payload = {
       ...eventFormData,
+      coverAspectRatio: eventFormData.coverAspectRatio || '16:9',
+      coverFit: eventFormData.coverFit || 'cover',
       distanceKm: Number(eventFormData.distanceKm || 5.8),
       distanceLabel: eventFormData.distanceLabel || `City Run ${eventFormData.distanceKm || 5.8}K`,
       quota: Number(eventFormData.quota || 500),
@@ -464,8 +471,6 @@ export function AdminPortal({
       elevationGain: eventFormData.elevationGain || '+12 ม. (ทางราบ 95%)',
       routeHighlights: highlightsArray
     };
-
-    setIsSavingEvent(true);
 
     try {
       if (isEditingEvent) {
@@ -482,8 +487,6 @@ export function AdminPortal({
     } catch (err) {
       console.error(err);
       showToast('เกิดข้อผิดพลาดในการบันทึกงานวิ่ง', false);
-    } finally {
-      setIsSavingEvent(false);
     }
   };
 
@@ -599,8 +602,8 @@ export function AdminPortal({
     const link = document.createElement('a');
     link.href = url;
     const selectedEv = events.find(e => e.id === filterEventId);
-    const fileName = filterEventId === 'all' 
-      ? 'TAK_City_Run_ALL_EPISODES_Runners.csv' 
+    const fileName = filterEventId === 'all'
+      ? 'TAK_City_Run_ALL_EPISODES_Runners.csv'
       : `TAK_City_Run_EP${String(selectedEv?.epNumber || '02').padStart(2, '0')}_Runners.csv`;
     link.setAttribute('download', fileName);
     document.body.appendChild(link);
@@ -691,13 +694,13 @@ export function AdminPortal({
   const filteredRunners = registrations.filter(r => {
     const matchesEvent = filterEventId === 'all' || r.eventId === filterEventId;
 
-    const matchesQuery = !searchQuery || 
+    const matchesQuery = !searchQuery ||
       (r.bibNumber && r.bibNumber.toLowerCase().includes(searchQuery.toLowerCase())) ||
       (r.fullName && r.fullName.toLowerCase().includes(searchQuery.toLowerCase())) ||
       (r.phone && r.phone.includes(searchQuery));
 
-    const matchesCheckIn = filterCheckIn === 'all' || 
-      (filterCheckIn === 'checked' && r.checkedIn) || 
+    const matchesCheckIn = filterCheckIn === 'all' ||
+      (filterCheckIn === 'checked' && r.checkedIn) ||
       (filterCheckIn === 'pending' && !r.checkedIn);
 
     return matchesEvent && matchesQuery && matchesCheckIn;
@@ -735,8 +738,8 @@ export function AdminPortal({
           <form onSubmit={handleLogin}>
             <div className="form-group">
               <label className="form-label">ชื่อผู้ใช้งาน (Username) *</label>
-              <input 
-                type="text" 
+              <input
+                type="text"
                 className="form-control"
                 placeholder="เช่น admin, staff_tak"
                 value={adminUsername}
@@ -748,8 +751,8 @@ export function AdminPortal({
 
             <div className="form-group">
               <label className="form-label">รหัสผ่าน (Password) *</label>
-              <input 
-                type="password" 
+              <input
+                type="password"
                 className="form-control"
                 placeholder="กรอกรหัสผ่านของคุณ"
                 value={adminPassword}
@@ -824,8 +827,8 @@ export function AdminPortal({
               </div>
             </div>
           )}
-          <button 
-            className="btn btn-secondary btn-sm" 
+          <button
+            className="btn btn-secondary btn-sm"
             onClick={() => {
               setChangePasswordError('');
               setChangePasswordForm({ currentPassword: '', newPassword: '', confirmPassword: '' });
@@ -849,8 +852,8 @@ export function AdminPortal({
         <div className="stat-card">
           <div className="stat-val" style={{ color: 'var(--primary)' }}>{totalRunners}</div>
           <div className="stat-label">
-            {filterEventId === 'all' 
-              ? 'ยอดนักวิ่งทุกรอบรวมกัน (คน)' 
+            {filterEventId === 'all'
+              ? 'ยอดนักวิ่งทุกรอบรวมกัน (คน)'
               : `ยอดนักวิ่ง EP.${String(events.find(e => e.id === filterEventId)?.epNumber || '02').padStart(2, '0')} (คน)`}
           </div>
         </div>
@@ -873,63 +876,63 @@ export function AdminPortal({
 
       {/* Admin Navigation Tabs */}
       <div className="admin-nav-tabs">
-        <button 
+        <button
           className={`admin-tab ${activeTab === 'events' ? 'active' : ''}`}
           onClick={() => setActiveTab('events')}
         >
           <Calendar size={16} /> งานวิ่ง & แผนที่ ({events.length})
         </button>
 
-        <button 
+        <button
           className={`admin-tab ${activeTab === 'runners' ? 'active' : ''}`}
           onClick={() => setActiveTab('runners')}
         >
           <Users size={16} /> รายชื่อนักวิ่ง ({registrations.length})
         </button>
 
-        <button 
+        <button
           className={`admin-tab ${activeTab === 'scanner' ? 'active' : ''}`}
           onClick={() => setActiveTab('scanner')}
         >
           <QrCode size={16} /> โต๊ะเช็คอิน
         </button>
 
-        <button 
+        <button
           className={`admin-tab ${activeTab === 'coupon' ? 'active' : ''}`}
           onClick={() => setActiveTab('coupon')}
         >
           <Gift size={16} /> 🎟️ ปรับแต่งคูปอง
         </button>
 
-        <button 
+        <button
           className={`admin-tab ${activeTab === 'sponsors' ? 'active' : ''}`}
           onClick={() => setActiveTab('sponsors')}
         >
           <HeartHandshake size={16} /> ผู้สนับสนุน ({sponsorsList.length})
         </button>
 
-        <button 
+        <button
           className={`admin-tab ${activeTab === 'market' ? 'active' : ''}`}
           onClick={() => setActiveTab('market')}
         >
           <Store size={16} /> ร้านค้า & กิจกรรม ({shopsList.length})
         </button>
 
-        <button 
+        <button
           className={`admin-tab ${activeTab === 'gallery' ? 'active' : ''}`}
           onClick={() => setActiveTab('gallery')}
         >
           <ImageIcon size={16} /> แกลเลอรีภาพ ({galleryList.length})
         </button>
 
-        <button 
+        <button
           className={`admin-tab ${activeTab === 'admins' ? 'active' : ''}`}
           onClick={() => setActiveTab('admins')}
         >
           <Key size={16} /> จัดการแอดมิน ({adminUsersList.length})
         </button>
 
-        <button 
+        <button
           className={`admin-tab ${activeTab === 'settings' ? 'active' : ''}`}
           onClick={() => setActiveTab('settings')}
         >
@@ -962,10 +965,10 @@ export function AdminPortal({
 
           <div className="admin-events-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 340px), 1fr))', gap: '24px' }}>
             {events.map((ev) => (
-              <div 
-                key={ev.id} 
-                className="glass-card" 
-                style={{ 
+              <div
+                key={ev.id}
+                className="glass-card"
+                style={{
                   border: ev.isActive ? '2px solid var(--primary)' : '1px solid var(--dark-border)',
                   display: 'flex',
                   flexDirection: 'column',
@@ -987,7 +990,7 @@ export function AdminPortal({
                     </div>
 
                     <div style={{ display: 'flex', gap: '6px' }}>
-                      <button 
+                      <button
                         className="btn btn-primary btn-sm"
                         style={{ padding: '6px 12px', fontSize: '0.85rem' }}
                         onClick={() => handleOpenEditEvent(ev)}
@@ -995,7 +998,7 @@ export function AdminPortal({
                       >
                         <Edit size={14} /> แก้ไขงานวิ่ง & แผนที่
                       </button>
-                      <button 
+                      <button
                         className="btn btn-secondary btn-sm"
                         style={{ padding: '6px 10px', color: '#F87171' }}
                         onClick={() => handleDeleteEvent(ev.id, ev.title)}
@@ -1053,9 +1056,9 @@ export function AdminPortal({
                       )}
                     </div>
                     {ev.routeImageUrl && (
-                      <img 
-                        src={ev.routeImageUrl} 
-                        alt="แผนที่เส้นทาง" 
+                      <img
+                        src={ev.routeImageUrl}
+                        alt="แผนที่เส้นทาง"
                         style={{ width: '100%', height: '120px', objectFit: 'cover', borderRadius: 'var(--radius-sm)' }}
                       />
                     )}
@@ -1089,7 +1092,7 @@ export function AdminPortal({
                 {/* Footer of Card */}
                 <div style={{ paddingTop: '16px', borderTop: '1px solid var(--dark-border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                   {!ev.isActive ? (
-                    <button 
+                    <button
                       className="btn btn-outline btn-sm"
                       onClick={() => handleSetActiveEvent(ev.id)}
                     >
@@ -1117,14 +1120,14 @@ export function AdminPortal({
       {activeTab === 'runners' && (
         <div className="glass-card">
           {/* Event / Episode Round Filter Selector */}
-          <div style={{ 
-            display: 'flex', 
-            alignItems: 'center', 
-            gap: '8px', 
-            flexWrap: 'wrap', 
-            paddingBottom: '10px', 
-            marginBottom: '18px', 
-            borderBottom: '1px solid rgba(255, 255, 255, 0.08)' 
+          <div style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '8px',
+            flexWrap: 'wrap',
+            paddingBottom: '10px',
+            marginBottom: '18px',
+            borderBottom: '1px solid rgba(255, 255, 255, 0.08)'
           }}>
             <span style={{ fontSize: '0.85rem', color: 'var(--text-muted)', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '6px', whiteSpace: 'nowrap' }}>
               <Calendar size={15} /> เลือกรอบวิ่ง (Episode):
@@ -1147,10 +1150,10 @@ export function AdminPortal({
                   key={ev.id}
                   type="button"
                   className={`btn btn-sm ${isSelected ? 'btn-primary' : 'btn-secondary'}`}
-                  style={{ 
-                    padding: '5px 14px', 
-                    borderRadius: '999px', 
-                    fontSize: '0.82rem', 
+                  style={{
+                    padding: '5px 14px',
+                    borderRadius: '999px',
+                    fontSize: '0.82rem',
                     whiteSpace: 'nowrap',
                     border: ev.isActive ? '1.5px solid var(--primary)' : undefined
                   }}
@@ -1167,9 +1170,9 @@ export function AdminPortal({
             <div className="runners-search-group" style={{ display: 'flex', gap: '10px', flex: 1, minWidth: '280px' }}>
               <div style={{ position: 'relative', flex: 1 }}>
                 <Search size={18} style={{ position: 'absolute', left: '12px', top: '12px', color: 'var(--text-muted)' }} />
-                <input 
-                  type="text" 
-                  className="form-control" 
+                <input
+                  type="text"
+                  className="form-control"
                   style={{ paddingLeft: '38px' }}
                   placeholder="ค้นหาชื่อ, เบอร์โทร, หรือเลขคูปอง..."
                   value={searchQuery}
@@ -1177,8 +1180,8 @@ export function AdminPortal({
                 />
               </div>
 
-              <select 
-                className="form-control runners-filter-select" 
+              <select
+                className="form-control runners-filter-select"
                 style={{ width: '160px' }}
                 value={filterCheckIn}
                 onChange={(e) => setFilterCheckIn(e.target.value)}
@@ -1190,9 +1193,9 @@ export function AdminPortal({
             </div>
 
             <div className="runners-action-buttons" style={{ display: 'flex', gap: '10px' }}>
-              <button 
-                type="button" 
-                className="btn btn-secondary" 
+              <button
+                type="button"
+                className="btn btn-secondary"
                 onClick={loadAllAdminData}
                 title="รีเฟรชข้อมูลรายชื่อผู้สมัครล่าสุดทันที"
               >
@@ -1235,71 +1238,71 @@ export function AdminPortal({
                   filteredRunners.map((runner) => {
                     const evInfo = events.find(e => e.id === runner.eventId);
                     return (
-                    <tr key={runner.id}>
-                      <td>
-                        <span 
-                          className={`badge-tag ${runner.eventId === activeEvent?.id ? 'cyan' : ''}`}
-                          style={{ margin: 0, fontSize: '0.74rem', padding: '2px 8px', whiteSpace: 'nowrap' }}
-                        >
-                          EP.{String(evInfo?.epNumber || '02').padStart(2, '0')}
-                        </span>
-                      </td>
-                      <td>
-                        <strong style={{ fontFamily: 'var(--font-heading)', color: '#F59E0B', fontSize: '1.05rem' }}>
-                          {runner.bibNumber}
-                        </strong>
-                      </td>
-                      <td>
-                        <div style={{ fontWeight: 600, color: '#FFF' }}>{runner.fullName}</div>
-                        {runner.nickname && <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>({runner.nickname})</div>}
-                      </td>
-                      <td>{runner.phone}</td>
-                      <td>
-                        <span style={{ padding: '3px 8px', borderRadius: '4px', background: 'rgba(255, 85, 0, 0.1)', color: 'var(--primary)', fontWeight: 700, fontSize: '0.85rem' }}>
-                          {runner.distanceLabel || `${activeEvent?.distanceKm || 5.8}K`}
-                        </span>
-                      </td>
-                      <td>{runner.shirtSize || '-'}</td>
-                      <td>
-                        <div style={{ fontSize: '0.85rem' }}>{runner.emergencyContact || '-'}</div>
-                        <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>{runner.emergencyPhone || ''}</div>
-                      </td>
-                      <td>
-                        <span style={{ fontSize: '0.82rem', color: runner.medicalNotes && runner.medicalNotes !== '-' ? '#F87171' : 'var(--text-muted)' }}>
-                          {runner.medicalNotes || '-'}
-                        </span>
-                      </td>
-                      <td>
-                        {runner.checkedIn ? (
-                          <span className="badge-tag green" style={{ margin: 0, fontSize: '0.75rem', padding: '3px 8px' }}>
-                            <CheckCircle size={12} /> เช็คอินแล้ว
-                          </span>
-                        ) : (
-                          <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>
-                            ยังไม่เช็คอิน
-                          </span>
-                        )}
-                      </td>
-                      <td>
-                        <div style={{ display: 'flex', gap: '6px' }}>
-                          <button 
-                            className={`btn btn-sm ${runner.checkedIn ? 'btn-secondary' : 'btn-primary'}`}
-                            onClick={() => handleToggleCheckIn(runner.id)}
-                            style={{ padding: '4px 10px', fontSize: '0.8rem' }}
+                      <tr key={runner.id}>
+                        <td>
+                          <span
+                            className={`badge-tag ${runner.eventId === activeEvent?.id ? 'cyan' : ''}`}
+                            style={{ margin: 0, fontSize: '0.74rem', padding: '2px 8px', whiteSpace: 'nowrap' }}
                           >
-                            {runner.checkedIn ? 'ยกเลิก' : 'เช็คอิน'}
-                          </button>
-                          <button 
-                            className="btn btn-secondary btn-sm"
-                            onClick={() => handleDeleteRunner(runner.id, runner.fullName)}
-                            style={{ padding: '4px 8px', color: '#F87171' }}
-                            title="ลบรายชื่อ"
-                          >
-                            <Trash2 size={14} />
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
+                            EP.{String(evInfo?.epNumber || '02').padStart(2, '0')}
+                          </span>
+                        </td>
+                        <td>
+                          <strong style={{ fontFamily: 'var(--font-heading)', color: '#F59E0B', fontSize: '1.05rem' }}>
+                            {runner.bibNumber}
+                          </strong>
+                        </td>
+                        <td>
+                          <div style={{ fontWeight: 600, color: '#FFF' }}>{runner.fullName}</div>
+                          {runner.nickname && <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>({runner.nickname})</div>}
+                        </td>
+                        <td>{runner.phone}</td>
+                        <td>
+                          <span style={{ padding: '3px 8px', borderRadius: '4px', background: 'rgba(255, 85, 0, 0.1)', color: 'var(--primary)', fontWeight: 700, fontSize: '0.85rem' }}>
+                            {runner.distanceLabel || `${activeEvent?.distanceKm || 5.8}K`}
+                          </span>
+                        </td>
+                        <td>{runner.shirtSize || '-'}</td>
+                        <td>
+                          <div style={{ fontSize: '0.85rem' }}>{runner.emergencyContact || '-'}</div>
+                          <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>{runner.emergencyPhone || ''}</div>
+                        </td>
+                        <td>
+                          <span style={{ fontSize: '0.82rem', color: runner.medicalNotes && runner.medicalNotes !== '-' ? '#F87171' : 'var(--text-muted)' }}>
+                            {runner.medicalNotes || '-'}
+                          </span>
+                        </td>
+                        <td>
+                          {runner.checkedIn ? (
+                            <span className="badge-tag green" style={{ margin: 0, fontSize: '0.75rem', padding: '3px 8px' }}>
+                              <CheckCircle size={12} /> เช็คอินแล้ว
+                            </span>
+                          ) : (
+                            <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>
+                              ยังไม่เช็คอิน
+                            </span>
+                          )}
+                        </td>
+                        <td>
+                          <div style={{ display: 'flex', gap: '6px' }}>
+                            <button
+                              className={`btn btn-sm ${runner.checkedIn ? 'btn-secondary' : 'btn-primary'}`}
+                              onClick={() => handleToggleCheckIn(runner.id)}
+                              style={{ padding: '4px 10px', fontSize: '0.8rem' }}
+                            >
+                              {runner.checkedIn ? 'ยกเลิก' : 'เช็คอิน'}
+                            </button>
+                            <button
+                              className="btn btn-secondary btn-sm"
+                              onClick={() => handleDeleteRunner(runner.id, runner.fullName)}
+                              style={{ padding: '4px 8px', color: '#F87171' }}
+                              title="ลบรายชื่อ"
+                            >
+                              <Trash2 size={14} />
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
                     );
                   })
                 )}
@@ -1328,8 +1331,8 @@ export function AdminPortal({
           {/* Quick Round Selector for Desk */}
           <div style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', background: 'rgba(255, 255, 255, 0.04)', padding: '6px 14px', borderRadius: '999px', marginBottom: '24px' }}>
             <span style={{ fontSize: '0.82rem', color: 'var(--text-muted)' }}>เช็คอินประจำรอบ:</span>
-            <select 
-              className="form-control" 
+            <select
+              className="form-control"
               style={{ width: 'auto', padding: '4px 10px', fontSize: '0.84rem', height: 'auto', background: 'transparent' }}
               value={filterEventId}
               onChange={(e) => setFilterEventId(e.target.value)}
@@ -1342,8 +1345,8 @@ export function AdminPortal({
           </div>
 
           <form onSubmit={handleQuickCheckIn} style={{ display: 'flex', gap: '10px', marginBottom: '24px' }}>
-            <input 
-              type="text" 
+            <input
+              type="text"
               className="form-control"
               style={{ fontSize: '1.25rem', textAlign: 'center', letterSpacing: '1px' }}
               placeholder="พิมพ์เลขคูปอง หรือ เบอร์โทร..."
@@ -1389,7 +1392,7 @@ export function AdminPortal({
                   </div>
                 </div>
 
-                <button 
+                <button
                   className="btn btn-secondary btn-sm"
                   style={{ color: '#F87171', padding: '8px' }}
                   onClick={() => handleDeleteSponsor(sp.id)}
@@ -1430,8 +1433,8 @@ export function AdminPortal({
                     </span>
                     <h4 style={{ fontSize: '1.15rem', color: '#FFF', margin: '4px 0' }}>{item.name}</h4>
                   </div>
-                  <button 
-                    className="btn btn-secondary btn-sm" 
+                  <button
+                    className="btn btn-secondary btn-sm"
                     style={{ color: '#F87171', padding: '6px' }}
                     onClick={() => handleDeleteShop(item.id)}
                   >
@@ -1476,7 +1479,7 @@ export function AdminPortal({
                     <h5 style={{ fontSize: '0.92rem', color: '#FFF' }}>{g.title}</h5>
                     <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>EP.{g.epNumber}</span>
                   </div>
-                  <button 
+                  <button
                     className="btn btn-secondary btn-sm"
                     style={{ color: '#F87171', padding: '6px' }}
                     onClick={() => handleDeleteGallery(g.id)}
@@ -1503,8 +1506,8 @@ export function AdminPortal({
           <form onSubmit={handleSaveSettings}>
             <div className="form-group">
               <label className="form-label">ชื่อชมรมวิ่ง (Club Name)</label>
-              <input 
-                type="text" 
+              <input
+                type="text"
                 className="form-control"
                 value={settingsForm.clubName || ''}
                 onChange={(e) => setSettingsForm({ ...settingsForm, clubName: e.target.value })}
@@ -1513,8 +1516,8 @@ export function AdminPortal({
 
             <div className="form-group">
               <label className="form-label">สโลแกนชมรม (Tagline)</label>
-              <input 
-                type="text" 
+              <input
+                type="text"
                 className="form-control"
                 value={settingsForm.tagline || ''}
                 onChange={(e) => setSettingsForm({ ...settingsForm, tagline: e.target.value })}
@@ -1523,8 +1526,8 @@ export function AdminPortal({
 
             <div className="form-group">
               <label className="form-label">ที่อยู่รูปภาพ Logo (URL หรือ SVG Path)</label>
-              <input 
-                type="text" 
+              <input
+                type="text"
                 className="form-control"
                 value={settingsForm.logoUrl || ''}
                 onChange={(e) => setSettingsForm({ ...settingsForm, logoUrl: e.target.value })}
@@ -1570,8 +1573,8 @@ export function AdminPortal({
             <div className="form-row">
               <div className="form-group">
                 <label className="form-label">Facebook Fanpage URL</label>
-                <input 
-                  type="text" 
+                <input
+                  type="text"
                   className="form-control"
                   value={settingsForm.facebookUrl || ''}
                   onChange={(e) => setSettingsForm({ ...settingsForm, facebookUrl: e.target.value })}
@@ -1579,8 +1582,8 @@ export function AdminPortal({
               </div>
               <div className="form-group">
                 <label className="form-label">รหัส PIN แอดมิน (เปลี่ยนรหัสเข้าห้องนี้)</label>
-                <input 
-                  type="text" 
+                <input
+                  type="text"
                   className="form-control"
                   value={settingsForm.adminPin || '1234'}
                   onChange={(e) => setSettingsForm({ ...settingsForm, adminPin: e.target.value })}
@@ -1600,90 +1603,90 @@ export function AdminPortal({
          ======================================================== */}
       {activeTab === 'coupon' && (
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '24px', alignItems: 'start' }}>
-            {/* Left Form */}
-            <div className="glass-card" style={{ padding: '28px' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '8px' }}>
-                <span className="badge-tag gold" style={{ margin: 0 }}>
-                  <Gift size={14} /> ปรับแต่งคูปอง
-                </span>
-                <span style={{ fontSize: '0.82rem', color: 'var(--text-muted)' }}>
-                  มีผลต่อคูปองของนักวิ่งทุกคนทันที
-                </span>
-              </div>
-              <h2 style={{ fontSize: '1.4rem', color: '#FFF', marginBottom: '8px' }}>
-                ตั้งค่ารายละเอียดคูปองลุ้นรางวัล & สิทธิประโยชน์
-              </h2>
-              <p style={{ color: 'var(--text-muted)', fontSize: '0.88rem', marginBottom: '24px', lineHeight: 1.5 }}>
-                ปรับแต่งข้อความสิทธิประโยชน์ ของรางวัล Lucky Draw จุดบริการอาหารเช้า และเงื่อนไขที่นักวิ่งจะเห็นบนคูปอง
-              </p>
+          {/* Left Form */}
+          <div className="glass-card" style={{ padding: '28px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '8px' }}>
+              <span className="badge-tag gold" style={{ margin: 0 }}>
+                <Gift size={14} /> ปรับแต่งคูปอง
+              </span>
+              <span style={{ fontSize: '0.82rem', color: 'var(--text-muted)' }}>
+                มีผลต่อคูปองของนักวิ่งทุกคนทันที
+              </span>
+            </div>
+            <h2 style={{ fontSize: '1.4rem', color: '#FFF', marginBottom: '8px' }}>
+              ตั้งค่ารายละเอียดคูปองลุ้นรางวัล & สิทธิประโยชน์
+            </h2>
+            <p style={{ color: 'var(--text-muted)', fontSize: '0.88rem', marginBottom: '24px', lineHeight: 1.5 }}>
+              ปรับแต่งข้อความสิทธิประโยชน์ ของรางวัล Lucky Draw จุดบริการอาหารเช้า และเงื่อนไขที่นักวิ่งจะเห็นบนคูปอง
+            </p>
 
-              <form onSubmit={handleSaveCouponConfig}>
-                {/* Section 1: Header & Badge */}
-                <div style={{ background: 'rgba(255, 255, 255, 0.03)', padding: '16px', borderRadius: 'var(--radius-sm)', border: '1px solid var(--dark-border)', marginBottom: '18px' }}>
-                  <h4 style={{ fontSize: '0.95rem', color: 'var(--primary)', marginBottom: '12px', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                    <Award size={16} /> 1. ข้อความส่วนหัวคูปอง
-                  </h4>
-                  <div className="form-group">
-                    <label className="form-label">ป้ายมุมบนขวา (Badge Tag)</label>
-                    <input 
-                      type="text" 
-                      className="form-control"
-                      placeholder="เช่น 🎟️ LUCKY DRAW PASS"
-                      value={currentCouponConfig.badgeText || ''}
-                      onChange={(e) => setCouponConfigForm(prev => ({ ...defaultCouponConfig, ...(prev || {}), badgeText: e.target.value }))}
-                    />
-                  </div>
-                  <div className="form-group">
-                    <label className="form-label">ชื่อหัวข้อคูปอง (Headline)</label>
-                    <input 
-                      type="text" 
-                      className="form-control"
-                      placeholder="เช่น คูปองลุ้นรางวัล & สิทธิประโยชน์นักวิ่ง"
-                      value={currentCouponConfig.headline || ''}
-                      onChange={(e) => setCouponConfigForm(prev => ({ ...defaultCouponConfig, ...(prev || {}), headline: e.target.value }))}
-                    />
-                  </div>
-                  <div className="form-group" style={{ marginBottom: 0 }}>
-                    <label className="form-label">คำบรรยายใต้หัวข้อ (Subheadline)</label>
-                    <input 
-                      type="text" 
-                      className="form-control"
-                      placeholder="เช่น บัตรดิจิทัลประจำตัวสำหรับลุ้นของรางวัลท้ายงาน และรับอาหารเช้าหน้างาน"
-                      value={currentCouponConfig.subheadline || ''}
-                      onChange={(e) => setCouponConfigForm(prev => ({ ...defaultCouponConfig, ...(prev || {}), subheadline: e.target.value }))}
-                    />
-                  </div>
+            <form onSubmit={handleSaveCouponConfig}>
+              {/* Section 1: Header & Badge */}
+              <div style={{ background: 'rgba(255, 255, 255, 0.03)', padding: '16px', borderRadius: 'var(--radius-sm)', border: '1px solid var(--dark-border)', marginBottom: '18px' }}>
+                <h4 style={{ fontSize: '0.95rem', color: 'var(--primary)', marginBottom: '12px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  <Award size={16} /> 1. ข้อความส่วนหัวคูปอง
+                </h4>
+                <div className="form-group">
+                  <label className="form-label">ป้ายมุมบนขวา (Badge Tag)</label>
+                  <input
+                    type="text"
+                    className="form-control"
+                    placeholder="เช่น 🎟️ LUCKY DRAW PASS"
+                    value={currentCouponConfig.badgeText || ''}
+                    onChange={(e) => setCouponConfigForm(prev => ({ ...defaultCouponConfig, ...(prev || {}), badgeText: e.target.value }))}
+                  />
                 </div>
+                <div className="form-group">
+                  <label className="form-label">ชื่อหัวข้อคูปอง (Headline)</label>
+                  <input
+                    type="text"
+                    className="form-control"
+                    placeholder="เช่น คูปองลุ้นรางวัล & สิทธิประโยชน์นักวิ่ง"
+                    value={currentCouponConfig.headline || ''}
+                    onChange={(e) => setCouponConfigForm(prev => ({ ...defaultCouponConfig, ...(prev || {}), headline: e.target.value }))}
+                  />
+                </div>
+                <div className="form-group" style={{ marginBottom: 0 }}>
+                  <label className="form-label">คำบรรยายใต้หัวข้อ (Subheadline)</label>
+                  <input
+                    type="text"
+                    className="form-control"
+                    placeholder="เช่น บัตรดิจิทัลประจำตัวสำหรับลุ้นของรางวัลท้ายงาน และรับอาหารเช้าหน้างาน"
+                    value={currentCouponConfig.subheadline || ''}
+                    onChange={(e) => setCouponConfigForm(prev => ({ ...defaultCouponConfig, ...(prev || {}), subheadline: e.target.value }))}
+                  />
+                </div>
+              </div>
 
-                {/* Section 2: Perks Breakdown */}
-                <div style={{ background: 'rgba(255, 255, 255, 0.03)', padding: '16px', borderRadius: 'var(--radius-sm)', border: '1px solid var(--dark-border)', marginBottom: '18px' }}>
-                  <h4 style={{ fontSize: '0.95rem', color: '#F59E0B', marginBottom: '12px', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                    <Sparkles size={16} /> 2. รายการสิทธิประโยชน์ 3 ข้อ
-                  </h4>
+              {/* Section 2: Perks Breakdown */}
+              <div style={{ background: 'rgba(255, 255, 255, 0.03)', padding: '16px', borderRadius: 'var(--radius-sm)', border: '1px solid var(--dark-border)', marginBottom: '18px' }}>
+                <h4 style={{ fontSize: '0.95rem', color: '#F59E0B', marginBottom: '12px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  <Sparkles size={16} /> 2. รายการสิทธิประโยชน์ 3 ข้อ
+                </h4>
 
-                  <div className="form-group">
-                    <label className="form-label">หัวข้อส่วนสิทธิประโยชน์</label>
-                    <input 
-                      type="text" 
-                      className="form-control"
-                      value={currentCouponConfig.perksTitle || ''}
-                      onChange={(e) => setCouponConfigForm(prev => ({ ...defaultCouponConfig, ...(prev || {}), perksTitle: e.target.value }))}
-                    />
-                  </div>
+                <div className="form-group">
+                  <label className="form-label">หัวข้อส่วนสิทธิประโยชน์</label>
+                  <input
+                    type="text"
+                    className="form-control"
+                    value={currentCouponConfig.perksTitle || ''}
+                    onChange={(e) => setCouponConfigForm(prev => ({ ...defaultCouponConfig, ...(prev || {}), perksTitle: e.target.value }))}
+                  />
+                </div>
 
                 {/* Perk 1 */}
                 <div style={{ borderLeft: '3px solid #F59E0B', paddingLeft: '12px', marginBottom: '14px' }}>
                   <label className="form-label" style={{ color: '#F59E0B' }}>สิทธิประโยชน์ที่ 1 (ของรางวัล Lucky Draw)</label>
-                  <input 
-                    type="text" 
+                  <input
+                    type="text"
                     className="form-control"
                     style={{ marginBottom: '6px' }}
                     placeholder="ชื่อสิทธิประโยชน์ 1"
                     value={currentCouponConfig.perk1Title || ''}
                     onChange={(e) => setCouponConfigForm(prev => ({ ...defaultCouponConfig, ...(prev || {}), perk1Title: e.target.value }))}
                   />
-                  <input 
-                    type="text" 
+                  <input
+                    type="text"
                     className="form-control"
                     placeholder="รายละเอียดเพิ่มเติม"
                     value={currentCouponConfig.perk1Desc || ''}
@@ -1694,16 +1697,16 @@ export function AdminPortal({
                 {/* Perk 2 */}
                 <div style={{ borderLeft: '3px solid #10B981', paddingLeft: '12px', marginBottom: '14px' }}>
                   <label className="form-label" style={{ color: '#10B981' }}>สิทธิประโยชน์ที่ 2 (อาหารเช้า & เครื่องดื่ม)</label>
-                  <input 
-                    type="text" 
+                  <input
+                    type="text"
                     className="form-control"
                     style={{ marginBottom: '6px' }}
                     placeholder="ชื่อสิทธิประโยชน์ 2"
                     value={currentCouponConfig.perk2Title || ''}
                     onChange={(e) => setCouponConfigForm(prev => ({ ...defaultCouponConfig, ...(prev || {}), perk2Title: e.target.value }))}
                   />
-                  <input 
-                    type="text" 
+                  <input
+                    type="text"
                     className="form-control"
                     placeholder="รายละเอียดเพิ่มเติม"
                     value={currentCouponConfig.perk2Desc || ''}
@@ -1714,16 +1717,16 @@ export function AdminPortal({
                 {/* Perk 3 */}
                 <div style={{ borderLeft: '3px solid var(--cyan)', paddingLeft: '12px' }}>
                   <label className="form-label" style={{ color: 'var(--cyan)' }}>สิทธิประโยชน์ที่ 3 (ส่วนลดร้านค้าชุมชน)</label>
-                  <input 
-                    type="text" 
+                  <input
+                    type="text"
                     className="form-control"
                     style={{ marginBottom: '6px' }}
                     placeholder="ชื่อสิทธิประโยชน์ 3"
                     value={currentCouponConfig.perk3Title || ''}
                     onChange={(e) => setCouponConfigForm(prev => ({ ...defaultCouponConfig, ...(prev || {}), perk3Title: e.target.value }))}
                   />
-                  <input 
-                    type="text" 
+                  <input
+                    type="text"
                     className="form-control"
                     placeholder="รายละเอียดเพิ่มเติม"
                     value={currentCouponConfig.perk3Desc || ''}
@@ -1738,8 +1741,8 @@ export function AdminPortal({
                   3. คำแนะนำ / เงื่อนไขท้ายคูปอง
                 </h4>
                 <div className="form-group" style={{ marginBottom: 0 }}>
-                  <textarea 
-                    className="form-control" 
+                  <textarea
+                    className="form-control"
                     rows={3}
                     placeholder="แสดงคูปองนี้ต่อเจ้าหน้าที่หน้างานเพื่อรับอาหารเช้าและสิทธิ์ร่วมจับสลาก Lucky Draw"
                     value={currentCouponConfig.noticeText || ''}
@@ -1752,8 +1755,8 @@ export function AdminPortal({
                 <button type="submit" className="btn btn-primary btn-lg" style={{ flex: 1 }}>
                   <Check size={18} /> บันทึกการปรับแต่งคูปอง
                 </button>
-                <button 
-                  type="button" 
+                <button
+                  type="button"
                   className="btn btn-secondary"
                   onClick={() => setCouponConfigForm(defaultCouponConfig)}
                   title="คืนค่าเป็นค่าเริ่มต้น"
@@ -1770,7 +1773,7 @@ export function AdminPortal({
             <div style={{ textAlign: 'center', marginBottom: '12px', fontSize: '0.85rem', color: 'var(--text-muted)' }}>
               👁️ ตัวอย่างคูปองแบบเรียลไทม์ (Live Preview ที่นักวิ่งจะเห็น)
             </div>
-            
+
             <div className="coupon-ticket" style={{ maxWidth: '420px', margin: '0 auto' }}>
               <div className="coupon-header">
                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
@@ -1861,7 +1864,7 @@ export function AdminPortal({
                 สร้างบัญชีผู้ใช้งานและรหัสผ่านให้ทีมงาน โดยไม่ต้องใช้อีเมล และทีมงานสามารถเข้ามาเปลี่ยนรหัสผ่านเองได้
               </p>
             </div>
-            <button 
+            <button
               className="btn btn-primary btn-sm"
               onClick={() => {
                 setNewAdminError('');
@@ -1875,7 +1878,7 @@ export function AdminPortal({
 
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: '16px' }}>
             {adminUsersList.map(u => (
-              <div 
+              <div
                 key={u.id || u.username}
                 className="glass-card"
                 style={{ padding: '20px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}
@@ -1886,7 +1889,7 @@ export function AdminPortal({
                       {u.role === 'superadmin' ? '👑 Superadmin' : '🛡️ Staff แอดมิน'}
                     </span>
                     {u.username.toLowerCase() !== 'admin' && (
-                      <button 
+                      <button
                         className="btn btn-secondary btn-sm"
                         style={{ color: '#F87171', padding: '4px 8px' }}
                         onClick={() => handleDeleteAdminUser(u.id, u.username)}
@@ -1911,8 +1914,8 @@ export function AdminPortal({
                 </div>
 
                 <div style={{ marginTop: '16px', display: 'flex', gap: '8px' }}>
-                  <button 
-                    className="btn btn-secondary btn-sm" 
+                  <button
+                    className="btn btn-secondary btn-sm"
                     style={{ flex: 1, fontSize: '0.82rem' }}
                     onClick={() => {
                       const newPass = prompt(`ตั้งรหัสผ่านใหม่สำหรับ @${u.username}:`, '');
@@ -1965,7 +1968,7 @@ export function AdminPortal({
 
             {/* Modal Internal Tabs */}
             <div style={{ display: 'flex', gap: '8px', borderBottom: '1px solid var(--dark-border)', paddingBottom: '12px', marginBottom: '22px', overflowX: 'auto' }}>
-              <button 
+              <button
                 type="button"
                 className={`admin-tab ${modalActiveTab === 'general' ? 'active' : ''}`}
                 style={{ padding: '8px 16px', fontSize: '0.88rem', whiteSpace: 'nowrap' }}
@@ -1973,7 +1976,7 @@ export function AdminPortal({
               >
                 1. 📋 ข้อมูลทั่วไป
               </button>
-              <button 
+              <button
                 type="button"
                 className={`admin-tab ${modalActiveTab === 'distance' ? 'active' : ''}`}
                 style={{ padding: '8px 16px', fontSize: '0.88rem', whiteSpace: 'nowrap' }}
@@ -1981,7 +1984,7 @@ export function AdminPortal({
               >
                 2. 🏃 ระยะทาง & โควตา
               </button>
-              <button 
+              <button
                 type="button"
                 className={`admin-tab ${modalActiveTab === 'route' ? 'active' : ''}`}
                 style={{ padding: '8px 16px', fontSize: '0.88rem', whiteSpace: 'nowrap' }}
@@ -1989,7 +1992,7 @@ export function AdminPortal({
               >
                 3. 🗺️ แผนที่ & จุดบริการ
               </button>
-              <button 
+              <button
                 type="button"
                 className={`admin-tab ${modalActiveTab === 'schedule' ? 'active' : ''}`}
                 style={{ padding: '8px 16px', fontSize: '0.88rem', whiteSpace: 'nowrap' }}
@@ -2006,8 +2009,8 @@ export function AdminPortal({
                   <div className="form-row">
                     <div className="form-group">
                       <label className="form-label">Episode ลำดับที่ *</label>
-                      <input 
-                        type="number" 
+                      <input
+                        type="number"
                         className="form-control"
                         value={eventFormData.epNumber}
                         onChange={(e) => setEventFormData({ ...eventFormData, epNumber: Number(e.target.value) })}
@@ -2016,7 +2019,7 @@ export function AdminPortal({
                     </div>
                     <div className="form-group">
                       <label className="form-label">สถานะงานวิ่ง *</label>
-                      <select 
+                      <select
                         className="form-control"
                         value={eventFormData.status}
                         onChange={(e) => setEventFormData({ ...eventFormData, status: e.target.value })}
@@ -2030,8 +2033,8 @@ export function AdminPortal({
 
                   <div className="form-group">
                     <label className="form-label">ชื่องานวิ่ง Episode *</label>
-                    <input 
-                      type="text" 
+                    <input
+                      type="text"
                       className="form-control"
                       placeholder="เช่น TAK City Run EP.02 - ปั่นปันรัก วิ่งรับลมหนาว ริมแม่น้ำปิง"
                       value={eventFormData.title}
@@ -2042,8 +2045,8 @@ export function AdminPortal({
 
                   <div className="form-group">
                     <label className="form-label">คำโปรย / สโลแกนประจำ EP</label>
-                    <input 
-                      type="text" 
+                    <input
+                      type="text"
                       className="form-control"
                       placeholder="เช่น วิ่งสัมผัสสายหมอกและลมหนาวเลียบสะพาน 200 ปี"
                       value={eventFormData.subtitle}
@@ -2053,8 +2056,8 @@ export function AdminPortal({
 
                   <div className="form-group">
                     <label className="form-label">วันและเวลาปล่อยตัว *</label>
-                    <input 
-                      type="datetime-local" 
+                    <input
+                      type="datetime-local"
                       className="form-control"
                       value={eventFormData.eventDate ? eventFormData.eventDate.substring(0, 16) : ''}
                       onChange={(e) => setEventFormData({ ...eventFormData, eventDate: e.target.value })}
@@ -2070,7 +2073,12 @@ export function AdminPortal({
                     folder="covers"
                     placeholder="https://... หรือวางลิงก์ Google Drive"
                     helpText="อัปโหลดรูปจากเครื่อง หรือวางลิงก์ Google Drive (ระบบจะแปลงลิงก์ให้อัตโนมัติ)"
-                    previewHeight="200px"
+                    aspectRatio={eventFormData.coverAspectRatio || '16:9'}
+                    onAspectRatioChange={(ratio) => setEventFormData({ ...eventFormData, coverAspectRatio: ratio })}
+                    fitMode={eventFormData.coverFit || 'cover'}
+                    onFitModeChange={(mode) => setEventFormData({ ...eventFormData, coverFit: mode })}
+                    showAspectRatioSelector={true}
+                    previewHeight="220px"
                     samples={[
                       { label: 'ภาพนักวิ่งยามเช้า', url: 'https://images.unsplash.com/photo-1452626038306-9aae5e071dd3?auto=format&fit=crop&w=1200&q=80' },
                       { label: 'ภาพริมน้ำปิง', url: 'https://images.unsplash.com/photo-1476480862126-209bfaa8edc8?auto=format&fit=crop&w=1200&q=80' }
@@ -2079,8 +2087,8 @@ export function AdminPortal({
 
                   <div className="form-group">
                     <label className="form-label">สถานที่จัดงาน & จุดปล่อยตัว *</label>
-                    <input 
-                      type="text" 
+                    <input
+                      type="text"
                       className="form-control"
                       placeholder="เช่น ริมแม่น้ำปิง หน้าสะพานสมโภชกรุงรัตนโกสินทร์ 200 ปี จ.ตาก"
                       value={eventFormData.locationName}
@@ -2109,9 +2117,9 @@ export function AdminPortal({
                   <div className="form-row">
                     <div className="form-group">
                       <label className="form-label">ระยะทางวิ่งอย่างเป็นทางการ (กิโลเมตร) *</label>
-                      <input 
-                        type="number" 
-                        step="0.1" 
+                      <input
+                        type="number"
+                        step="0.1"
                         className="form-control"
                         style={{ fontSize: '1.2rem', fontWeight: 800, color: 'var(--primary)' }}
                         placeholder="เช่น 5.8"
@@ -2122,8 +2130,8 @@ export function AdminPortal({
                     </div>
                     <div className="form-group">
                       <label className="form-label">โควตาผู้เข้าร่วม (คน) *</label>
-                      <input 
-                        type="number" 
+                      <input
+                        type="number"
                         className="form-control"
                         placeholder="เช่น 500"
                         value={eventFormData.quota}
@@ -2135,8 +2143,8 @@ export function AdminPortal({
 
                   <div className="form-group">
                     <label className="form-label">ชื่อเรียกของระยะทางวิ่งนี้ *</label>
-                    <input 
-                      type="text" 
+                    <input
+                      type="text"
                       className="form-control"
                       placeholder="เช่น City Run 5.8K ตะลุยเมืองเก่าเลียบปิง"
                       value={eventFormData.distanceLabel}
@@ -2175,8 +2183,8 @@ export function AdminPortal({
 
                   <div className="form-group">
                     <label className="form-label">ลิงก์ Google Maps สำหรับปักหมุดจุดปล่อยตัว</label>
-                    <input 
-                      type="text" 
+                    <input
+                      type="text"
                       className="form-control"
                       placeholder="https://maps.google.com/?q=..."
                       value={eventFormData.locationMapUrl}
@@ -2186,7 +2194,7 @@ export function AdminPortal({
 
                   <div className="form-group">
                     <label className="form-label">คำอธิบายเส้นทางวิ่ง สภาพถนน และบรรยากาศ</label>
-                    <textarea 
+                    <textarea
                       className="form-control"
                       rows="3"
                       placeholder="เช่น เส้นทางไฮไลต์เลียบเขื่อนแม่น้ำปิง ผ่านสะพานแขวน 200 ปี ทางราบเรียบ วิ่งสบายตลอดสาย"
@@ -2198,8 +2206,8 @@ export function AdminPortal({
                   <div className="form-row">
                     <div className="form-group">
                       <label className="form-label">จำนวนจุดบริการน้ำดื่ม (จุด)</label>
-                      <input 
-                        type="number" 
+                      <input
+                        type="number"
                         className="form-control"
                         value={eventFormData.waterStations}
                         onChange={(e) => setEventFormData({ ...eventFormData, waterStations: Number(e.target.value) })}
@@ -2207,8 +2215,8 @@ export function AdminPortal({
                     </div>
                     <div className="form-group">
                       <label className="form-label">จำนวนหน่วยปฐมพยาบาล (จุด)</label>
-                      <input 
-                        type="number" 
+                      <input
+                        type="number"
                         className="form-control"
                         value={eventFormData.firstAidPoints}
                         onChange={(e) => setEventFormData({ ...eventFormData, firstAidPoints: Number(e.target.value) })}
@@ -2218,8 +2226,8 @@ export function AdminPortal({
 
                   <div className="form-group">
                     <label className="form-label">ระดับความชัน / สภาพพื้นที่ (Elevation)</label>
-                    <input 
-                      type="text" 
+                    <input
+                      type="text"
                       className="form-control"
                       placeholder="เช่น +12 ม. (ทางราบ 95%)"
                       value={eventFormData.elevationGain}
@@ -2229,8 +2237,8 @@ export function AdminPortal({
 
                   <div className="form-group">
                     <label className="form-label">ไฮไลต์สถานที่ในเส้นทาง (คั่นด้วยเครื่องหมายจุลภาค ,)</label>
-                    <input 
-                      type="text" 
+                    <input
+                      type="text"
                       className="form-control"
                       placeholder="เช่น สะพาน 200 ปี, ศาลสมเด็จพระเจ้าตากสิน, ตลาดเก่าริมปิง"
                       value={eventFormData.routeHighlightsText}
@@ -2261,8 +2269,8 @@ export function AdminPortal({
 
                   {eventFormData.schedule?.map((item, idx) => (
                     <div key={idx} style={{ display: 'grid', gridTemplateColumns: '120px 1fr auto', gap: '10px', marginBottom: '10px', alignItems: 'center' }}>
-                      <input 
-                        type="text" 
+                      <input
+                        type="text"
                         className="form-control"
                         placeholder="05:30 น."
                         value={item.time}
@@ -2272,8 +2280,8 @@ export function AdminPortal({
                           setEventFormData({ ...eventFormData, schedule: updated });
                         }}
                       />
-                      <input 
-                        type="text" 
+                      <input
+                        type="text"
                         className="form-control"
                         placeholder="รายละเอียดกิจกรรม เช่น รวมพล Warm-up"
                         value={item.title}
@@ -2284,9 +2292,9 @@ export function AdminPortal({
                         }}
                       />
                       {eventFormData.schedule.length > 1 && (
-                        <button 
-                          type="button" 
-                          className="btn btn-secondary btn-sm" 
+                        <button
+                          type="button"
+                          className="btn btn-secondary btn-sm"
                           style={{ color: '#F87171' }}
                           onClick={() => handleRemoveScheduleRow(idx)}
                         >
@@ -2303,8 +2311,8 @@ export function AdminPortal({
                       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '10px' }}>
                         <div>
                           <label className="form-label" style={{ fontSize: '0.8rem' }}>นักวิ่งเข้าร่วม (คน)</label>
-                          <input 
-                            type="number" 
+                          <input
+                            type="number"
                             className="form-control"
                             value={eventFormData.stats?.runnersJoined || 500}
                             onChange={(e) => setEventFormData({ ...eventFormData, stats: { ...eventFormData.stats, runnersJoined: Number(e.target.value) } })}
@@ -2312,8 +2320,8 @@ export function AdminPortal({
                         </div>
                         <div>
                           <label className="form-label" style={{ fontSize: '0.8rem' }}>กิโลเมตรรวม</label>
-                          <input 
-                            type="number" 
+                          <input
+                            type="number"
                             className="form-control"
                             value={eventFormData.stats?.totalKilometers || 2900}
                             onChange={(e) => setEventFormData({ ...eventFormData, stats: { ...eventFormData.stats, totalKilometers: Number(e.target.value) } })}
@@ -2321,8 +2329,8 @@ export function AdminPortal({
                         </div>
                         <div>
                           <label className="form-label" style={{ fontSize: '0.8rem' }}>จำนวนภาพถ่าย</label>
-                          <input 
-                            type="text" 
+                          <input
+                            type="text"
                             className="form-control"
                             value={eventFormData.stats?.photosTaken || '1,000+'}
                             onChange={(e) => setEventFormData({ ...eventFormData, stats: { ...eventFormData.stats, photosTaken: e.target.value } })}
@@ -2336,23 +2344,10 @@ export function AdminPortal({
 
               {/* Modal Buttons */}
               <div style={{ display: 'flex', gap: '12px', marginTop: '28px', paddingTop: '16px', borderTop: '1px solid var(--dark-border)' }}>
-                <button 
-                  type="submit" 
-                  className="btn btn-primary" 
-                  style={{ flex: 1, padding: '14px', fontSize: '1.05rem' }}
-                  disabled={isSavingEvent}
-                >
-                  {isSavingEvent ? (
-                    <>
-                      <RefreshCw size={18} className="spin-animation" /> กำลังบันทึกข้อมูลงานวิ่ง...
-                    </>
-                  ) : isEditingEvent ? (
-                    '💾 บันทึกการแก้ไขงานวิ่ง & แผนที่'
-                  ) : (
-                    '✓ ยืนยันสร้างงานวิ่งใหม่'
-                  )}
+                <button type="submit" className="btn btn-primary" style={{ flex: 1, padding: '14px', fontSize: '1.05rem' }}>
+                  {isEditingEvent ? '💾 บันทึกการแก้ไขงานวิ่ง & แผนที่' : '✓ ยืนยันสร้างงานวิ่งใหม่'}
                 </button>
-                <button type="button" className="btn btn-secondary" onClick={() => setEventModalOpen(false)} disabled={isSavingEvent}>
+                <button type="button" className="btn btn-secondary" onClick={() => setEventModalOpen(false)}>
                   ยกเลิก
                 </button>
               </div>
@@ -2372,8 +2367,8 @@ export function AdminPortal({
             <form onSubmit={handleAddSponsor}>
               <div className="form-group">
                 <label className="form-label">ชื่อผู้สนับสนุน / องค์กร *</label>
-                <input 
-                  type="text" 
+                <input
+                  type="text"
                   className="form-control"
                   value={sponsorFormData.name}
                   onChange={(e) => setSponsorFormData({ ...sponsorFormData, name: e.target.value })}
@@ -2382,7 +2377,7 @@ export function AdminPortal({
               </div>
               <div className="form-group">
                 <label className="form-label">ระดับการสนับสนุน (Tier)</label>
-                <select 
+                <select
                   className="form-control"
                   value={sponsorFormData.tier}
                   onChange={(e) => setSponsorFormData({ ...sponsorFormData, tier: e.target.value })}
@@ -2394,8 +2389,8 @@ export function AdminPortal({
               </div>
               <div className="form-group">
                 <label className="form-label">บทบาทการสนับสนุน</label>
-                <input 
-                  type="text" 
+                <input
+                  type="text"
                   className="form-control"
                   placeholder="เช่น สนับสนุนน้ำดื่มตลอดเส้นทาง"
                   value={sponsorFormData.role}
@@ -2430,8 +2425,8 @@ export function AdminPortal({
             <form onSubmit={handleAddShop}>
               <div className="form-group">
                 <label className="form-label">ชื่อร้านค้า หรือ ชื่อกิจกรรม *</label>
-                <input 
-                  type="text" 
+                <input
+                  type="text"
                   className="form-control"
                   value={shopFormData.name}
                   onChange={(e) => setShopFormData({ ...shopFormData, name: e.target.value })}
@@ -2440,8 +2435,8 @@ export function AdminPortal({
               </div>
               <div className="form-group">
                 <label className="form-label">หมวดหมู่</label>
-                <input 
-                  type="text" 
+                <input
+                  type="text"
                   className="form-control"
                   placeholder="เช่น อาหารพื้นเมือง, เครื่องดื่ม, สุขภาพ"
                   value={shopFormData.category}
@@ -2450,7 +2445,7 @@ export function AdminPortal({
               </div>
               <div className="form-group">
                 <label className="form-label">คำอธิบาย</label>
-                <textarea 
+                <textarea
                   className="form-control"
                   rows="3"
                   value={shopFormData.description}
@@ -2459,8 +2454,8 @@ export function AdminPortal({
               </div>
               <div className="form-group">
                 <label className="form-label">ป้ายข้อความพิเศษ (Badge)</label>
-                <input 
-                  type="text" 
+                <input
+                  type="text"
                   className="form-control"
                   placeholder="เช่น ลด 10% เมื่อโชว์คูปองนักวิ่ง"
                   value={shopFormData.badge}
@@ -2496,8 +2491,8 @@ export function AdminPortal({
               <div className="form-row">
                 <div className="form-group">
                   <label className="form-label">Episode ลำดับที่</label>
-                  <input 
-                    type="number" 
+                  <input
+                    type="number"
                     className="form-control"
                     value={galleryFormData.epNumber}
                     onChange={(e) => setGalleryFormData({ ...galleryFormData, epNumber: Number(e.target.value) })}
@@ -2506,8 +2501,8 @@ export function AdminPortal({
                 </div>
                 <div className="form-group">
                   <label className="form-label">ชื่อภาพไฮไลต์ *</label>
-                  <input 
-                    type="text" 
+                  <input
+                    type="text"
                     className="form-control"
                     placeholder="เช่น ปล่อยตัวยามเช้า"
                     value={galleryFormData.title}
@@ -2518,8 +2513,8 @@ export function AdminPortal({
               </div>
               <div className="form-group">
                 <label className="form-label">คำบรรยายภาพ</label>
-                <input 
-                  type="text" 
+                <input
+                  type="text"
                   className="form-control"
                   value={galleryFormData.caption}
                   onChange={(e) => setGalleryFormData({ ...galleryFormData, caption: e.target.value })}
@@ -2564,8 +2559,8 @@ export function AdminPortal({
             <form onSubmit={handleChangePassword}>
               <div className="form-group">
                 <label className="form-label">รหัสผ่านปัจจุบัน *</label>
-                <input 
-                  type="password" 
+                <input
+                  type="password"
                   className="form-control"
                   placeholder="กรอกรหัสผ่านเดิม"
                   value={changePasswordForm.currentPassword}
@@ -2577,8 +2572,8 @@ export function AdminPortal({
 
               <div className="form-group">
                 <label className="form-label">รหัสผ่านใหม่ (อย่างน้อย 4 ตัวอักษร) *</label>
-                <input 
-                  type="password" 
+                <input
+                  type="password"
                   className="form-control"
                   placeholder="กำหนดรหัสผ่านใหม่"
                   value={changePasswordForm.newPassword}
@@ -2589,8 +2584,8 @@ export function AdminPortal({
 
               <div className="form-group">
                 <label className="form-label">ยืนยันรหัสผ่านใหม่อีกครั้ง *</label>
-                <input 
-                  type="password" 
+                <input
+                  type="password"
                   className="form-control"
                   placeholder="กรอกรหัสผ่านใหม่อีกครั้งให้ตรงกัน"
                   value={changePasswordForm.confirmPassword}
@@ -2634,8 +2629,8 @@ export function AdminPortal({
             <form onSubmit={handleCreateAdminUser}>
               <div className="form-group">
                 <label className="form-label">ชื่อผู้ใช้งาน (Username สำหรับล็อกอิน) *</label>
-                <input 
-                  type="text" 
+                <input
+                  type="text"
                   className="form-control"
                   placeholder="เช่น staff_tak, somchai, nurse01"
                   value={newAdminForm.username}
@@ -2647,8 +2642,8 @@ export function AdminPortal({
 
               <div className="form-group">
                 <label className="form-label">ชื่อเรียก / หน่วยงาน (Display Name)</label>
-                <input 
-                  type="text" 
+                <input
+                  type="text"
                   className="form-control"
                   placeholder="เช่น สมชาย (โต๊ะลงทะเบียน), ทีมปฐมพยาบาล"
                   value={newAdminForm.displayName}
@@ -2658,8 +2653,8 @@ export function AdminPortal({
 
               <div className="form-group">
                 <label className="form-label">รหัสผ่านเริ่มต้น *</label>
-                <input 
-                  type="text" 
+                <input
+                  type="text"
                   className="form-control"
                   placeholder="เช่น tak2026, 123456"
                   value={newAdminForm.password}
@@ -2670,7 +2665,7 @@ export function AdminPortal({
 
               <div className="form-group">
                 <label className="form-label">ระดับสิทธิ์ (Role)</label>
-                <select 
+                <select
                   className="form-control"
                   value={newAdminForm.role}
                   onChange={(e) => setNewAdminForm({ ...newAdminForm, role: e.target.value })}
