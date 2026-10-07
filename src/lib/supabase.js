@@ -1120,19 +1120,77 @@ export function normalizeImageUrl(url) {
 }
 
 /**
- * Helper to read File as Base64 DataURL (for fallback)
+ * Compress and downscale image file before upload (reducing 5-10MB down to ~150KB)
  */
-function readFileAsDataUrl(file) {
-  return new Promise((resolve, reject) => {
+export function compressImageFile(file, maxDimension = 1600, quality = 0.82) {
+  return new Promise((resolve) => {
+    if (typeof window === 'undefined' || typeof document === 'undefined' || !file || !file.type.startsWith('image/')) {
+      return resolve({ file, dataUrl: null });
+    }
+
+    // Skip GIFs to preserve animation
+    if (file.type === 'image/gif') {
+      const reader = new FileReader();
+      reader.onload = () => resolve({ file, dataUrl: reader.result });
+      reader.onerror = () => resolve({ file, dataUrl: null });
+      reader.readAsDataURL(file);
+      return;
+    }
+
     const reader = new FileReader();
-    reader.onload = () => resolve(reader.result);
-    reader.onerror = reject;
+    reader.onload = (e) => {
+      const img = new Image();
+      img.onload = () => {
+        let width = img.width;
+        let height = img.height;
+
+        if (width > maxDimension || height > maxDimension) {
+          if (width > height) {
+            height = Math.round((height * maxDimension) / width);
+            width = maxDimension;
+          } else {
+            width = Math.round((width * maxDimension) / height);
+            height = maxDimension;
+          }
+        }
+
+        const canvas = document.createElement('canvas');
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext('2d');
+        ctx.imageSmoothingEnabled = true;
+        ctx.imageSmoothingQuality = 'high';
+        ctx.drawImage(img, 0, 0, width, height);
+
+        const outputMime = 'image/webp';
+        const dataUrl = canvas.toDataURL(outputMime, quality);
+
+        canvas.toBlob(
+          (blob) => {
+            if (!blob) {
+              return resolve({ file, dataUrl });
+            }
+            const cleanName = file.name.replace(/\.[^/.]+$/, '') + '.webp';
+            const optimizedFile = new File([blob], cleanName, {
+              type: outputMime,
+              lastModified: Date.now()
+            });
+            resolve({ file: optimizedFile, dataUrl });
+          },
+          outputMime,
+          quality
+        );
+      };
+      img.onerror = () => resolve({ file, dataUrl: e.target.result });
+      img.src = e.target.result;
+    };
+    reader.onerror = () => resolve({ file, dataUrl: null });
     reader.readAsDataURL(file);
   });
 }
 
 /**
- * Upload an image file to Supabase Storage (with graceful Base64 fallback)
+ * Upload an image file to Supabase Storage (with client-side compression & Base64 fallback)
  */
 export async function uploadImageFile(file, bucket = 'event-images', folder = 'events') {
   if (!file) {
@@ -1143,13 +1201,13 @@ export async function uploadImageFile(file, bucket = 'event-images', folder = 'e
     throw new Error('กรุณาเลือกไฟล์รูปภาพเท่านั้น (JPG, PNG, WebP, GIF)');
   }
 
-  if (file.size > 10 * 1024 * 1024) {
-    throw new Error('ขนาดไฟล์รูปภาพเกิน 10MB กรุณาเลือกไฟล์ที่ขนาดเล็กลง');
-  }
+  // 1. Optimize image in browser first (dramatically speeds up upload & saving)
+  const { file: uploadFile, dataUrl: fallbackDataUrl } = await compressImageFile(file);
 
+  // 2. Upload to Supabase Storage Bucket if configured
   if (isSupabaseConfigured && supabase) {
     try {
-      const ext = file.name.split('.').pop()?.toLowerCase() || 'jpg';
+      const ext = uploadFile.name.split('.').pop()?.toLowerCase() || 'webp';
       const cleanBaseName = file.name.substring(0, file.name.lastIndexOf('.'))
         .replace(/[^a-zA-Z0-9]/g, '_')
         .substring(0, 20);
@@ -1158,7 +1216,7 @@ export async function uploadImageFile(file, bucket = 'event-images', folder = 'e
 
       const { data, error } = await supabase.storage
         .from(bucket)
-        .upload(filePath, file, {
+        .upload(filePath, uploadFile, {
           cacheControl: '3600',
           upsert: true
         });
@@ -1175,10 +1233,9 @@ export async function uploadImageFile(file, bucket = 'event-images', folder = 'e
                              errMsg.includes('row-level security') ||
                              errMsg.includes('AccessDenied');
 
-        const base64 = await readFileAsDataUrl(file);
         return {
           success: true,
-          url: base64,
+          url: fallbackDataUrl,
           isFallback: true,
           warning: isBucketMissing
             ? `ยังไม่พบ Storage Bucket '${bucket}' ใน Supabase (สร้างได้ที่ Supabase Dashboard > Storage > New bucket '${bucket}' และเปิด Public)`
@@ -1200,20 +1257,18 @@ export async function uploadImageFile(file, bucket = 'event-images', folder = 'e
       };
     } catch (err) {
       console.warn('Storage upload error caught:', err);
-      const base64 = await readFileAsDataUrl(file);
       return {
         success: true,
-        url: base64,
+        url: fallbackDataUrl,
         isFallback: true,
         warning: 'เกิดข้อผิดพลาดในการอัปโหลดเข้า Supabase ระบบจึงใช้รูปสำรองชั่วคราว'
       };
     }
   }
 
-  const base64 = await readFileAsDataUrl(file);
   return {
     success: true,
-    url: base64,
+    url: fallbackDataUrl,
     isFallback: true,
     warning: 'ยังไม่ได้เชื่อมต่อ Supabase จึงใช้รูปสำรองชั่วคราว'
   };

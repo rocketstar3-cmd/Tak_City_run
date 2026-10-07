@@ -18,6 +18,8 @@ import {
 export function EventDetails({ activeEvent, onOpenRegister }) {
   if (!activeEvent) return null;
 
+  const [visualMode, setVisualMode] = React.useState('map');
+
   const distanceKm = activeEvent.distanceKm || 5.8;
   const distanceLabel = activeEvent.distanceLabel || 'City Run เลียบแม่น้ำปิง';
   const quota = activeEvent.quota || 500;
@@ -189,8 +191,48 @@ export function EventDetails({ activeEvent, onOpenRegister }) {
                 </div>
               </div>
 
-              {/* Right Column: Route Map Image / Visual Map */}
+              {/* Right Column: Route Map Image / Poster Showcase */}
               <div>
+                {/* Tab Selector if both Route Map and Cover Poster exist */}
+                {activeEvent.coverImage && activeEvent.routeImageUrl && (
+                  <div style={{ display: 'flex', gap: '8px', marginBottom: '12px' }}>
+                    <button
+                      type="button"
+                      onClick={() => setVisualMode('map')}
+                      style={{
+                        padding: '6px 14px',
+                        borderRadius: '999px',
+                        fontSize: '0.82rem',
+                        fontWeight: 700,
+                        border: '1px solid var(--dark-border)',
+                        background: visualMode === 'map' ? 'var(--cyan)' : 'rgba(255, 255, 255, 0.06)',
+                        color: visualMode === 'map' ? '#080C15' : 'var(--text-secondary)',
+                        cursor: 'pointer',
+                        transition: 'all 0.15s ease'
+                      }}
+                    >
+                      🗺️ แผนที่เส้นทาง
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setVisualMode('poster')}
+                      style={{
+                        padding: '6px 14px',
+                        borderRadius: '999px',
+                        fontSize: '0.82rem',
+                        fontWeight: 700,
+                        border: '1px solid var(--dark-border)',
+                        background: visualMode === 'poster' ? 'var(--primary)' : 'rgba(255, 255, 255, 0.06)',
+                        color: visualMode === 'poster' ? '#FFF' : 'var(--text-secondary)',
+                        cursor: 'pointer',
+                        transition: 'all 0.15s ease'
+                      }}
+                    >
+                      🖼️ โปสเตอร์งานวิ่ง (Official Poster)
+                    </button>
+                  </div>
+                )}
+
                 <div style={{
                   background: 'linear-gradient(135deg, #0F172A 0%, #1E293B 100%)',
                   borderRadius: 'var(--radius-lg)',
@@ -198,7 +240,32 @@ export function EventDetails({ activeEvent, onOpenRegister }) {
                   overflow: 'hidden',
                   position: 'relative'
                 }}>
-                  {activeEvent.routeImageUrl ? (
+                  {visualMode === 'poster' && activeEvent.coverImage ? (
+                    <div>
+                      <img 
+                        src={activeEvent.coverImage} 
+                        alt={`โปสเตอร์งานวิ่ง EP.${activeEvent.epNumber} ${activeEvent.title}`}
+                        style={{ width: '100%', height: '360px', objectFit: 'cover' }}
+                      />
+                      <div style={{
+                        position: 'absolute',
+                        bottom: '12px',
+                        right: '12px',
+                        background: 'rgba(0,0,0,0.85)',
+                        padding: '6px 14px',
+                        borderRadius: '999px',
+                        fontSize: '0.8rem',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '8px'
+                      }}>
+                        <span style={{ color: '#FFA559', fontWeight: 600 }}>โปสเตอร์ทางการ EP.{String(activeEvent.epNumber).padStart(2, '0')}</span>
+                        <a href={activeEvent.coverImage} target="_blank" rel="noreferrer" style={{ color: 'var(--cyan)', textDecoration: 'none', fontSize: '0.75rem' }}>
+                          ดูรูปเต็ม ↗
+                        </a>
+                      </div>
+                    </div>
+                  ) : activeEvent.routeImageUrl ? (
                     <div>
                       <img 
                         src={activeEvent.routeImageUrl} 
@@ -217,6 +284,14 @@ export function EventDetails({ activeEvent, onOpenRegister }) {
                       }}>
                         แผนที่เส้นทางวิ่งจริง EP.{String(activeEvent.epNumber).padStart(2, '0')}
                       </div>
+                    </div>
+                  ) : activeEvent.coverImage ? (
+                    <div>
+                      <img 
+                        src={activeEvent.coverImage} 
+                        alt={`โปสเตอร์งานวิ่ง EP.${activeEvent.epNumber} ${activeEvent.title}`}
+                        style={{ width: '100%', height: '360px', objectFit: 'cover' }}
+                      />
                     </div>
                   ) : (
                     /* Default Dynamic Route Graphics */

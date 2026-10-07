@@ -74,11 +74,30 @@ export function Hero({
   }
 
   return (
-    <section className="hero-section">
+    <section className="hero-section" style={{ position: 'relative' }}>
+      {/* Ambient Poster Glow in Hero Background */}
+      {activeEvent.coverImage && (
+        <div 
+          style={{
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            backgroundImage: `url(${activeEvent.coverImage})`,
+            backgroundSize: 'cover',
+            backgroundPosition: 'center',
+            opacity: 0.12,
+            filter: 'blur(50px)',
+            pointerEvents: 'none',
+            zIndex: 0
+          }}
+        />
+      )}
       <div className="hero-glow-1"></div>
       <div className="hero-glow-2"></div>
 
-      <div className="container hero-grid">
+      <div className="container hero-grid" style={{ position: 'relative', zIndex: 1 }}>
         {/* Left Column: Event Hero Pitch */}
         <div>
           {/* Status Tag */}
@@ -95,7 +114,7 @@ export function Hero({
           </h1>
 
           <p className="hero-desc">
-            {activeEvent.subtitle || 'กิจกรรมวิ่งเพื่อชุมชนคนรักสุขภาพ ร่วมสัมผัสบรรยากาศยามเช้าเมืองตาก ไม่มีค่าใช้จ่ายในการสมัคร'}
+            {activeEvent.subtitle || 'กิจกรรมวิ่งเพื่อชุมชนคนรักสุขภาพ ร่วมสัมผัสบรร营ากาศยามเช้าเมืองตาก ไม่มีค่าใช้จ่ายในการสมัคร'}
           </p>
 
           <div className="hero-meta-strip">
@@ -139,18 +158,85 @@ export function Hero({
           </div>
         </div>
 
-        {/* Right Column: Countdown Box & Distances summary */}
-        <div>
-          <div className="countdown-box">
+        {/* Right Column: Official Poster Showcase & Countdown Box */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+          {/* Official Event Cover Poster Showcase */}
+          {activeEvent.coverImage && (
+            <div style={{
+              borderRadius: 'var(--radius-lg)',
+              overflow: 'hidden',
+              position: 'relative',
+              boxShadow: '0 16px 40px rgba(0, 0, 0, 0.6), 0 0 24px rgba(255, 85, 0, 0.25)',
+              border: '1.5px solid rgba(255, 255, 255, 0.15)',
+              background: '#0F172A',
+              aspectRatio: '16/9',
+              maxHeight: '250px'
+            }}>
+              <img 
+                src={activeEvent.coverImage} 
+                alt={`โปสเตอร์งานวิ่ง EP.${activeEvent.epNumber} ${activeEvent.title}`}
+                style={{
+                  width: '100%',
+                  height: '100%',
+                  objectFit: 'cover',
+                  display: 'block'
+                }}
+              />
+              <div style={{
+                position: 'absolute',
+                top: '12px',
+                left: '12px',
+                background: 'rgba(8, 12, 21, 0.88)',
+                backdropFilter: 'blur(8px)',
+                padding: '4px 12px',
+                borderRadius: '999px',
+                fontSize: '0.75rem',
+                fontWeight: 700,
+                color: 'var(--primary)',
+                border: '1px solid rgba(255, 85, 0, 0.4)',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '5px'
+              }}>
+                <span>🖼️ โปสเตอร์ทางการ EP.{String(activeEvent.epNumber).padStart(2, '0')}</span>
+              </div>
+              <a 
+                href={activeEvent.coverImage}
+                target="_blank"
+                rel="noreferrer"
+                style={{
+                  position: 'absolute',
+                  bottom: '12px',
+                  right: '12px',
+                  background: 'rgba(0, 0, 0, 0.8)',
+                  backdropFilter: 'blur(8px)',
+                  color: '#FFF',
+                  padding: '5px 12px',
+                  borderRadius: '6px',
+                  fontSize: '0.74rem',
+                  textDecoration: 'none',
+                  fontWeight: 600,
+                  border: '1px solid rgba(255, 255, 255, 0.2)'
+                }}
+              >
+                ดูรูปเต็ม ↗
+              </a>
+            </div>
+          )}
+
+          {/* Countdown Box */}
+          <div className="countdown-box" style={{ padding: activeEvent.coverImage ? '24px 22px' : '36px 28px' }}>
             <div style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', color: 'var(--primary)', marginBottom: '8px' }}>
               <Clock size={18} />
               <span style={{ fontWeight: 700, fontSize: '0.85rem', letterSpacing: '0.08em', textTransform: 'uppercase' }}>
                 นับถอยหลังสู่วันงาน
               </span>
             </div>
-            <h3 className="countdown-title">พร้อมออกวิ่งไปพร้อมกัน</h3>
+            <h3 className="countdown-title" style={{ marginBottom: activeEvent.coverImage ? '14px' : '20px' }}>
+              พร้อมออกวิ่งไปพร้อมกัน
+            </h3>
 
-            <div className="countdown-grid">
+            <div className="countdown-grid" style={{ marginBottom: activeEvent.coverImage ? '18px' : '28px' }}>
               <div className="countdown-segment">
                 <span className="countdown-number">{String(timeLeft.days).padStart(2, '0')}</span>
                 <span className="countdown-label">วัน</span>
@@ -171,19 +257,19 @@ export function Hero({
               </div>
             </div>
 
-            <div style={{ background: 'rgba(255, 255, 255, 0.03)', borderRadius: 'var(--radius-md)', padding: '16px', border: '1px solid var(--dark-border)' }}>
-              <span style={{ display: 'block', fontSize: '0.85rem', color: 'var(--text-muted)', marginBottom: '8px' }}>
+            <div style={{ background: 'rgba(255, 255, 255, 0.03)', borderRadius: 'var(--radius-md)', padding: '12px 16px', border: '1px solid var(--dark-border)' }}>
+              <span style={{ display: 'block', fontSize: '0.8rem', color: 'var(--text-muted)', marginBottom: '6px' }}>
                 ระยะทางอย่างเป็นทางการใน EP นี้
               </span>
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px' }}>
                 <span style={{ 
-                  padding: '8px 18px', 
+                  padding: '6px 16px', 
                   borderRadius: '999px', 
                   background: 'rgba(255, 85, 0, 0.2)', 
                   border: '1.5px solid var(--primary)',
                   color: '#FFF',
                   fontWeight: 800,
-                  fontSize: '1rem',
+                  fontSize: '0.95rem',
                   display: 'flex',
                   alignItems: 'center',
                   gap: '6px'

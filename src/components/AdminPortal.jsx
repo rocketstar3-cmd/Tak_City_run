@@ -83,6 +83,7 @@ export function AdminPortal({
   // Event Edit/Create Modal
   const [eventModalOpen, setEventModalOpen] = useState(false);
   const [isEditingEvent, setIsEditingEvent] = useState(false);
+  const [isSavingEvent, setIsSavingEvent] = useState(false);
   const [modalActiveTab, setModalActiveTab] = useState('general'); // 'general', 'distance', 'route', 'schedule'
   
   const [eventFormData, setEventFormData] = useState({
@@ -464,6 +465,8 @@ export function AdminPortal({
       routeHighlights: highlightsArray
     };
 
+    setIsSavingEvent(true);
+
     try {
       if (isEditingEvent) {
         await DataService.updateEvent(payload.id, payload);
@@ -479,6 +482,8 @@ export function AdminPortal({
     } catch (err) {
       console.error(err);
       showToast('เกิดข้อผิดพลาดในการบันทึกงานวิ่ง', false);
+    } finally {
+      setIsSavingEvent(false);
     }
   };
 
@@ -2331,10 +2336,23 @@ export function AdminPortal({
 
               {/* Modal Buttons */}
               <div style={{ display: 'flex', gap: '12px', marginTop: '28px', paddingTop: '16px', borderTop: '1px solid var(--dark-border)' }}>
-                <button type="submit" className="btn btn-primary" style={{ flex: 1, padding: '14px', fontSize: '1.05rem' }}>
-                  {isEditingEvent ? '💾 บันทึกการแก้ไขงานวิ่ง & แผนที่' : '✓ ยืนยันสร้างงานวิ่งใหม่'}
+                <button 
+                  type="submit" 
+                  className="btn btn-primary" 
+                  style={{ flex: 1, padding: '14px', fontSize: '1.05rem' }}
+                  disabled={isSavingEvent}
+                >
+                  {isSavingEvent ? (
+                    <>
+                      <RefreshCw size={18} className="spin-animation" /> กำลังบันทึกข้อมูลงานวิ่ง...
+                    </>
+                  ) : isEditingEvent ? (
+                    '💾 บันทึกการแก้ไขงานวิ่ง & แผนที่'
+                  ) : (
+                    '✓ ยืนยันสร้างงานวิ่งใหม่'
+                  )}
                 </button>
-                <button type="button" className="btn btn-secondary" onClick={() => setEventModalOpen(false)}>
+                <button type="button" className="btn btn-secondary" onClick={() => setEventModalOpen(false)} disabled={isSavingEvent}>
                   ยกเลิก
                 </button>
               </div>
