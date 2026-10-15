@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Trophy, Search, ShieldCheck, Menu, X, Calendar, MapPin } from 'lucide-react';
+import { Trophy, Search, ShieldCheck, Menu, X, Calendar, MapPin, Lock } from 'lucide-react';
 
 export function Navbar({ 
   clubSettings, 
@@ -75,13 +75,24 @@ export function Navbar({
                 </button>
               )}
 
+              {/* Subtle Admin Icon Button - Discreet for staff */}
               <button 
                 className="btn btn-secondary btn-sm nav-hide-mobile" 
                 onClick={onOpenAdmin}
-                style={{ padding: '8px 12px' }}
-                title="เข้าสู่ระบบผู้ดูแลชมรม"
+                style={{ 
+                  padding: '8px 10px',
+                  background: 'rgba(255, 255, 255, 0.04)',
+                  borderColor: 'rgba(255, 255, 255, 0.08)',
+                  color: 'var(--text-muted)',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  minWidth: '36px'
+                }}
+                title="เข้าสู่ระบบผู้ดูแล (Admin)"
+                aria-label="Admin Portal"
               >
-                <ShieldCheck size={16} /> แอดมิน
+                <Lock size={15} style={{ opacity: 0.7 }} />
               </button>
 
               <button 
@@ -126,13 +137,27 @@ export function Navbar({
             🎟️ ค้นหาคูปอง / ใบประกาศของฉัน
           </button>
 
-          <button 
-            className="btn btn-secondary" 
-            style={{ width: '100%', padding: '10px', color: 'var(--text-muted)', fontSize: '0.88rem' }}
-            onClick={() => { setMobileMenuOpen(false); onOpenAdmin(); }}
-          >
-            <ShieldCheck size={16} /> เข้าสู่ระบบผู้ดูแล (Admin Portal)
-          </button>
+          {/* Discreet Mobile Admin Access */}
+          <div style={{ textAlign: 'center', marginTop: '12px', paddingTop: '8px', borderTop: '1px solid rgba(255,255,255,0.06)' }}>
+            <button 
+              onClick={() => { setMobileMenuOpen(false); onOpenAdmin(); }}
+              style={{ 
+                background: 'none', 
+                border: 'none', 
+                color: 'var(--text-muted)', 
+                fontSize: '0.8rem', 
+                display: 'inline-flex', 
+                alignItems: 'center', 
+                gap: '6px', 
+                cursor: 'pointer',
+                opacity: 0.6,
+                padding: '6px 12px'
+              }}
+              title="เข้าสู่ระบบผู้ดูแล"
+            >
+              <Lock size={13} /> เจ้าหน้าที่ผู้ดูแลระบบ
+            </button>
+          </div>
         </div>
       )}
     </header>

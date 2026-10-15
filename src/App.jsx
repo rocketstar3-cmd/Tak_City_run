@@ -30,6 +30,32 @@ export default function App() {
 
   useEffect(() => {
     loadAllData();
+
+    // Check if opened with #admin or ?admin in URL
+    const checkAdminRoute = () => {
+      const hash = window.location.hash.toLowerCase();
+      const search = window.location.search.toLowerCase();
+      if (hash === '#admin' || search.includes('admin=1') || search.includes('admin=true')) {
+        setIsAdminView(true);
+      }
+    };
+    checkAdminRoute();
+
+    window.addEventListener('hashchange', checkAdminRoute);
+
+    // Keyboard shortcut for admins: Ctrl + Shift + A or Alt + A
+    const handleKeyDown = (e) => {
+      if ((e.ctrlKey && e.shiftKey && (e.key === 'A' || e.key === 'a')) || (e.altKey && (e.key === 'a' || e.key === 'A'))) {
+        e.preventDefault();
+        setIsAdminView(prev => !prev);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+
+    return () => {
+      window.removeEventListener('hashchange', checkAdminRoute);
+      window.removeEventListener('keydown', handleKeyDown);
+    };
   }, []);
 
   // Realtime subscription to registrations table to keep registrationsCount live
@@ -97,6 +123,13 @@ export default function App() {
     setRegistrationsCount(prev => prev + 1);
   };
 
+  const handleExitAdmin = () => {
+    setIsAdminView(false);
+    if (window.location.hash.toLowerCase() === '#admin') {
+      window.history.replaceState(null, document.title, window.location.pathname + window.location.search);
+    }
+  };
+
   if (loading) {
     return (
       <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'var(--dark-bg)' }}>
@@ -135,7 +168,7 @@ export default function App() {
         onOpenCheckBib={() => setIsCheckBibOpen(true)}
         onOpenAdmin={() => setIsAdminView(true)}
         isAdminActive={isAdminView}
-        onExitAdmin={() => setIsAdminView(false)}
+        onExitAdmin={handleExitAdmin}
       />
 
       {/* Main Content Area */}
@@ -156,7 +189,7 @@ export default function App() {
             const active = fresh.find(e => e.isActive) || fresh[0];
             setActiveEvent(active ? { ...active } : null);
           }}
-          onExitAdmin={() => setIsAdminView(false)}
+          onExitAdmin={handleExitAdmin}
         />
       ) : (
         <main>

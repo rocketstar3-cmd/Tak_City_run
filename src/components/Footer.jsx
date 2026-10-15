@@ -1,5 +1,5 @@
 import React from 'react';
-import { Heart, Globe, MessageCircle } from 'lucide-react';
+import { Heart, Globe, MessageCircle, Lock } from 'lucide-react';
 
 export function Footer({ clubSettings, onOpenAdmin }) {
   return (
@@ -63,10 +63,23 @@ export function Footer({ clubSettings, onOpenAdmin }) {
               </a>
               <button 
                 onClick={onOpenAdmin}
-                className="btn btn-secondary btn-sm"
-                style={{ justifyContent: 'flex-start', marginTop: '6px', color: 'var(--text-muted)' }}
+                style={{ 
+                  background: 'transparent',
+                  border: 'none',
+                  padding: '4px 0',
+                  marginTop: '4px',
+                  color: 'var(--text-muted)',
+                  fontSize: '0.8rem',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                  cursor: 'pointer',
+                  opacity: 0.6,
+                  textAlign: 'left'
+                }}
+                title="เข้าสู่ระบบผู้ดูแลระบบ"
               >
-                🔒 ระบบจัดการแอดมิน (Admin Portal)
+                <Lock size={12} /> เจ้าหน้าที่ผู้ดูแลระบบ
               </button>
             </div>
           </div>

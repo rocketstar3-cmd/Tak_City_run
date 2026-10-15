@@ -30,6 +30,7 @@ import {
   Activity,
   Mountain,
   Eye,
+  EyeOff,
   Key,
   UserCheck,
   UserPlus,
@@ -54,14 +55,21 @@ export function AdminPortal({
   const [adminUsername, setAdminUsername] = useState('admin');
   const [adminPassword, setAdminPassword] = useState('');
   const [loginError, setLoginError] = useState('');
+  const [showLoginPassword, setShowLoginPassword] = useState(false);
 
   // Admin users & Password change state
   const [adminUsersList, setAdminUsersList] = useState([]);
+  const [revealedPasswords, setRevealedPasswords] = useState({});
+  const [showPin, setShowPin] = useState(false);
   const [changePasswordModalOpen, setChangePasswordModalOpen] = useState(false);
   const [changePasswordForm, setChangePasswordForm] = useState({ currentPassword: '', newPassword: '', confirmPassword: '' });
+  const [showChangePassCur, setShowChangePassCur] = useState(false);
+  const [showChangePassNew, setShowChangePassNew] = useState(false);
+  const [showChangePassConfirm, setShowChangePassConfirm] = useState(false);
   const [changePasswordError, setChangePasswordError] = useState('');
   const [newAdminModalOpen, setNewAdminModalOpen] = useState(false);
   const [newAdminForm, setNewAdminForm] = useState({ username: '', password: '', displayName: '', role: 'staff' });
+  const [showNewAdminPass, setShowNewAdminPass] = useState(false);
   const [newAdminError, setNewAdminError] = useState('');
 
   // Active Tab
@@ -751,21 +759,41 @@ export function AdminPortal({
 
             <div className="form-group">
               <label className="form-label">รหัสผ่าน (Password) *</label>
-              <input
-                type="password"
-                className="form-control"
-                placeholder="กรอกรหัสผ่านของคุณ"
-                value={adminPassword}
-                onChange={(e) => setAdminPassword(e.target.value)}
-                required
-              />
+              <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
+                <input
+                  type={showLoginPassword ? 'text' : 'password'}
+                  className="form-control"
+                  placeholder="กรอกรหัสผ่านของคุณ"
+                  value={adminPassword}
+                  onChange={(e) => setAdminPassword(e.target.value)}
+                  style={{ paddingRight: '44px' }}
+                  required
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowLoginPassword(!showLoginPassword)}
+                  style={{
+                    position: 'absolute',
+                    right: '10px',
+                    background: 'none',
+                    border: 'none',
+                    color: showLoginPassword ? 'var(--primary)' : 'var(--text-muted)',
+                    cursor: 'pointer',
+                    padding: '6px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    borderRadius: '4px'
+                  }}
+                  title={showLoginPassword ? 'ซ่อนรหัสผ่าน' : 'แสดงรหัสผ่าน'}
+                  tabIndex={-1}
+                >
+                  {showLoginPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                </button>
+              </div>
             </div>
 
-            <div style={{ background: 'rgba(255, 255, 255, 0.04)', borderRadius: 'var(--radius-sm)', padding: '10px 14px', marginBottom: '20px', fontSize: '0.82rem', color: 'var(--text-muted)' }}>
-              💡 บัญชีเริ่มต้นระบบ: Username: <strong style={{ color: '#FFF' }}>admin</strong> | รหัสผ่าน: <strong style={{ color: '#FFF' }}>1234</strong>
-            </div>
-
-            <button type="submit" className="btn btn-primary" style={{ width: '100%', padding: '14px', fontSize: '1.05rem' }}>
+            <button type="submit" className="btn btn-primary" style={{ width: '100%', padding: '14px', fontSize: '1.05rem', marginTop: '12px' }}>
               เข้าสู่ระบบ
             </button>
           </form>
@@ -1582,12 +1610,33 @@ export function AdminPortal({
               </div>
               <div className="form-group">
                 <label className="form-label">รหัส PIN แอดมิน (เปลี่ยนรหัสเข้าห้องนี้)</label>
-                <input
-                  type="text"
-                  className="form-control"
-                  value={settingsForm.adminPin || '1234'}
-                  onChange={(e) => setSettingsForm({ ...settingsForm, adminPin: e.target.value })}
-                />
+                <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
+                  <input
+                    type={showPin ? 'text' : 'password'}
+                    className="form-control"
+                    value={settingsForm.adminPin || '1234'}
+                    onChange={(e) => setSettingsForm({ ...settingsForm, adminPin: e.target.value })}
+                    style={{ paddingRight: '40px' }}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPin(!showPin)}
+                    style={{
+                      position: 'absolute',
+                      right: '8px',
+                      background: 'none',
+                      border: 'none',
+                      color: showPin ? 'var(--primary)' : 'var(--text-muted)',
+                      cursor: 'pointer',
+                      padding: '6px',
+                      display: 'flex',
+                      alignItems: 'center'
+                    }}
+                    title={showPin ? 'ซ่อนรหัส' : 'ดูรหัส'}
+                  >
+                    {showPin ? <EyeOff size={16} /> : <Eye size={16} />}
+                  </button>
+                </div>
               </div>
             </div>
 
@@ -1907,9 +1956,34 @@ export function AdminPortal({
                     @{u.username}
                   </div>
 
-                  <div style={{ fontSize: '0.82rem', color: 'var(--text-muted)', background: 'rgba(255, 255, 255, 0.03)', padding: '10px', borderRadius: 'var(--radius-sm)' }}>
-                    <div>🔑 รหัสผ่านปัจจุบัน: <strong style={{ color: '#FFF' }}>{u.password}</strong></div>
-                    <div style={{ marginTop: '4px', fontSize: '0.75rem' }}>สร้างเมื่อ: {new Date(u.createdAt || Date.now()).toLocaleDateString('th-TH')}</div>
+                  <div style={{ fontSize: '0.82rem', color: 'var(--text-muted)', background: 'rgba(255, 255, 255, 0.03)', padding: '10px 12px', borderRadius: 'var(--radius-sm)' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                      <div>
+                        🔑 รหัสผ่าน: <strong style={{ color: '#FFF', letterSpacing: revealedPasswords[u.id || u.username] ? 'normal' : '2px' }}>
+                          {revealedPasswords[u.id || u.username] ? u.password : '••••••••'}
+                        </strong>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => setRevealedPasswords(prev => ({
+                          ...prev,
+                          [u.id || u.username]: !prev[u.id || u.username]
+                        }))}
+                        style={{
+                          background: 'none',
+                          border: 'none',
+                          color: revealedPasswords[u.id || u.username] ? 'var(--primary)' : 'var(--text-muted)',
+                          cursor: 'pointer',
+                          padding: '4px',
+                          display: 'flex',
+                          alignItems: 'center'
+                        }}
+                        title={revealedPasswords[u.id || u.username] ? 'ซ่อนรหัส' : 'ดูรหัสผ่าน'}
+                      >
+                        {revealedPasswords[u.id || u.username] ? <EyeOff size={15} /> : <Eye size={15} />}
+                      </button>
+                    </div>
+                    <div style={{ marginTop: '6px', fontSize: '0.75rem' }}>สร้างเมื่อ: {new Date(u.createdAt || Date.now()).toLocaleDateString('th-TH')}</div>
                   </div>
                 </div>
 
@@ -2559,39 +2633,72 @@ export function AdminPortal({
             <form onSubmit={handleChangePassword}>
               <div className="form-group">
                 <label className="form-label">รหัสผ่านปัจจุบัน *</label>
-                <input
-                  type="password"
-                  className="form-control"
-                  placeholder="กรอกรหัสผ่านเดิม"
-                  value={changePasswordForm.currentPassword}
-                  onChange={(e) => setChangePasswordForm({ ...changePasswordForm, currentPassword: e.target.value })}
-                  required
-                  autoFocus
-                />
+                <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
+                  <input
+                    type={showChangePassCur ? 'text' : 'password'}
+                    className="form-control"
+                    placeholder="กรอกรหัสผ่านเดิม"
+                    value={changePasswordForm.currentPassword}
+                    onChange={(e) => setChangePasswordForm({ ...changePasswordForm, currentPassword: e.target.value })}
+                    style={{ paddingRight: '40px' }}
+                    required
+                    autoFocus
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowChangePassCur(!showChangePassCur)}
+                    style={{ position: 'absolute', right: '8px', background: 'none', border: 'none', color: showChangePassCur ? 'var(--primary)' : 'var(--text-muted)', cursor: 'pointer', padding: '6px' }}
+                    title={showChangePassCur ? 'ซ่อนรหัส' : 'ดูรหัส'}
+                  >
+                    {showChangePassCur ? <EyeOff size={16} /> : <Eye size={16} />}
+                  </button>
+                </div>
               </div>
 
               <div className="form-group">
                 <label className="form-label">รหัสผ่านใหม่ (อย่างน้อย 4 ตัวอักษร) *</label>
-                <input
-                  type="password"
-                  className="form-control"
-                  placeholder="กำหนดรหัสผ่านใหม่"
-                  value={changePasswordForm.newPassword}
-                  onChange={(e) => setChangePasswordForm({ ...changePasswordForm, newPassword: e.target.value })}
-                  required
-                />
+                <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
+                  <input
+                    type={showChangePassNew ? 'text' : 'password'}
+                    className="form-control"
+                    placeholder="กำหนดรหัสผ่านใหม่"
+                    value={changePasswordForm.newPassword}
+                    onChange={(e) => setChangePasswordForm({ ...changePasswordForm, newPassword: e.target.value })}
+                    style={{ paddingRight: '40px' }}
+                    required
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowChangePassNew(!showChangePassNew)}
+                    style={{ position: 'absolute', right: '8px', background: 'none', border: 'none', color: showChangePassNew ? 'var(--primary)' : 'var(--text-muted)', cursor: 'pointer', padding: '6px' }}
+                    title={showChangePassNew ? 'ซ่อนรหัส' : 'ดูรหัส'}
+                  >
+                    {showChangePassNew ? <EyeOff size={16} /> : <Eye size={16} />}
+                  </button>
+                </div>
               </div>
 
               <div className="form-group">
                 <label className="form-label">ยืนยันรหัสผ่านใหม่อีกครั้ง *</label>
-                <input
-                  type="password"
-                  className="form-control"
-                  placeholder="กรอกรหัสผ่านใหม่อีกครั้งให้ตรงกัน"
-                  value={changePasswordForm.confirmPassword}
-                  onChange={(e) => setChangePasswordForm({ ...changePasswordForm, confirmPassword: e.target.value })}
-                  required
-                />
+                <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
+                  <input
+                    type={showChangePassConfirm ? 'text' : 'password'}
+                    className="form-control"
+                    placeholder="กรอกรหัสผ่านใหม่อีกครั้งให้ตรงกัน"
+                    value={changePasswordForm.confirmPassword}
+                    onChange={(e) => setChangePasswordForm({ ...changePasswordForm, confirmPassword: e.target.value })}
+                    style={{ paddingRight: '40px' }}
+                    required
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowChangePassConfirm(!showChangePassConfirm)}
+                    style={{ position: 'absolute', right: '8px', background: 'none', border: 'none', color: showChangePassConfirm ? 'var(--primary)' : 'var(--text-muted)', cursor: 'pointer', padding: '6px' }}
+                    title={showChangePassConfirm ? 'ซ่อนรหัส' : 'ดูรหัส'}
+                  >
+                    {showChangePassConfirm ? <EyeOff size={16} /> : <Eye size={16} />}
+                  </button>
+                </div>
               </div>
 
               <div style={{ display: 'flex', gap: '10px', marginTop: '20px' }}>
@@ -2653,14 +2760,25 @@ export function AdminPortal({
 
               <div className="form-group">
                 <label className="form-label">รหัสผ่านเริ่มต้น *</label>
-                <input
-                  type="text"
-                  className="form-control"
-                  placeholder="เช่น tak2026, 123456"
-                  value={newAdminForm.password}
-                  onChange={(e) => setNewAdminForm({ ...newAdminForm, password: e.target.value })}
-                  required
-                />
+                <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
+                  <input
+                    type={showNewAdminPass ? 'text' : 'password'}
+                    className="form-control"
+                    placeholder="เช่น tak2026, 123456"
+                    value={newAdminForm.password}
+                    onChange={(e) => setNewAdminForm({ ...newAdminForm, password: e.target.value })}
+                    style={{ paddingRight: '40px' }}
+                    required
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowNewAdminPass(!showNewAdminPass)}
+                    style={{ position: 'absolute', right: '8px', background: 'none', border: 'none', color: showNewAdminPass ? 'var(--primary)' : 'var(--text-muted)', cursor: 'pointer', padding: '6px' }}
+                    title={showNewAdminPass ? 'ซ่อนรหัส' : 'ดูรหัส'}
+                  >
+                    {showNewAdminPass ? <EyeOff size={16} /> : <Eye size={16} />}
+                  </button>
+                </div>
               </div>
 
               <div className="form-group">
