@@ -139,50 +139,26 @@ export function Hero({
             <button className="btn btn-secondary btn-lg" onClick={onOpenCheckBib}>
               {isIdCard ? '🪪 บัตรประจำตัว & ใบประกาศ' : '🎟️ คูปอง & ใบประกาศ'}
             </button>
-          </div>
 
-          {/* Top 40 Running Shirt Privilege Announcement Banner */}
-          <div style={{ marginTop: '14px' }}>
             <button
               type="button"
-              className="btn btn-sm"
+              className="btn btn-gold-announcement"
               onClick={onOpenTop40Modal}
-              style={{
-                background: 'linear-gradient(135deg, rgba(255, 85, 0, 0.16), rgba(245, 158, 11, 0.22))',
-                border: '1.5px solid rgba(245, 158, 11, 0.6)',
-                color: '#FCD34D',
-                fontWeight: 700,
-                borderRadius: '999px',
-                padding: '8px 18px',
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: '8px',
-                cursor: 'pointer',
-                transition: 'all 0.2s ease',
-                boxShadow: '0 4px 15px rgba(245, 158, 11, 0.2)'
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.transform = 'translateY(-2px)';
-                e.currentTarget.style.borderColor = '#F59E0B';
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.transform = 'translateY(0)';
-                e.currentTarget.style.borderColor = 'rgba(245, 158, 11, 0.6)';
-              }}
+              title="ตรวจสอบรายชื่อผู้ได้รับสิทธิ์เสื้อที่ระลึก 40 คนแรก"
             >
-              <span style={{ fontSize: '1.1rem' }}>🎽</span>
+              <span style={{ fontSize: '1.15rem' }}>🎽</span>
               <span><strong>ประกาศ 40 คนแรก:</strong> ตรวจสอบรายชื่อผู้ได้รับเสื้อที่ระลึก ➔</span>
             </button>
           </div>
 
           {/* Social Proof */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '20px', marginTop: '28px', color: 'var(--text-muted)', fontSize: '0.9rem', flexWrap: 'wrap' }}>
-            <span style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+          <div className="hero-social-proof">
+            <span className="proof-item">
               <Users size={16} color="var(--primary)" />
               ลงทะเบียนแล้ว <strong style={{ color: '#FFF' }}>{registrationsCount}</strong> / {totalQuota} คน
             </span>
-            <span>•</span>
-            <span style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+            <span className="proof-divider">•</span>
+            <span className="proof-item">
               <HeartHandshake size={16} color="var(--green)" />
               กิจกรรมฟรี ไม่มีค่าธรรมเนียม
             </span>

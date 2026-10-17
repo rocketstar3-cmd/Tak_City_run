@@ -26,16 +26,26 @@ export function SponsorsSection({ sponsors = [] }) {
                 className="sponsor-avatar"
                 loading="lazy"
               />
-              <div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                  <strong style={{ color: '#FFF', fontSize: '0.95rem' }}>{sp.name}</strong>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px', flexWrap: 'wrap' }}>
+                  <strong style={{ color: '#FFF', fontSize: '0.95rem', wordBreak: 'break-word' }}>{sp.name}</strong>
                   {sp.tier === 'main' && (
-                    <span style={{ fontSize: '0.7rem', background: 'var(--primary)', color: '#FFF', padding: '2px 6px', borderRadius: '4px' }}>
+                    <span style={{
+                      fontSize: '0.72rem',
+                      fontWeight: 700,
+                      background: 'var(--primary)',
+                      color: '#FFF',
+                      padding: '3px 8px',
+                      borderRadius: '4px',
+                      whiteSpace: 'nowrap',
+                      flexShrink: 0,
+                      letterSpacing: '0.02em'
+                    }}>
                       ผู้สนับสนุนหลัก
                     </span>
                   )}
                 </div>
-                <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginTop: '2px' }}>
+                <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginTop: '3px' }}>
                   {sp.role}
                 </div>
               </div>

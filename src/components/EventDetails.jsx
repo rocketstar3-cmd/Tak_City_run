@@ -131,62 +131,63 @@ export function EventDetails({ activeEvent, onOpenRegister }) {
             </p>
           </div>
 
-          <div className="glass-card" style={{ padding: '36px' }}>
+          <div className="glass-card route-card">
             <div className="route-grid">
               {/* Left Column: Route description & Highlights */}
               <div>
                 <span className="badge-tag green" style={{ marginBottom: '8px' }}>
                   ระยะทางการแข่งขัน {distanceKm} กิโลเมตร
                 </span>
-                <h3 style={{ fontSize: '1.75rem', marginBottom: '14px', color: '#FFF' }}>
+                <h3 className="route-detail-title">
                   {distanceLabel}
                 </h3>
 
-                <p style={{ color: 'var(--text-secondary)', lineHeight: 1.8, fontSize: '1.05rem', marginBottom: '24px' }}>
+                <p style={{ color: 'var(--text-secondary)', lineHeight: 1.8, fontSize: '1.02rem', marginBottom: '24px' }}>
                   {activeEvent.routeDescription || 'เส้นทางวิ่งเลียบแม่น้ำปิง ทัศนียภาพสวยงาม ทางราบเรียบ เหมาะสำหรับการวิ่งรับอรุณยามเช้า'}
                 </p>
 
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '14px', marginBottom: '24px' }}>
-                  <div style={{ background: 'rgba(255, 255, 255, 0.04)', padding: '16px', borderRadius: 'var(--radius-sm)' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--cyan)', marginBottom: '4px' }}>
+                <div className="route-station-grid">
+                  <div className="route-station-box">
+                    <div className="route-station-header" style={{ color: 'var(--cyan)' }}>
                       <Droplet size={18} /> <strong>จุดบริการน้ำดื่ม</strong>
                     </div>
-                    <span style={{ fontSize: '1.3rem', fontWeight: 800, color: '#FFF' }}>
+                    <span className="route-station-val">
                       {waterStations} จุดตลอดเส้นทาง
                     </span>
                   </div>
 
-                  <div style={{ background: 'rgba(255, 255, 255, 0.04)', padding: '16px', borderRadius: 'var(--radius-sm)' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#F87171', marginBottom: '4px' }}>
+                  <div className="route-station-box">
+                    <div className="route-station-header" style={{ color: '#F87171' }}>
                       <Activity size={18} /> <strong>หน่วยปฐมพยาบาล</strong>
                     </div>
-                    <span style={{ fontSize: '1.3rem', fontWeight: 800, color: '#FFF' }}>
+                    <span className="route-station-val">
                       {firstAidPoints} จุดบริการ
                     </span>
                   </div>
                 </div>
 
-                <h4 style={{ fontSize: '1rem', color: 'var(--text-muted)', marginBottom: '12px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                <h4 style={{ fontSize: '0.95rem', color: 'var(--text-muted)', marginBottom: '12px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
                   ไฮไลต์และจุดเช็คอินในเส้นทาง:
                 </h4>
                 <ul className="highlights-list">
                   {highlights.map((hl, index) => (
-                    <li key={index} className="highlight-item" style={{ fontSize: '1rem' }}>
-                      <CheckCircle2 size={20} />
+                    <li key={index} className="highlight-item" style={{ fontSize: '0.98rem' }}>
+                      <CheckCircle2 size={18} />
                       <span>{hl}</span>
                     </li>
                   ))}
                 </ul>
 
-                <div style={{ marginTop: '28px' }}>
+                <div style={{ marginTop: '24px' }}>
                   <a 
                     href={activeEvent.locationMapUrl || 'https://maps.google.com'} 
                     target="_blank" 
                     rel="noreferrer"
-                    className="btn btn-secondary"
-                    style={{ gap: '10px' }}
+                    className="btn btn-secondary route-map-btn"
                   >
-                    <MapPin size={18} color="var(--primary)" /> เปิดแผนที่จุดปล่อยตัวบน Google Maps <ExternalLink size={14} />
+                    <MapPin size={18} color="var(--primary)" /> 
+                    <span>เปิดแผนที่จุดปล่อยตัวบน Google Maps</span>
+                    <ExternalLink size={14} />
                   </a>
                 </div>
               </div>
