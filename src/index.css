@@ -3,26 +3,27 @@
    ========================================================== */
 
 :root {
-  --primary: #FF5500;
-  --primary-hover: #FF6A1A;
-  --primary-light: #FFA066;
-  --primary-glow: rgba(255, 85, 0, 0.35);
+  --primary: #00E676;
+  --primary-hover: #00FF88;
+  --primary-light: #69F0AE;
+  --primary-dark: #00C853;
+  --primary-glow: rgba(0, 230, 118, 0.35);
   
   --cyan: #00F0FF;
   --cyan-glow: rgba(0, 240, 255, 0.3);
   
-  --green: #10B981;
-  --green-glow: rgba(16, 185, 129, 0.25);
+  --green: #00E676;
+  --green-glow: rgba(0, 230, 118, 0.25);
   
   --yellow: #FBBF24;
   --red: #EF4444;
   
-  --dark-bg: #080C15;
-  --dark-surface: #0F172A;
-  --dark-card: rgba(24, 34, 52, 0.85);
-  --dark-card-hover: rgba(30, 44, 68, 0.95);
-  --dark-border: rgba(255, 255, 255, 0.09);
-  --dark-border-focus: rgba(255, 85, 0, 0.5);
+  --dark-bg: #08090C;
+  --dark-surface: #0D1016;
+  --dark-card: rgba(14, 18, 25, 0.88);
+  --dark-card-hover: rgba(19, 25, 36, 0.96);
+  --dark-border: rgba(255, 255, 255, 0.08);
+  --dark-border-focus: rgba(0, 230, 118, 0.5);
   
   --text-main: #F8FAFC;
   --text-secondary: #CBD5E1;
@@ -59,16 +60,18 @@ html {
 
 body {
   font-family: var(--font-body);
-  background-color: var(--dark-bg);
+  background-color: #08090C;
   color: var(--text-main);
   line-height: 1.6;
   overflow-x: hidden;
   background-image: 
-    radial-gradient(circle at 10% 20%, rgba(255, 85, 0, 0.08) 0%, transparent 40%),
-    radial-gradient(circle at 90% 80%, rgba(0, 240, 255, 0.06) 0%, transparent 40%),
-    linear-gradient(rgba(255, 255, 255, 0.02) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(255, 255, 255, 0.02) 1px, transparent 1px);
-  background-size: 100% 100%, 100% 100%, 48px 48px, 48px 48px;
+    linear-gradient(45deg, rgba(255, 255, 255, 0.016) 25%, transparent 25%),
+    linear-gradient(-45deg, rgba(255, 255, 255, 0.016) 25%, transparent 25%),
+    linear-gradient(45deg, transparent 75%, rgba(255, 255, 255, 0.016) 75%),
+    linear-gradient(-45deg, transparent 75%, rgba(255, 255, 255, 0.016) 75%),
+    linear-gradient(rgba(255, 255, 255, 0.012) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.012) 1px, transparent 1px);
+  background-size: 8px 8px, 8px 8px, 8px 8px, 8px 8px, 32px 32px, 32px 32px;
   min-height: 100vh;
 }
 
@@ -118,9 +121,9 @@ button, input, select, textarea {
   letter-spacing: 0.1em;
   padding: 6px 14px;
   border-radius: 999px;
-  background: rgba(255, 85, 0, 0.12);
+  background: rgba(0, 230, 118, 0.12);
   color: var(--primary);
-  border: 1px solid rgba(255, 85, 0, 0.3);
+  border: 1px solid rgba(0, 230, 118, 0.3);
   margin-bottom: 12px;
 }
 
@@ -190,15 +193,17 @@ button, input, select, textarea {
 }
 
 .btn-primary {
-  background: linear-gradient(135deg, var(--primary) 0%, #FF8533 100%);
-  color: #FFFFFF;
-  box-shadow: 0 4px 20px var(--primary-glow);
+  background: var(--primary);
+  color: #000000;
+  font-weight: 800;
+  box-shadow: 0 4px 14px var(--primary-glow);
 }
 
 .btn-primary:hover {
-  background: linear-gradient(135deg, var(--primary-hover) 0%, var(--primary) 100%);
+  background: var(--primary-hover);
+  color: #000000;
   transform: translateY(-2px);
-  box-shadow: 0 6px 26px rgba(255, 85, 0, 0.55);
+  box-shadow: 0 6px 20px var(--primary-glow);
 }
 
 .btn-secondary {
@@ -214,14 +219,15 @@ button, input, select, textarea {
 }
 
 .btn-cyan {
-  background: linear-gradient(135deg, #00C6FF 0%, #0072FF 100%);
-  color: #FFFFFF;
-  box-shadow: 0 4px 18px var(--cyan-glow);
+  background: var(--cyan);
+  color: #000000;
+  font-weight: 800;
+  box-shadow: 0 4px 14px var(--cyan-glow);
 }
 
 .btn-cyan:hover {
   transform: translateY(-2px);
-  box-shadow: 0 6px 24px rgba(0, 240, 255, 0.45);
+  box-shadow: 0 6px 20px var(--cyan-glow);
 }
 
 .btn-outline {
@@ -248,7 +254,7 @@ button, input, select, textarea {
 }
 
 .btn-gold-announcement {
-  background: linear-gradient(135deg, rgba(255, 85, 0, 0.16), rgba(245, 158, 11, 0.22));
+  background: rgba(245, 158, 11, 0.16);
   border: 1.5px solid rgba(245, 158, 11, 0.6);
   color: #FCD34D;
   font-weight: 700;
@@ -268,7 +274,7 @@ button, input, select, textarea {
 .btn-gold-announcement:hover {
   transform: translateY(-2px);
   border-color: #F59E0B;
-  background: linear-gradient(135deg, rgba(255, 85, 0, 0.25), rgba(245, 158, 11, 0.35));
+  background: rgba(245, 158, 11, 0.28);
 }
 
 .hero-social-proof {
@@ -357,9 +363,7 @@ button, input, select, textarea {
 }
 
 .brand-title-accent {
-  background: linear-gradient(135deg, var(--primary) 0%, #FFB03A 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
+  color: var(--primary);
 }
 
 .brand-text-block {
@@ -450,26 +454,9 @@ button, input, select, textarea {
   overflow: hidden;
 }
 
-.hero-glow-1 {
-  position: absolute;
-  top: 15%;
-  left: 5%;
-  width: 450px;
-  height: 450px;
-  background: radial-gradient(circle, rgba(255, 85, 0, 0.18) 0%, transparent 70%);
-  pointer-events: none;
-  z-index: 0;
-}
-
+.hero-glow-1,
 .hero-glow-2 {
-  position: absolute;
-  bottom: 10%;
-  right: 5%;
-  width: 480px;
-  height: 480px;
-  background: radial-gradient(circle, rgba(0, 240, 255, 0.15) 0%, transparent 70%);
-  pointer-events: none;
-  z-index: 0;
+  display: none;
 }
 
 .hero-grid {
@@ -486,10 +473,10 @@ button, input, select, textarea {
   align-items: center;
   gap: 10px;
   padding: 6px 16px;
-  background: rgba(255, 85, 0, 0.14);
-  border: 1px solid rgba(255, 85, 0, 0.4);
+  background: rgba(0, 230, 118, 0.12);
+  border: 1px solid rgba(0, 230, 118, 0.4);
   border-radius: 999px;
-  color: #FFA559;
+  color: #00FF88;
   font-family: var(--font-heading);
   font-weight: 700;
   font-size: 0.95rem;
@@ -520,9 +507,7 @@ button, input, select, textarea {
 }
 
 .hero-gradient-text {
-  background: linear-gradient(135deg, #FF6B00 0%, #FFD600 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
+  color: var(--primary);
   display: block;
 }
 
@@ -565,11 +550,11 @@ button, input, select, textarea {
 
 /* Countdown Card */
 .countdown-box {
-  background: linear-gradient(160deg, rgba(24, 34, 52, 0.95) 0%, rgba(15, 23, 42, 0.95) 100%);
-  border: 1.5px solid rgba(255, 85, 0, 0.35);
+  background: #0E1219;
+  border: 1.5px solid rgba(0, 230, 118, 0.4);
   border-radius: var(--radius-xl);
   padding: 36px 28px;
-  box-shadow: 0 20px 48px rgba(0, 0, 0, 0.6), var(--shadow-glow);
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.7);
   text-align: center;
 }
 
@@ -730,7 +715,7 @@ button, input, select, textarea {
   bottom: 0;
   left: 100px;
   width: 2px;
-  background: rgba(255, 85, 0, 0.25);
+  background: rgba(0, 230, 118, 0.25);
 }
 
 .timeline-row {
@@ -835,18 +820,18 @@ button, input, select, textarea {
 
 .coupon-ticket,
 .bib-ticket {
-  background: linear-gradient(145deg, #131b2e 0%, #0d1322 100%);
-  border: 2px solid #F59E0B;
+  background: #0D121D;
+  border: 2px solid var(--primary);
   border-radius: 22px;
   overflow: hidden;
-  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.7), 0 0 30px rgba(245, 158, 11, 0.25);
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.7);
   position: relative;
 }
 
 .coupon-header,
 .bib-header {
-  background: linear-gradient(90deg, #F59E0B 0%, var(--primary) 100%);
-  color: #FFF;
+  background: var(--primary);
+  color: #000000;
   padding: 16px 22px;
   display: flex;
   align-items: center;
@@ -1298,15 +1283,15 @@ button, input, select, textarea {
 }
 
 .official-distance-badge {
-  background: linear-gradient(135deg, var(--primary) 0%, #FF8533 100%);
-  color: #FFF;
+  background: var(--primary);
+  color: #000000;
   font-size: 0.8rem;
   font-weight: 800;
   padding: 6px 14px;
   border-radius: 999px;
   text-transform: uppercase;
   letter-spacing: 0.05em;
-  box-shadow: 0 4px 14px rgba(255, 85, 0, 0.35);
+  box-shadow: 0 4px 14px var(--primary-glow);
   display: inline-block;
 }
 
@@ -1320,8 +1305,8 @@ button, input, select, textarea {
 
 .official-distance-km-box {
   text-align: center;
-  background: rgba(255, 85, 0, 0.12);
-  border: 1.5px solid rgba(255, 85, 0, 0.4);
+  background: rgba(0, 230, 118, 0.12);
+  border: 1.5px solid rgba(0, 230, 118, 0.4);
   border-radius: var(--radius-lg);
   padding: 24px 32px;
   min-width: 170px;
@@ -1539,6 +1524,7 @@ button, input, select, textarea {
     font-size: clamp(1.4rem, 5.5vw, 1.95rem);
     line-height: 1.22;
     margin-top: 4px;
+    color: var(--primary);
   }
 
   .hero-desc {
@@ -1724,14 +1710,14 @@ button, input, select, textarea {
     bottom: 0;
     left: 0;
     right: 0;
-    background: rgba(11, 15, 25, 0.95);
+    background: rgba(9, 12, 17, 0.96);
     backdrop-filter: blur(16px);
     -webkit-backdrop-filter: blur(16px);
-    border-top: 1px solid rgba(255, 85, 0, 0.4);
+    border-top: 1px solid rgba(0, 230, 118, 0.4);
     padding: 10px 16px;
     padding-bottom: calc(10px + env(safe-area-inset-bottom, 0px));
     z-index: 990;
-    box-shadow: 0 -8px 24px rgba(0, 0, 0, 0.7), 0 0 16px rgba(255, 85, 0, 0.2);
+    box-shadow: 0 -8px 24px rgba(0, 0, 0, 0.7), 0 0 16px rgba(0, 230, 118, 0.2);
   }
 
   .sticky-bar-info {
@@ -1741,13 +1727,13 @@ button, input, select, textarea {
   }
 
   .sticky-ep-badge {
-    background: rgba(255, 85, 0, 0.22);
-    color: #FF7700;
+    background: rgba(0, 230, 118, 0.22);
+    color: #00FF88;
     font-weight: 800;
     font-size: 0.78rem;
     padding: 3px 8px;
     border-radius: 6px;
-    border: 1px solid rgba(255, 85, 0, 0.45);
+    border: 1px solid rgba(0, 230, 118, 0.45);
   }
 
   .sticky-distance-text {
@@ -1761,7 +1747,7 @@ button, input, select, textarea {
     font-size: 0.95rem !important;
     font-weight: 800 !important;
     border-radius: 999px !important;
-    box-shadow: 0 4px 14px rgba(255, 85, 0, 0.45) !important;
+    box-shadow: 0 4px 14px rgba(0, 230, 118, 0.45) !important;
   }
 
   /* ========================================================
@@ -1956,8 +1942,8 @@ button, input, select, textarea {
     text-align: center;
     font-size: 0.78rem;
     color: var(--primary);
-    background: rgba(255, 85, 0, 0.08);
-    border: 1px dashed rgba(255, 85, 0, 0.3);
+    background: rgba(0, 230, 118, 0.08);
+    border: 1px dashed rgba(0, 230, 118, 0.3);
     padding: 6px 12px;
     border-radius: 8px;
     margin-bottom: 10px;

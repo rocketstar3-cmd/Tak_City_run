@@ -235,7 +235,7 @@ export function EventDetails({ activeEvent, onOpenRegister }) {
                 )}
 
                 <div style={{
-                  background: 'linear-gradient(135deg, #0F172A 0%, #1E293B 100%)',
+                  background: '#0D1017',
                   borderRadius: 'var(--radius-lg)',
                   border: '1.5px solid var(--dark-border)',
                   overflow: 'hidden',
@@ -254,7 +254,7 @@ export function EventDetails({ activeEvent, onOpenRegister }) {
                         maxHeight: posterMaxHeightCss,
                         width: '100%',
                         margin: '0 auto',
-                        background: posterFit === 'contain' ? 'radial-gradient(circle, #1E293B 0%, #080C15 100%)' : '#0F172A'
+                        background: '#08090C'
                       }}>
                         <img 
                           src={activeEvent.coverImage} 
@@ -314,7 +314,7 @@ export function EventDetails({ activeEvent, onOpenRegister }) {
                     <div style={{ padding: '24px' }}>
                       <div style={{ 
                         height: '280px', 
-                        background: 'radial-gradient(circle, rgba(0, 240, 255, 0.08) 0%, rgba(15, 23, 42, 0.95) 80%)',
+                        background: '#0E121A',
                         borderRadius: 'var(--radius-md)',
                         display: 'flex',
                         flexDirection: 'column',

@@ -1631,6 +1631,7 @@ export function AdminPortal({
               <label className="form-label">เลือกโทนสีหลัก (Primary Accent Theme)</label>
               <div style={{ display: 'flex', gap: '14px', alignItems: 'center', marginTop: '6px' }}>
                 {[
+                  { name: 'Cyber Racing Green', color: '#00E676' },
                   { name: 'Active Orange', color: '#FF5500' },
                   { name: 'Electric Cyan', color: '#00F0FF' },
                   { name: 'Neon Lime', color: '#10B981' },

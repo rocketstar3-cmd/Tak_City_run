@@ -128,6 +128,10 @@ export default function App() {
       // Apply dynamic theme color from settings if specified
       if (settingsData?.themeColor) {
         document.documentElement.style.setProperty('--primary', settingsData.themeColor);
+        if (settingsData.themeColor === '#00E676') {
+          document.documentElement.style.setProperty('--primary-glow', 'rgba(0, 230, 118, 0.35)');
+          document.documentElement.style.setProperty('--primary-hover', '#00FF88');
+        }
       }
 
       // Sync latest registration count in background without blocking

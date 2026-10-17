@@ -96,12 +96,20 @@ function setLocalItem(key, value) {
       }
     }
 
-    // Auto-migrate legacy cached settings logoUrl in browser
+    // Auto-migrate legacy cached settings logoUrl & themeColor in browser
     const rawSettings = localStorage.getItem(LS_KEYS.SETTINGS);
     if (rawSettings) {
       const parsedSettings = JSON.parse(rawSettings);
+      let settingsChanged = false;
       if (!parsedSettings.logoUrl || parsedSettings.logoUrl === '/tak-city-run-logo.svg') {
         parsedSettings.logoUrl = '/tak-logo-white.png';
+        settingsChanged = true;
+      }
+      if (parsedSettings.themeColor === '#FF5500' || !parsedSettings.themeColor) {
+        parsedSettings.themeColor = '#00E676';
+        settingsChanged = true;
+      }
+      if (settingsChanged) {
         localStorage.setItem(LS_KEYS.SETTINGS, JSON.stringify(parsedSettings));
       }
     }
