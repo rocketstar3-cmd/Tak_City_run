@@ -9,9 +9,12 @@ export const initialClubSettings = {
   lineUrl: "https://line.me",
   adminPin: "1234",
   couponSettings: {
+    cardType: "coupon", // "coupon" | "id_card"
+    showPerks: true,
     badgeText: "🎟️ LUCKY PASS",
     headline: "คูปองลุ้นรางวัล & สิทธิประโยชน์นักวิ่ง",
     subheadline: "บัตรดิจิทัลประจำตัวสำหรับลุ้นของรางวัลท้ายงาน และรับอาหารเช้าหน้างาน",
+    bibLabel: "หมายเลขคูปองชิงโชค (LUCKY NO.)",
     perksTitle: "สิทธิประโยชน์สำหรับผู้ถือคูปองนี้:",
     perk1Title: "สิทธิ์ลุ้นรับรางวัล Lucky Draw ท้ายงาน",
     perk1Desc: "จับสลากแจกของรางวัล & ของที่ระลึกจากผู้สนับสนุนหลังเข้าเส้นชัย",

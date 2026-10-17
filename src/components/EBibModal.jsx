@@ -33,11 +33,16 @@ export function EBibModal({ registration, activeEvent, clubSettings, onClose }) 
   const location = activeEvent?.locationName || 'ริมแม่น้ำปิง หน้าสะพานสมโภชกรุงรัตนโกสินทร์ 200 ปี จ.ตาก';
   const eventDateFormatted = activeEvent?.eventDate ? formatThaiDateEBib(activeEvent.eventDate) : '15 พฤศจิกายน 2569';
 
+  const isIdCard = clubSettings?.couponSettings?.cardType === 'id_card' || clubSettings?.couponSettings?.showPerks === false;
+
   // Customizable settings from admin with smart fallbacks
   const couponConfig = {
-    badgeText: clubSettings?.couponSettings?.badgeText || '🎟️ LUCKY DRAW PASS',
-    headline: clubSettings?.couponSettings?.headline || 'คูปองลุ้นรางวัล & สิทธิประโยชน์นักวิ่ง',
-    subheadline: clubSettings?.couponSettings?.subheadline || 'บัตรดิจิทัลประจำตัวสำหรับลุ้นของรางวัลท้ายงาน และรับอาหารเช้าหน้างาน',
+    cardType: clubSettings?.couponSettings?.cardType || 'coupon',
+    showPerks: clubSettings?.couponSettings?.showPerks !== false,
+    badgeText: clubSettings?.couponSettings?.badgeText || (isIdCard ? '🏃‍♂️ RUNNER PASS' : '🎟️ LUCKY DRAW PASS'),
+    headline: clubSettings?.couponSettings?.headline || (isIdCard ? 'บัตรประจำตัวผู้สมัคร (Runner Digital ID)' : 'คูปองลุ้นรางวัล & สิทธิประโยชน์นักวิ่ง'),
+    subheadline: clubSettings?.couponSettings?.subheadline || (isIdCard ? 'บัตรดิจิทัลยืนยันสิทธิ์การลงทะเบียนเข้าร่วมกิจกรรม' : 'บัตรดิจิทัลประจำตัวสำหรับลุ้นของรางวัลท้ายงาน และรับอาหารเช้าหน้างาน'),
+    bibLabel: clubSettings?.couponSettings?.bibLabel || (isIdCard ? 'หมายเลขประจำตัวนักวิ่ง (BIB NO.)' : 'หมายเลขคูปองชิงโชค (LUCKY NO.)'),
     perksTitle: clubSettings?.couponSettings?.perksTitle || 'สิทธิประโยชน์สำหรับผู้ถือคูปองนี้:',
     perk1Title: clubSettings?.couponSettings?.perk1Title || 'สิทธิ์ลุ้นรับรางวัล Lucky Draw ท้ายงาน',
     perk1Desc: clubSettings?.couponSettings?.perk1Desc || 'จับสลากแจกของรางวัล & ของที่ระลึกจากผู้สนับสนุนหลังเข้าเส้นชัย',
@@ -45,7 +50,7 @@ export function EBibModal({ registration, activeEvent, clubSettings, onClose }) 
     perk2Desc: clubSettings?.couponSettings?.perk2Desc || 'อิ่มอร่อยกับเมนูท้องถิ่นเมืองตาก ณ ซุ้มอาหารบริการนักวิ่ง',
     perk3Title: clubSettings?.couponSettings?.perk3Title || 'ส่วนลดพิเศษร้านค้าชุมชน',
     perk3Desc: clubSettings?.couponSettings?.perk3Desc || 'แสดงคูปองเพื่อรับส่วนลดและโปรโมชั่นพิเศษจากร้านค้าที่ร่วมรายการ',
-    noticeText: clubSettings?.couponSettings?.noticeText || 'แสดงคูปองนี้ต่อเจ้าหน้าที่หน้างานเพื่อรับอาหารเช้าและสิทธิ์ร่วมจับสลาก Lucky Draw'
+    noticeText: clubSettings?.couponSettings?.noticeText || (isIdCard ? 'แสดงบัตรนี้ต่อเจ้าหน้าที่หน้างาน ณ จุดรายงานตัว' : 'แสดงคูปองนี้ต่อเจ้าหน้าที่หน้างานเพื่อรับอาหารเช้าและสิทธิ์ร่วมจับสลาก Lucky Draw')
   };
 
   // 1-Click Save as Image
@@ -90,9 +95,9 @@ export function EBibModal({ registration, activeEvent, clubSettings, onClose }) 
         <div className="modal-header" style={{ marginBottom: '14px' }}>
           <div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <span className="badge-tag gold" style={{ margin: 0, padding: '3px 10px', fontSize: '0.78rem' }}>
-                {activeTab === 'coupon' ? <Gift size={13} /> : <Award size={13} />} 
-                {activeTab === 'coupon' ? ' คูปองกิจกรรม & ชิงโชค' : ' ใบประกาศนียบัตรออนไลน์'}
+              <span className={`badge-tag ${activeTab === 'coupon' && isIdCard ? 'cyan' : 'gold'}`} style={{ margin: 0, padding: '3px 10px', fontSize: '0.78rem' }}>
+                {activeTab === 'coupon' ? (isIdCard ? <ShieldCheck size={13} /> : <Gift size={13} />) : <Award size={13} />} 
+                {activeTab === 'coupon' ? (isIdCard ? ' บัตรประจำตัวนักวิ่ง (E-BIB)' : ' คูปองกิจกรรม & ชิงโชค') : ' ใบประกาศนียบัตรออนไลน์'}
               </span>
             </div>
             <h3 style={{ fontSize: '1.3rem', color: '#FFF', marginTop: '6px' }}>
@@ -122,7 +127,7 @@ export function EBibModal({ registration, activeEvent, clubSettings, onClose }) 
             style={{ flex: 1, padding: '8px 12px', fontSize: '0.88rem' }}
             onClick={() => setActiveTab('coupon')}
           >
-            <Gift size={15} /> 🎟️ คูปองชิงรางวัล
+            {isIdCard ? <ShieldCheck size={15} /> : <Gift size={15} />} {isIdCard ? '🪪 บัตรประจำตัวนักวิ่ง' : '🎟️ คูปองชิงรางวัล'}
           </button>
 
           <button
@@ -183,7 +188,7 @@ export function EBibModal({ registration, activeEvent, clubSettings, onClose }) 
                 <span className="coupon-distance-pill">{distance}</span>
 
                 <div className="coupon-number-label">
-                  หมายเลขคูปองชิงโชค (LUCKY NO.)
+                  {couponConfig.bibLabel}
                 </div>
                 <div className="coupon-number-display">
                   {registration.bibNumber}
@@ -192,15 +197,15 @@ export function EBibModal({ registration, activeEvent, clubSettings, onClose }) 
                 {/* Verified Runner Identity */}
                 <div style={{ 
                   background: 'rgba(255, 255, 255, 0.05)', 
-                  border: '1.5px solid rgba(245, 158, 11, 0.35)', 
+                  border: isIdCard ? '1.5px solid rgba(0, 240, 255, 0.35)' : '1.5px solid rgba(245, 158, 11, 0.35)', 
                   borderRadius: '14px', 
                   padding: '14px 18px', 
                   margin: '12px 0 16px 0',
                   textAlign: 'left'
                 }}>
                   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '6px' }}>
-                    <span style={{ fontSize: '0.75rem', color: '#F59E0B', fontWeight: 800, letterSpacing: '0.06em', textTransform: 'uppercase', display: 'flex', alignItems: 'center', gap: '4px' }}>
-                      <ShieldCheck size={14} /> ผู้สมัครที่ได้รับการยืนยัน
+                    <span style={{ fontSize: '0.75rem', color: isIdCard ? 'var(--cyan)' : '#F59E0B', fontWeight: 800, letterSpacing: '0.06em', textTransform: 'uppercase', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                      <ShieldCheck size={14} /> {isIdCard ? 'บัตรประจำตัวนักวิ่งที่ลงทะเบียนแล้ว' : 'ผู้สมัครที่ได้รับการยืนยัน'}
                     </span>
                     <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
                       {registration.createdAt ? new Date(registration.createdAt).toLocaleDateString('th-TH', { day: 'numeric', month: 'short' }) : 'ยืนยันแล้ว'}
@@ -210,7 +215,7 @@ export function EBibModal({ registration, activeEvent, clubSettings, onClose }) 
                   <div style={{ fontSize: '1.4rem', fontWeight: 800, color: '#FFF', lineHeight: 1.2 }}>
                     {registration.fullName}
                     {registration.nickname && (
-                      <span style={{ color: '#F59E0B', marginLeft: '8px', fontSize: '1.1rem', fontWeight: 600 }}>
+                      <span style={{ color: isIdCard ? 'var(--cyan)' : '#F59E0B', marginLeft: '8px', fontSize: '1.1rem', fontWeight: 600 }}>
                         ({registration.nickname})
                       </span>
                     )}
@@ -225,80 +230,88 @@ export function EBibModal({ registration, activeEvent, clubSettings, onClose }) 
                   </div>
                 </div>
 
-                {/* Perforated Divider with Cutout Notches */}
-                <div className="coupon-perforated-wrap">
-                  <div className="coupon-notch-left"></div>
-                  <div className="coupon-perforated-line">
-                    <span>✂️ รอยปรุ • หางบัตรจับรางวัล & สิทธิประโยชน์</span>
+                {/* Perforated Divider & Stub Perks (Only in Coupon Mode) */}
+                {!isIdCard && (
+                  <>
+                    <div className="coupon-perforated-wrap">
+                      <div className="coupon-notch-left"></div>
+                      <div className="coupon-perforated-line">
+                        <span>✂️ รอยปรุ • หางบัตรจับรางวัล & สิทธิประโยชน์</span>
+                      </div>
+                      <div className="coupon-notch-right"></div>
+                    </div>
+
+                    <div className="coupon-stub-section">
+                      <div className="coupon-perks-title">
+                        <Sparkles size={14} color="#F59E0B" /> {couponConfig.perksTitle}
+                      </div>
+                      <div className="coupon-perks-list">
+                        <div className="coupon-perk-item">
+                          <div className="coupon-perk-icon" style={{ background: 'rgba(245, 158, 11, 0.15)', color: '#F59E0B' }}>
+                            <Gift size={16} />
+                          </div>
+                          <div>
+                            <strong>{couponConfig.perk1Title}</strong>
+                            <p>{couponConfig.perk1Desc}</p>
+                          </div>
+                        </div>
+
+                        <div className="coupon-perk-item">
+                          <div className="coupon-perk-icon" style={{ background: 'rgba(16, 185, 129, 0.15)', color: '#10B981' }}>
+                            <Coffee size={16} />
+                          </div>
+                          <div>
+                            <strong>{couponConfig.perk2Title}</strong>
+                            <p>{couponConfig.perk2Desc}</p>
+                          </div>
+                        </div>
+
+                        <div className="coupon-perk-item">
+                          <div className="coupon-perk-icon" style={{ background: 'rgba(0, 240, 255, 0.15)', color: 'var(--cyan)' }}>
+                            <ShoppingBag size={16} />
+                          </div>
+                          <div>
+                            <strong>{couponConfig.perk3Title}</strong>
+                            <p>{couponConfig.perk3Desc}</p>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </>
+                )}
+
+                {/* Additional Event & Runner Details */}
+                <div className="coupon-details-grid" style={{ 
+                  marginTop: isIdCard ? '16px' : '0', 
+                  background: isIdCard ? 'rgba(255, 255, 255, 0.03)' : undefined,
+                  borderRadius: isIdCard ? '12px' : undefined,
+                  padding: isIdCard ? '14px 16px' : undefined
+                }}>
+                  <div>
+                    <span style={{ color: 'var(--text-muted)', display: 'block', fontSize: '0.72rem' }}>วันจัดงาน</span>
+                    <strong style={{ color: '#FFF' }}>{eventDateFormatted}</strong>
                   </div>
-                  <div className="coupon-notch-right"></div>
+                  <div>
+                    <span style={{ color: 'var(--text-muted)', display: 'block', fontSize: '0.72rem' }}>ผู้ติดต่อฉุกเฉิน</span>
+                    <strong>{registration.emergencyContact || '-'} ({registration.emergencyPhone || '-'})</strong>
+                  </div>
+                  <div style={{ gridColumn: 'span 2' }}>
+                    <span style={{ color: 'var(--text-muted)', display: 'block', fontSize: '0.72rem' }}>สถานที่นัดพบ</span>
+                    <span style={{ fontSize: '0.82rem', color: '#CBD5E1' }}>{location}</span>
+                  </div>
                 </div>
 
-                {/* Stub / Perks Section */}
-                <div className="coupon-stub-section">
-                  <div className="coupon-perks-title">
-                    <Sparkles size={14} color="#F59E0B" /> {couponConfig.perksTitle}
-                  </div>
-                  <div className="coupon-perks-list">
-                    <div className="coupon-perk-item">
-                      <div className="coupon-perk-icon" style={{ background: 'rgba(245, 158, 11, 0.15)', color: '#F59E0B' }}>
-                        <Gift size={16} />
-                      </div>
-                      <div>
-                        <strong>{couponConfig.perk1Title}</strong>
-                        <p>{couponConfig.perk1Desc}</p>
-                      </div>
-                    </div>
-
-                    <div className="coupon-perk-item">
-                      <div className="coupon-perk-icon" style={{ background: 'rgba(16, 185, 129, 0.15)', color: '#10B981' }}>
-                        <Coffee size={16} />
-                      </div>
-                      <div>
-                        <strong>{couponConfig.perk2Title}</strong>
-                        <p>{couponConfig.perk2Desc}</p>
-                      </div>
-                    </div>
-
-                    <div className="coupon-perk-item">
-                      <div className="coupon-perk-icon" style={{ background: 'rgba(0, 240, 255, 0.15)', color: 'var(--cyan)' }}>
-                        <ShoppingBag size={16} />
-                      </div>
-                      <div>
-                        <strong>{couponConfig.perk3Title}</strong>
-                        <p>{couponConfig.perk3Desc}</p>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Additional Event & Runner Details */}
-                  <div className="coupon-details-grid">
-                    <div>
-                      <span style={{ color: 'var(--text-muted)', display: 'block', fontSize: '0.72rem' }}>วันจัดงาน</span>
-                      <strong style={{ color: '#FFF' }}>{eventDateFormatted}</strong>
-                    </div>
-                    <div>
-                      <span style={{ color: 'var(--text-muted)', display: 'block', fontSize: '0.72rem' }}>ผู้ติดต่อฉุกเฉิน</span>
-                      <strong>{registration.emergencyContact || '-'} ({registration.emergencyPhone || '-'})</strong>
-                    </div>
-                    <div style={{ gridColumn: 'span 2' }}>
-                      <span style={{ color: 'var(--text-muted)', display: 'block', fontSize: '0.72rem' }}>สถานที่นัดพบ</span>
-                      <span style={{ fontSize: '0.82rem', color: '#CBD5E1' }}>{location}</span>
-                    </div>
-                  </div>
-
-                  {/* Status Badge */}
-                  <div style={{ marginTop: '16px', textAlign: 'center' }}>
-                    {registration.checkedIn ? (
-                      <span className="badge-tag green" style={{ margin: 0, padding: '6px 14px', fontSize: '0.85rem' }}>
-                        <CheckCircle size={15} /> ยืนยันสิทธิ์ & เช็คอินหน้างานแล้ว
-                      </span>
-                    ) : (
-                      <span className="badge-tag gold" style={{ margin: 0, padding: '6px 14px', fontSize: '0.85rem' }}>
-                        🎟️ แสดงคูปองนี้ให้เจ้าหน้าที่หน้างานเพื่อรับอาหารเช้า & สิทธิ์ลุ้นรางวัล
-                      </span>
-                    )}
-                  </div>
+                {/* Status Badge */}
+                <div style={{ marginTop: '16px', textAlign: 'center' }}>
+                  {registration.checkedIn ? (
+                    <span className="badge-tag green" style={{ margin: 0, padding: '6px 14px', fontSize: '0.85rem' }}>
+                      <CheckCircle size={15} /> ยืนยันสิทธิ์ & เช็คอินหน้างานแล้ว
+                    </span>
+                  ) : (
+                    <span className={`badge-tag ${isIdCard ? 'cyan' : 'gold'}`} style={{ margin: 0, padding: '6px 14px', fontSize: '0.85rem' }}>
+                      {isIdCard ? '🪪 ' : '🎟️ '}{couponConfig.noticeText}
+                    </span>
+                  )}
                 </div>
               </div>
             </div>

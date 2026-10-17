@@ -4,10 +4,12 @@ import { parseEventDateTime, formatThaiDateHero, formatThaiTimeHero } from '../l
 
 export function Hero({ 
   activeEvent, 
+  clubSettings,
   registrationsCount = 0, 
   onOpenRegister, 
   onOpenCheckBib 
 }) {
+  const isIdCard = clubSettings?.couponSettings?.cardType === 'id_card' || clubSettings?.couponSettings?.showPerks === false;
   // Countdown Timer
   const [timeLeft, setTimeLeft] = useState({ days: 0, hours: 0, minutes: 0, seconds: 0 });
 
@@ -134,7 +136,7 @@ export function Hero({
             )}
 
             <button className="btn btn-secondary btn-lg" onClick={onOpenCheckBib}>
-              🎟️ คูปอง & ใบประกาศ
+              {isIdCard ? '🪪 บัตรประจำตัว & ใบประกาศ' : '🎟️ คูปอง & ใบประกาศ'}
             </button>
           </div>
 

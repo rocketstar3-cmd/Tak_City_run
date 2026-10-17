@@ -172,11 +172,14 @@ export function AdminPortal({
   // Settings State
   const [settingsForm, setSettingsForm] = useState(clubSettings || {});
 
-  // Coupon Customizer State
+  // Coupon & ID Card Customizer State
   const defaultCouponConfig = {
-    badgeText: '🎟️ LUCKY DRAW PASS',
+    cardType: 'coupon', // 'coupon' | 'id_card'
+    showPerks: true,
+    badgeText: '🎟️ LUCKY PASS',
     headline: 'คูปองลุ้นรางวัล & สิทธิประโยชน์นักวิ่ง',
     subheadline: 'บัตรดิจิทัลประจำตัวสำหรับลุ้นของรางวัลท้ายงาน และรับอาหารเช้าหน้างาน',
+    bibLabel: 'หมายเลขคูปองชิงโชค (LUCKY NO.)',
     perksTitle: 'สิทธิประโยชน์สำหรับผู้ถือคูปองนี้:',
     perk1Title: 'สิทธิ์ลุ้นรับรางวัล Lucky Draw ท้ายงาน',
     perk1Desc: 'จับสลากแจกของรางวัล & ของที่ระลึกจากผู้สนับสนุนหลังเข้าเส้นชัย',
@@ -696,6 +699,38 @@ export function AdminPortal({
     showToast('บันทึกการปรับแต่งคูปองเรียบร้อยแล้ว!');
   };
 
+  const handleSelectCardType = (type) => {
+    if (type === 'id_card') {
+      setCouponConfigForm(prev => {
+        const base = { ...defaultCouponConfig, ...(prev || {}) };
+        return {
+          ...base,
+          cardType: 'id_card',
+          showPerks: false,
+          badgeText: (base.badgeText === '🎟️ LUCKY PASS' || base.badgeText === '🎟️ LUCKY DRAW PASS') ? '🏃‍♂️ RUNNER PASS' : (base.badgeText || '🏃‍♂️ RUNNER PASS'),
+          headline: base.headline === 'คูปองลุ้นรางวัล & สิทธิประโยชน์นักวิ่ง' ? 'บัตรประจำตัวผู้สมัคร (Runner Digital ID)' : (base.headline || 'บัตรประจำตัวผู้สมัคร (Runner Digital ID)'),
+          subheadline: base.subheadline === 'บัตรดิจิทัลประจำตัวสำหรับลุ้นของรางวัลท้ายงาน และรับอาหารเช้าหน้างาน' ? 'บัตรดิจิทัลยืนยันสิทธิ์การลงทะเบียนเข้าร่วมกิจกรรม' : (base.subheadline || 'บัตรดิจิทัลยืนยันสิทธิ์การลงทะเบียนเข้าร่วมกิจกรรม'),
+          bibLabel: (base.bibLabel === 'หมายเลขคูปองชิงโชค (LUCKY NO.)' || !base.bibLabel) ? 'หมายเลขประจำตัวนักวิ่ง (BIB NO.)' : base.bibLabel,
+          noticeText: base.noticeText === 'แสดงคูปองนี้ต่อเจ้าหน้าที่หน้างานเพื่อรับอาหารเช้าและสิทธิ์ร่วมจับสลาก Lucky Draw' ? 'แสดงบัตรนี้ต่อเจ้าหน้าที่หน้างาน ณ จุดรายงานตัวเพื่อรับ BIB' : (base.noticeText || 'แสดงบัตรนี้ต่อเจ้าหน้าที่หน้างาน ณ จุดรายงานตัวเพื่อรับ BIB')
+        };
+      });
+    } else {
+      setCouponConfigForm(prev => {
+        const base = { ...defaultCouponConfig, ...(prev || {}) };
+        return {
+          ...base,
+          cardType: 'coupon',
+          showPerks: true,
+          badgeText: base.badgeText === '🏃‍♂️ RUNNER PASS' ? '🎟️ LUCKY PASS' : (base.badgeText || '🎟️ LUCKY PASS'),
+          headline: base.headline === 'บัตรประจำตัวผู้สมัคร (Runner Digital ID)' ? 'คูปองลุ้นรางวัล & สิทธิประโยชน์นักวิ่ง' : (base.headline || 'คูปองลุ้นรางวัล & สิทธิประโยชน์นักวิ่ง'),
+          subheadline: base.subheadline === 'บัตรดิจิทัลยืนยันสิทธิ์การลงทะเบียนเข้าร่วมกิจกรรม' ? 'บัตรดิจิทัลประจำตัวสำหรับลุ้นของรางวัลท้ายงาน และรับอาหารเช้าหน้างาน' : (base.subheadline || 'บัตรดิจิทัลประจำตัวสำหรับลุ้นของรางวัลท้ายงาน และรับอาหารเช้าหน้างาน'),
+          bibLabel: base.bibLabel === 'หมายเลขประจำตัวนักวิ่ง (BIB NO.)' ? 'หมายเลขคูปองชิงโชค (LUCKY NO.)' : (base.bibLabel || 'หมายเลขคูปองชิงโชค (LUCKY NO.)'),
+          noticeText: base.noticeText === 'แสดงบัตรนี้ต่อเจ้าหน้าที่หน้างาน ณ จุดรายงานตัวเพื่อรับ BIB' ? 'แสดงคูปองนี้ต่อเจ้าหน้าที่หน้างานเพื่อรับอาหารเช้าและสิทธิ์ร่วมจับสลาก Lucky Draw' : (base.noticeText || 'แสดงคูปองนี้ต่อเจ้าหน้าที่หน้างานเพื่อรับอาหารเช้าและสิทธิ์ร่วมจับสลาก Lucky Draw')
+        };
+      });
+    }
+  };
+
   const currentCouponConfig = {
     ...defaultCouponConfig,
     ...(couponConfigForm || {})
@@ -932,7 +967,7 @@ export function AdminPortal({
           className={`admin-tab ${activeTab === 'coupon' ? 'active' : ''}`}
           onClick={() => setActiveTab('coupon')}
         >
-          <Gift size={16} /> 🎟️ ปรับแต่งคูปอง
+          <Gift size={16} /> 🪪 ปรับแต่งบัตร & คูปอง
         </button>
 
         <button
@@ -1661,145 +1696,250 @@ export function AdminPortal({
           {/* Left Form */}
           <div className="glass-card" style={{ padding: '28px' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '8px' }}>
-              <span className="badge-tag gold" style={{ margin: 0 }}>
-                <Gift size={14} /> ปรับแต่งคูปอง
+              <span className={`badge-tag ${currentCouponConfig.cardType === 'id_card' ? 'cyan' : 'gold'}`} style={{ margin: 0 }}>
+                {currentCouponConfig.cardType === 'id_card' ? <ShieldCheck size={14} /> : <Gift size={14} />} ปรับแต่งบัตรดิจิทัล & คูปอง
               </span>
               <span style={{ fontSize: '0.82rem', color: 'var(--text-muted)' }}>
-                มีผลต่อคูปองของนักวิ่งทุกคนทันที
+                มีผลต่อบัตรดิจิทัลและคูปองของนักวิ่งทุกคนทันที
               </span>
             </div>
             <h2 style={{ fontSize: '1.4rem', color: '#FFF', marginBottom: '8px' }}>
-              ตั้งค่ารายละเอียดคูปองลุ้นรางวัล & สิทธิประโยชน์
+              ตั้งค่ารูปแบบบัตรประจำตัวนักวิ่ง (E-BIB) & คูปองสิทธิประโยชน์
             </h2>
             <p style={{ color: 'var(--text-muted)', fontSize: '0.88rem', marginBottom: '24px', lineHeight: 1.5 }}>
-              ปรับแต่งข้อความสิทธิประโยชน์ ของรางวัล Lucky Draw จุดบริการอาหารเช้า และเงื่อนไขที่นักวิ่งจะเห็นบนคูปอง
+              สามารถเลือกว่างานนี้เป็น <strong>"บัตรประจำตัวยืนยันการลงทะเบียน (E-BIB)"</strong> (เหมาะกับงานที่ไม่มีสิทธิประโยชน์ต่อ) หรือ <strong>"คูปองลุ้นรางวัล & สิทธิประโยชน์"</strong> (มีรอยปรุหางบัตร + สิทธิประโยชน์ 3 ข้อ)
             </p>
 
             <form onSubmit={handleSaveCouponConfig}>
+              {/* CARD MODE SELECTOR */}
+              <div style={{
+                background: 'rgba(255, 255, 255, 0.04)',
+                padding: '18px',
+                borderRadius: 'var(--radius-md)',
+                border: '1px solid var(--dark-border)',
+                marginBottom: '20px'
+              }}>
+                <label className="form-label" style={{ fontSize: '0.98rem', fontWeight: 800, color: '#FFF', marginBottom: '4px' }}>
+                  🎯 เลือกประเภทของบัตรดิจิทัล (Digital Pass Mode)
+                </label>
+                <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginBottom: '14px', lineHeight: 1.5 }}>
+                  เลือกรูปแบบให้เหมาะกับงานวิ่งในแต่ละครั้ง (บางงานไม่มีของรางวัลหรืออาหารเช้า สามารถเลือกเป็นบัตรประจำตัวนักวิ่งได้)
+                </p>
+
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '12px' }}>
+                  {/* Option 1: Runner Digital ID */}
+                  <div
+                    onClick={() => handleSelectCardType('id_card')}
+                    style={{
+                      background: currentCouponConfig.cardType === 'id_card' ? 'rgba(0, 240, 255, 0.12)' : 'rgba(255, 255, 255, 0.02)',
+                      border: currentCouponConfig.cardType === 'id_card' ? '2px solid var(--cyan)' : '1px solid var(--dark-border)',
+                      borderRadius: 'var(--radius-sm)',
+                      padding: '14px 16px',
+                      cursor: 'pointer',
+                      transition: 'var(--transition)'
+                    }}
+                  >
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '6px' }}>
+                      <span style={{ fontWeight: 800, color: currentCouponConfig.cardType === 'id_card' ? 'var(--cyan)' : '#FFF', fontSize: '0.95rem', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                        🪪 บัตรประจำตัวนักวิ่ง (E-BIB)
+                      </span>
+                      {currentCouponConfig.cardType === 'id_card' && (
+                        <span className="badge-tag cyan" style={{ margin: 0, padding: '2px 8px', fontSize: '0.7rem' }}>
+                          ✓ เลือกใช้อยู่
+                        </span>
+                      )}
+                    </div>
+                    <p style={{ fontSize: '0.76rem', color: 'var(--text-muted)', margin: 0, lineHeight: 1.5 }}>
+                      <strong>ไม่มีสิทธิประโยชน์ต่อ:</strong> แสดงเป็นบัตรยืนยันตัวตน มีชื่อผู้สมัคร, เลข BIB, วันที่, สถานที่ (ซ่อนรอยปรุและสิทธิประโยชน์)
+                    </p>
+                  </div>
+
+                  {/* Option 2: Coupon with Perks */}
+                  <div
+                    onClick={() => handleSelectCardType('coupon')}
+                    style={{
+                      background: currentCouponConfig.cardType !== 'id_card' ? 'rgba(245, 158, 11, 0.12)' : 'rgba(255, 255, 255, 0.02)',
+                      border: currentCouponConfig.cardType !== 'id_card' ? '2px solid #F59E0B' : '1px solid var(--dark-border)',
+                      borderRadius: 'var(--radius-sm)',
+                      padding: '14px 16px',
+                      cursor: 'pointer',
+                      transition: 'var(--transition)'
+                    }}
+                  >
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '6px' }}>
+                      <span style={{ fontWeight: 800, color: currentCouponConfig.cardType !== 'id_card' ? '#F59E0B' : '#FFF', fontSize: '0.95rem', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                        🎟️ คูปองชิงโชค & สิทธิประโยชน์
+                      </span>
+                      {currentCouponConfig.cardType !== 'id_card' && (
+                        <span className="badge-tag gold" style={{ margin: 0, padding: '2px 8px', fontSize: '0.7rem' }}>
+                          ✓ เลือกใช้อยู่
+                        </span>
+                      )}
+                    </div>
+                    <p style={{ fontSize: '0.76rem', color: 'var(--text-muted)', margin: 0, lineHeight: 1.5 }}>
+                      <strong>มีของรางวัล / อาหารเช้า:</strong> มีรอยปรุหางบัตรสำหรับจับรางวัล Lucky Draw และแสดงรายการสิทธิประโยชน์ 3 ข้อ
+                    </p>
+                  </div>
+                </div>
+              </div>
+
               {/* Section 1: Header & Badge */}
               <div style={{ background: 'rgba(255, 255, 255, 0.03)', padding: '16px', borderRadius: 'var(--radius-sm)', border: '1px solid var(--dark-border)', marginBottom: '18px' }}>
-                <h4 style={{ fontSize: '0.95rem', color: 'var(--primary)', marginBottom: '12px', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                  <Award size={16} /> 1. ข้อความส่วนหัวคูปอง
+                <h4 style={{ fontSize: '0.95rem', color: currentCouponConfig.cardType === 'id_card' ? 'var(--cyan)' : 'var(--primary)', marginBottom: '12px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  <Award size={16} /> 1. ข้อความส่วนหัว & ป้ายกำกับ
                 </h4>
                 <div className="form-group">
                   <label className="form-label">ป้ายมุมบนขวา (Badge Tag)</label>
                   <input
                     type="text"
                     className="form-control"
-                    placeholder="เช่น 🎟️ LUCKY DRAW PASS"
+                    placeholder={currentCouponConfig.cardType === 'id_card' ? 'เช่น 🏃‍♂️ RUNNER PASS' : 'เช่น 🎟️ LUCKY PASS'}
                     value={currentCouponConfig.badgeText || ''}
                     onChange={(e) => setCouponConfigForm(prev => ({ ...defaultCouponConfig, ...(prev || {}), badgeText: e.target.value }))}
                   />
                 </div>
                 <div className="form-group">
-                  <label className="form-label">ชื่อหัวข้อคูปอง (Headline)</label>
+                  <label className="form-label">ชื่อหัวข้อบัตร (Headline)</label>
                   <input
                     type="text"
                     className="form-control"
-                    placeholder="เช่น คูปองลุ้นรางวัล & สิทธิประโยชน์นักวิ่ง"
+                    placeholder={currentCouponConfig.cardType === 'id_card' ? 'เช่น บัตรประจำตัวผู้สมัคร (Runner Digital ID)' : 'เช่น คูปองลุ้นรางวัล & สิทธิประโยชน์นักวิ่ง'}
                     value={currentCouponConfig.headline || ''}
                     onChange={(e) => setCouponConfigForm(prev => ({ ...defaultCouponConfig, ...(prev || {}), headline: e.target.value }))}
                   />
                 </div>
-                <div className="form-group" style={{ marginBottom: 0 }}>
+                <div className="form-group">
                   <label className="form-label">คำบรรยายใต้หัวข้อ (Subheadline)</label>
                   <input
                     type="text"
                     className="form-control"
-                    placeholder="เช่น บัตรดิจิทัลประจำตัวสำหรับลุ้นของรางวัลท้ายงาน และรับอาหารเช้าหน้างาน"
+                    placeholder={currentCouponConfig.cardType === 'id_card' ? 'เช่น บัตรดิจิทัลยืนยันสิทธิ์การลงทะเบียนเข้าร่วมกิจกรรม' : 'เช่น บัตรดิจิทัลประจำตัวสำหรับลุ้นของรางวัลท้ายงาน และรับอาหารเช้าหน้างาน'}
                     value={currentCouponConfig.subheadline || ''}
                     onChange={(e) => setCouponConfigForm(prev => ({ ...defaultCouponConfig, ...(prev || {}), subheadline: e.target.value }))}
                   />
                 </div>
-              </div>
-
-              {/* Section 2: Perks Breakdown */}
-              <div style={{ background: 'rgba(255, 255, 255, 0.03)', padding: '16px', borderRadius: 'var(--radius-sm)', border: '1px solid var(--dark-border)', marginBottom: '18px' }}>
-                <h4 style={{ fontSize: '0.95rem', color: '#F59E0B', marginBottom: '12px', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                  <Sparkles size={16} /> 2. รายการสิทธิประโยชน์ 3 ข้อ
-                </h4>
-
-                <div className="form-group">
-                  <label className="form-label">หัวข้อส่วนสิทธิประโยชน์</label>
+                <div className="form-group" style={{ marginBottom: 0 }}>
+                  <label className="form-label">ป้ายกำกับหมายเลข (Number Label)</label>
                   <input
                     type="text"
                     className="form-control"
-                    value={currentCouponConfig.perksTitle || ''}
-                    onChange={(e) => setCouponConfigForm(prev => ({ ...defaultCouponConfig, ...(prev || {}), perksTitle: e.target.value }))}
-                  />
-                </div>
-
-                {/* Perk 1 */}
-                <div style={{ borderLeft: '3px solid #F59E0B', paddingLeft: '12px', marginBottom: '14px' }}>
-                  <label className="form-label" style={{ color: '#F59E0B' }}>สิทธิประโยชน์ที่ 1 (ของรางวัล Lucky Draw)</label>
-                  <input
-                    type="text"
-                    className="form-control"
-                    style={{ marginBottom: '6px' }}
-                    placeholder="ชื่อสิทธิประโยชน์ 1"
-                    value={currentCouponConfig.perk1Title || ''}
-                    onChange={(e) => setCouponConfigForm(prev => ({ ...defaultCouponConfig, ...(prev || {}), perk1Title: e.target.value }))}
-                  />
-                  <input
-                    type="text"
-                    className="form-control"
-                    placeholder="รายละเอียดเพิ่มเติม"
-                    value={currentCouponConfig.perk1Desc || ''}
-                    onChange={(e) => setCouponConfigForm(prev => ({ ...defaultCouponConfig, ...(prev || {}), perk1Desc: e.target.value }))}
-                  />
-                </div>
-
-                {/* Perk 2 */}
-                <div style={{ borderLeft: '3px solid #10B981', paddingLeft: '12px', marginBottom: '14px' }}>
-                  <label className="form-label" style={{ color: '#10B981' }}>สิทธิประโยชน์ที่ 2 (อาหารเช้า & เครื่องดื่ม)</label>
-                  <input
-                    type="text"
-                    className="form-control"
-                    style={{ marginBottom: '6px' }}
-                    placeholder="ชื่อสิทธิประโยชน์ 2"
-                    value={currentCouponConfig.perk2Title || ''}
-                    onChange={(e) => setCouponConfigForm(prev => ({ ...defaultCouponConfig, ...(prev || {}), perk2Title: e.target.value }))}
-                  />
-                  <input
-                    type="text"
-                    className="form-control"
-                    placeholder="รายละเอียดเพิ่มเติม"
-                    value={currentCouponConfig.perk2Desc || ''}
-                    onChange={(e) => setCouponConfigForm(prev => ({ ...defaultCouponConfig, ...(prev || {}), perk2Desc: e.target.value }))}
-                  />
-                </div>
-
-                {/* Perk 3 */}
-                <div style={{ borderLeft: '3px solid var(--cyan)', paddingLeft: '12px' }}>
-                  <label className="form-label" style={{ color: 'var(--cyan)' }}>สิทธิประโยชน์ที่ 3 (ส่วนลดร้านค้าชุมชน)</label>
-                  <input
-                    type="text"
-                    className="form-control"
-                    style={{ marginBottom: '6px' }}
-                    placeholder="ชื่อสิทธิประโยชน์ 3"
-                    value={currentCouponConfig.perk3Title || ''}
-                    onChange={(e) => setCouponConfigForm(prev => ({ ...defaultCouponConfig, ...(prev || {}), perk3Title: e.target.value }))}
-                  />
-                  <input
-                    type="text"
-                    className="form-control"
-                    placeholder="รายละเอียดเพิ่มเติม"
-                    value={currentCouponConfig.perk3Desc || ''}
-                    onChange={(e) => setCouponConfigForm(prev => ({ ...defaultCouponConfig, ...(prev || {}), perk3Desc: e.target.value }))}
+                    placeholder={currentCouponConfig.cardType === 'id_card' ? 'เช่น หมายเลขประจำตัวนักวิ่ง (BIB NO.)' : 'เช่น หมายเลขคูปองชิงโชค (LUCKY NO.)'}
+                    value={currentCouponConfig.bibLabel || ''}
+                    onChange={(e) => setCouponConfigForm(prev => ({ ...defaultCouponConfig, ...(prev || {}), bibLabel: e.target.value }))}
                   />
                 </div>
               </div>
+
+              {/* Section 2: Perks Breakdown (Only when in coupon mode) */}
+              {currentCouponConfig.cardType === 'id_card' ? (
+                <div style={{
+                  background: 'rgba(0, 240, 255, 0.05)',
+                  border: '1px dashed rgba(0, 240, 255, 0.3)',
+                  borderRadius: 'var(--radius-sm)',
+                  padding: '16px 18px',
+                  marginBottom: '18px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '14px'
+                }}>
+                  <ShieldCheck size={28} color="var(--cyan)" style={{ flexShrink: 0 }} />
+                  <div>
+                    <strong style={{ color: 'var(--cyan)', fontSize: '0.92rem' }}>
+                      โหมดบัตรประจำตัวนักวิ่ง (E-BIB): ซ่อนรายการสิทธิประโยชน์
+                    </strong>
+                    <p style={{ margin: '4px 0 0 0', fontSize: '0.78rem', color: 'var(--text-muted)', lineHeight: 1.5 }}>
+                      ในโหมดนี้ บัตรดิจิทัลจะไม่แสดงรอยปรุหางบัตรและรายการสิทธิประโยชน์ 3 ข้อ ช่วยให้บัตรดูสะอาด กระชับ และเป็นทางการ เหมาะสำหรับงานที่ไม่มีอาหารเช้าหรือของรางวัลจับสลาก
+                    </p>
+                  </div>
+                </div>
+              ) : (
+                <div style={{ background: 'rgba(255, 255, 255, 0.03)', padding: '16px', borderRadius: 'var(--radius-sm)', border: '1px solid var(--dark-border)', marginBottom: '18px' }}>
+                  <h4 style={{ fontSize: '0.95rem', color: '#F59E0B', marginBottom: '12px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                    <Sparkles size={16} /> 2. รายการสิทธิประโยชน์ 3 ข้อ
+                  </h4>
+
+                  <div className="form-group">
+                    <label className="form-label">หัวข้อส่วนสิทธิประโยชน์</label>
+                    <input
+                      type="text"
+                      className="form-control"
+                      value={currentCouponConfig.perksTitle || ''}
+                      onChange={(e) => setCouponConfigForm(prev => ({ ...defaultCouponConfig, ...(prev || {}), perksTitle: e.target.value }))}
+                    />
+                  </div>
+
+                  {/* Perk 1 */}
+                  <div style={{ borderLeft: '3px solid #F59E0B', paddingLeft: '12px', marginBottom: '14px' }}>
+                    <label className="form-label" style={{ color: '#F59E0B' }}>สิทธิประโยชน์ที่ 1 (ของรางวัล Lucky Draw)</label>
+                    <input
+                      type="text"
+                      className="form-control"
+                      style={{ marginBottom: '6px' }}
+                      placeholder="ชื่อสิทธิประโยชน์ 1"
+                      value={currentCouponConfig.perk1Title || ''}
+                      onChange={(e) => setCouponConfigForm(prev => ({ ...defaultCouponConfig, ...(prev || {}), perk1Title: e.target.value }))}
+                    />
+                    <input
+                      type="text"
+                      className="form-control"
+                      placeholder="รายละเอียดเพิ่มเติม"
+                      value={currentCouponConfig.perk1Desc || ''}
+                      onChange={(e) => setCouponConfigForm(prev => ({ ...defaultCouponConfig, ...(prev || {}), perk1Desc: e.target.value }))}
+                    />
+                  </div>
+
+                  {/* Perk 2 */}
+                  <div style={{ borderLeft: '3px solid #10B981', paddingLeft: '12px', marginBottom: '14px' }}>
+                    <label className="form-label" style={{ color: '#10B981' }}>สิทธิประโยชน์ที่ 2 (อาหารเช้า & เครื่องดื่ม)</label>
+                    <input
+                      type="text"
+                      className="form-control"
+                      style={{ marginBottom: '6px' }}
+                      placeholder="ชื่อสิทธิประโยชน์ 2"
+                      value={currentCouponConfig.perk2Title || ''}
+                      onChange={(e) => setCouponConfigForm(prev => ({ ...defaultCouponConfig, ...(prev || {}), perk2Title: e.target.value }))}
+                    />
+                    <input
+                      type="text"
+                      className="form-control"
+                      placeholder="รายละเอียดเพิ่มเติม"
+                      value={currentCouponConfig.perk2Desc || ''}
+                      onChange={(e) => setCouponConfigForm(prev => ({ ...defaultCouponConfig, ...(prev || {}), perk2Desc: e.target.value }))}
+                    />
+                  </div>
+
+                  {/* Perk 3 */}
+                  <div style={{ borderLeft: '3px solid var(--cyan)', paddingLeft: '12px' }}>
+                    <label className="form-label" style={{ color: 'var(--cyan)' }}>สิทธิประโยชน์ที่ 3 (ส่วนลดร้านค้าชุมชน)</label>
+                    <input
+                      type="text"
+                      className="form-control"
+                      style={{ marginBottom: '6px' }}
+                      placeholder="ชื่อสิทธิประโยชน์ 3"
+                      value={currentCouponConfig.perk3Title || ''}
+                      onChange={(e) => setCouponConfigForm(prev => ({ ...defaultCouponConfig, ...(prev || {}), perk3Title: e.target.value }))}
+                    />
+                    <input
+                      type="text"
+                      className="form-control"
+                      placeholder="รายละเอียดเพิ่มเติม"
+                      value={currentCouponConfig.perk3Desc || ''}
+                      onChange={(e) => setCouponConfigForm(prev => ({ ...defaultCouponConfig, ...(prev || {}), perk3Desc: e.target.value }))}
+                    />
+                  </div>
+                </div>
+              )}
 
               {/* Section 3: Bottom Notice */}
               <div style={{ background: 'rgba(255, 255, 255, 0.03)', padding: '16px', borderRadius: 'var(--radius-sm)', border: '1px solid var(--dark-border)', marginBottom: '22px' }}>
                 <h4 style={{ fontSize: '0.95rem', color: '#FFF', marginBottom: '12px' }}>
-                  3. คำแนะนำ / เงื่อนไขท้ายคูปอง
+                  {currentCouponConfig.cardType === 'id_card' ? '2. คำแนะนำ / ข้อความท้ายบัตร' : '3. คำแนะนำ / เงื่อนไขท้ายคูปอง'}
                 </h4>
                 <div className="form-group" style={{ marginBottom: 0 }}>
                   <textarea
                     className="form-control"
                     rows={3}
-                    placeholder="แสดงคูปองนี้ต่อเจ้าหน้าที่หน้างานเพื่อรับอาหารเช้าและสิทธิ์ร่วมจับสลาก Lucky Draw"
+                    placeholder={currentCouponConfig.cardType === 'id_card' ? 'แสดงบัตรนี้ต่อเจ้าหน้าที่หน้างาน ณ จุดรายงานตัวเพื่อรับ BIB' : 'แสดงคูปองนี้ต่อเจ้าหน้าที่หน้างานเพื่อรับอาหารเช้าและสิทธิ์ร่วมจับสลาก Lucky Draw'}
                     value={currentCouponConfig.noticeText || ''}
                     onChange={(e) => setCouponConfigForm(prev => ({ ...defaultCouponConfig, ...(prev || {}), noticeText: e.target.value }))}
                   />
@@ -1808,7 +1948,7 @@ export function AdminPortal({
 
               <div style={{ display: 'flex', gap: '10px' }}>
                 <button type="submit" className="btn btn-primary btn-lg" style={{ flex: 1 }}>
-                  <Check size={18} /> บันทึกการปรับแต่งคูปอง
+                  <Check size={18} /> บันทึกการตั้งค่า
                 </button>
                 <button
                   type="button"
@@ -1826,7 +1966,7 @@ export function AdminPortal({
           {/* Right Live Preview */}
           <div style={{ position: 'sticky', top: '90px' }}>
             <div style={{ textAlign: 'center', marginBottom: '12px', fontSize: '0.85rem', color: 'var(--text-muted)' }}>
-              👁️ ตัวอย่างคูปองแบบเรียลไทม์ (Live Preview ที่นักวิ่งจะเห็น)
+              👁️ ตัวอย่างบัตรแบบเรียลไทม์ (Live Preview ที่นักวิ่งจะเห็น)
             </div>
 
             <div className="coupon-ticket" style={{ maxWidth: '420px', margin: '0 auto' }}>
@@ -1839,7 +1979,7 @@ export function AdminPortal({
                   </div>
                 </div>
                 <span className="coupon-pass-badge" style={{ fontSize: '0.7rem' }}>
-                  {currentCouponConfig.badgeText || '🎟️ LUCKY PASS'}
+                  {currentCouponConfig.badgeText || (currentCouponConfig.cardType === 'id_card' ? '🏃‍♂️ RUNNER PASS' : '🎟️ LUCKY PASS')}
                 </span>
               </div>
 
@@ -1848,59 +1988,105 @@ export function AdminPortal({
                   {activeEvent?.distanceKm || 5.8} KM City Run
                 </span>
 
-                <div className="coupon-number-label" style={{ fontSize: '0.7rem' }}>หมายเลขคูปองชิงโชค (LUCKY NO.)</div>
+                <div className="coupon-number-label" style={{ fontSize: '0.7rem' }}>
+                  {currentCouponConfig.bibLabel || (currentCouponConfig.cardType === 'id_card' ? 'หมายเลขประจำตัวนักวิ่ง (BIB NO.)' : 'หมายเลขคูปองชิงโชค (LUCKY NO.)')}
+                </div>
                 <div className="coupon-number-display" style={{ fontSize: '2.6rem', margin: '2px 0 8px 0' }}>
                   TK02-001
                 </div>
 
-                <div style={{ background: 'rgba(255, 255, 255, 0.05)', border: '1px solid rgba(245, 158, 11, 0.3)', borderRadius: '10px', padding: '10px 14px', textAlign: 'left', marginBottom: '12px' }}>
-                  <div style={{ fontSize: '0.7rem', color: '#F59E0B', fontWeight: 800 }}>👤 ผู้สมัครตัวอย่าง</div>
+                <div style={{ 
+                  background: 'rgba(255, 255, 255, 0.05)', 
+                  border: currentCouponConfig.cardType === 'id_card' ? '1px solid rgba(0, 240, 255, 0.35)' : '1px solid rgba(245, 158, 11, 0.3)', 
+                  borderRadius: '10px', 
+                  padding: '10px 14px', 
+                  textAlign: 'left', 
+                  marginBottom: '12px' 
+                }}>
+                  <div style={{ fontSize: '0.7rem', color: currentCouponConfig.cardType === 'id_card' ? 'var(--cyan)' : '#F59E0B', fontWeight: 800, display: 'flex', alignItems: 'center', gap: '4px' }}>
+                    <ShieldCheck size={12} /> {currentCouponConfig.cardType === 'id_card' ? 'บัตรประจำตัวนักวิ่งที่ลงทะเบียนแล้ว' : 'ผู้สมัครที่ได้รับการยืนยัน'}
+                  </div>
                   <div style={{ fontSize: '1.1rem', fontWeight: 800, color: '#FFF' }}>นาย ทดสอบ วิ่งสุขใจ (กอล์ฟ)</div>
                   <div style={{ fontSize: '0.78rem', color: 'var(--text-secondary)' }}>โทร: 081-234-5678 • ไซส์ L</div>
                 </div>
 
-                <div className="coupon-perforated-wrap" style={{ margin: '14px -16px' }}>
-                  <div className="coupon-notch-left"></div>
-                  <div className="coupon-perforated-line">
-                    <span style={{ fontSize: '0.65rem' }}>✂️ รอยปรุ • หางบัตรจับรางวัล</span>
-                  </div>
-                  <div className="coupon-notch-right"></div>
-                </div>
+                {/* Perforated Divider & Stub Perks (Only in Coupon Mode) */}
+                {currentCouponConfig.cardType !== 'id_card' ? (
+                  <>
+                    <div className="coupon-perforated-wrap" style={{ margin: '14px -16px' }}>
+                      <div className="coupon-notch-left"></div>
+                      <div className="coupon-perforated-line">
+                        <span style={{ fontSize: '0.65rem' }}>✂️ รอยปรุ • หางบัตรจับรางวัล</span>
+                      </div>
+                      <div className="coupon-notch-right"></div>
+                    </div>
 
-                <div className="coupon-stub-section" style={{ fontSize: '0.8rem' }}>
-                  <div className="coupon-perks-title" style={{ fontSize: '0.8rem', color: '#F59E0B' }}>
-                    <Sparkles size={13} /> {currentCouponConfig.perksTitle || 'สิทธิประโยชน์:'}
-                  </div>
-                  <div className="coupon-perks-list" style={{ gap: '6px' }}>
-                    <div className="coupon-perk-item" style={{ padding: '6px 8px' }}>
-                      <Gift size={14} color="#F59E0B" />
-                      <div>
-                        <strong style={{ fontSize: '0.78rem' }}>{currentCouponConfig.perk1Title}</strong>
-                        <p style={{ fontSize: '0.7rem' }}>{currentCouponConfig.perk1Desc}</p>
+                    <div className="coupon-stub-section" style={{ fontSize: '0.8rem' }}>
+                      <div className="coupon-perks-title" style={{ fontSize: '0.8rem', color: '#F59E0B' }}>
+                        <Sparkles size={13} /> {currentCouponConfig.perksTitle || 'สิทธิประโยชน์:'}
                       </div>
-                    </div>
-                    <div className="coupon-perk-item" style={{ padding: '6px 8px' }}>
-                      <Coffee size={14} color="#10B981" />
-                      <div>
-                        <strong style={{ fontSize: '0.78rem' }}>{currentCouponConfig.perk2Title}</strong>
-                        <p style={{ fontSize: '0.7rem' }}>{currentCouponConfig.perk2Desc}</p>
+                      <div className="coupon-perks-list" style={{ gap: '6px' }}>
+                        <div className="coupon-perk-item" style={{ padding: '6px 8px' }}>
+                          <Gift size={14} color="#F59E0B" />
+                          <div>
+                            <strong style={{ fontSize: '0.78rem' }}>{currentCouponConfig.perk1Title}</strong>
+                            <p style={{ fontSize: '0.7rem' }}>{currentCouponConfig.perk1Desc}</p>
+                          </div>
+                        </div>
+                        <div className="coupon-perk-item" style={{ padding: '6px 8px' }}>
+                          <Coffee size={14} color="#10B981" />
+                          <div>
+                            <strong style={{ fontSize: '0.78rem' }}>{currentCouponConfig.perk2Title}</strong>
+                            <p style={{ fontSize: '0.7rem' }}>{currentCouponConfig.perk2Desc}</p>
+                          </div>
+                        </div>
+                        <div className="coupon-perk-item" style={{ padding: '6px 8px' }}>
+                          <ShoppingBag size={14} color="var(--cyan)" />
+                          <div>
+                            <strong style={{ fontSize: '0.78rem' }}>{currentCouponConfig.perk3Title}</strong>
+                            <p style={{ fontSize: '0.7rem' }}>{currentCouponConfig.perk3Desc}</p>
+                          </div>
+                        </div>
                       </div>
-                    </div>
-                    <div className="coupon-perk-item" style={{ padding: '6px 8px' }}>
-                      <ShoppingBag size={14} color="var(--cyan)" />
-                      <div>
-                        <strong style={{ fontSize: '0.78rem' }}>{currentCouponConfig.perk3Title}</strong>
-                        <p style={{ fontSize: '0.7rem' }}>{currentCouponConfig.perk3Desc}</p>
-                      </div>
-                    </div>
-                  </div>
 
-                  <div style={{ marginTop: '12px', textAlign: 'center' }}>
-                    <span className="badge-tag gold" style={{ fontSize: '0.74rem', padding: '4px 10px', margin: 0 }}>
-                      🎟️ {currentCouponConfig.noticeText || 'แสดงคูปองนี้ต่อเจ้าหน้าที่'}
-                    </span>
+                      <div style={{ marginTop: '12px', textAlign: 'center' }}>
+                        <span className="badge-tag gold" style={{ fontSize: '0.74rem', padding: '4px 10px', margin: 0 }}>
+                          🎟️ {currentCouponConfig.noticeText || 'แสดงคูปองนี้ต่อเจ้าหน้าที่'}
+                        </span>
+                      </div>
+                    </div>
+                  </>
+                ) : (
+                  /* Clean Runner ID Details (ID Card Mode) */
+                  <div style={{ marginTop: '12px' }}>
+                    <div style={{ 
+                      background: 'rgba(255, 255, 255, 0.03)', 
+                      borderRadius: '8px', 
+                      padding: '10px 12px',
+                      display: 'grid',
+                      gridTemplateColumns: '1fr 1fr',
+                      gap: '8px',
+                      fontSize: '0.75rem',
+                      textAlign: 'left',
+                      marginBottom: '12px'
+                    }}>
+                      <div>
+                        <span style={{ color: 'var(--text-muted)', display: 'block', fontSize: '0.68rem' }}>วันจัดงาน</span>
+                        <strong style={{ color: '#FFF' }}>1 พ.ย. 2569</strong>
+                      </div>
+                      <div>
+                        <span style={{ color: 'var(--text-muted)', display: 'block', fontSize: '0.68rem' }}>จุดปล่อยตัว</span>
+                        <strong style={{ color: '#FFF' }}>สนามกีฬาตากสิน</strong>
+                      </div>
+                    </div>
+
+                    <div style={{ textAlign: 'center' }}>
+                      <span className="badge-tag cyan" style={{ fontSize: '0.74rem', padding: '5px 12px', margin: 0 }}>
+                        🪪 {currentCouponConfig.noticeText || 'แสดงบัตรนี้ต่อเจ้าหน้าที่หน้างาน ณ จุดรายงานตัว'}
+                      </span>
+                    </div>
                   </div>
-                </div>
+                )}
               </div>
             </div>
           </div>

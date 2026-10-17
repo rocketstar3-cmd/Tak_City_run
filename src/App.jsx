@@ -196,6 +196,7 @@ export default function App() {
           {/* Hero Section */}
           <Hero 
             activeEvent={activeEvent}
+            clubSettings={clubSettings}
             registrationsCount={registrationsCount}
             onOpenRegister={() => setIsRegisterOpen(true)}
             onOpenCheckBib={() => setIsCheckBibOpen(true)}
@@ -255,6 +256,7 @@ export default function App() {
       {isCheckBibOpen && (
         <CheckBibModal 
           activeEvent={activeEvent}
+          clubSettings={clubSettings}
           onClose={() => setIsCheckBibOpen(false)}
           onSelectRegistration={(reg) => {
             setIsCheckBibOpen(false);

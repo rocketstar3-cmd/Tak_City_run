@@ -2,11 +2,13 @@ import React, { useState } from 'react';
 import { Search, X, User, Phone, CheckCircle, ArrowRight, Gift, Sparkles } from 'lucide-react';
 import { DataService } from '../lib/supabase';
 
-export function CheckBibModal({ activeEvent, onClose, onSelectRegistration }) {
+export function CheckBibModal({ activeEvent, clubSettings, onClose, onSelectRegistration }) {
   const [query, setQuery] = useState('');
   const [results, setResults] = useState([]);
   const [hasSearched, setHasSearched] = useState(false);
   const [loading, setLoading] = useState(false);
+
+  const isIdCard = clubSettings?.couponSettings?.cardType === 'id_card' || clubSettings?.couponSettings?.showPerks === false;
 
   const handleSearch = async (e) => {
     e.preventDefault();
@@ -34,15 +36,17 @@ export function CheckBibModal({ activeEvent, onClose, onSelectRegistration }) {
         <div className="modal-header">
           <div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <span className="badge-tag gold" style={{ margin: 0, padding: '3px 10px', fontSize: '0.78rem' }}>
-                <Gift size={13} /> คูปองของฉัน
+              <span className={`badge-tag ${isIdCard ? 'cyan' : 'gold'}`} style={{ margin: 0, padding: '3px 10px', fontSize: '0.78rem' }}>
+                {isIdCard ? <User size={13} /> : <Gift size={13} />} {isIdCard ? 'บัตรประจำตัวของฉัน' : 'คูปองของฉัน'}
               </span>
             </div>
             <h3 style={{ fontSize: '1.3rem', color: '#FFF', marginTop: '6px' }}>
-              ค้นหาคูปองลุ้นรางวัล & สิทธิพิเศษ
+              {isIdCard ? 'ค้นหาบัตรประจำตัวนักวิ่ง & หมายเลข BIB' : 'ค้นหาคูปองลุ้นรางวัล & สิทธิพิเศษ'}
             </h3>
             <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>
-              กรอกเบอร์โทรศัพท์ หรือเลขคูปอง เพื่อดูคูปองและบันทึกรูปภาพ
+              {isIdCard 
+                ? 'กรอกเบอร์โทรศัพท์ หรือเลข BIB เพื่อดูบัตรประจำตัวและบันทึกรูปภาพ' 
+                : 'กรอกเบอร์โทรศัพท์ หรือเลขคูปอง เพื่อดูคูปองและบันทึกรูปภาพ'}
             </p>
           </div>
           <button className="modal-close-btn" onClick={onClose} aria-label="Close">
@@ -54,7 +58,7 @@ export function CheckBibModal({ activeEvent, onClose, onSelectRegistration }) {
           <input 
             type="text" 
             className="form-control"
-            placeholder="กรอกเบอร์โทร หรือเลขคูปอง (เช่น 0812345678, TK02-001)"
+            placeholder={isIdCard ? "กรอกเบอร์โทร หรือเลข BIB (เช่น 0812345678, TK02-001)" : "กรอกเบอร์โทร หรือเลขคูปอง (เช่น 0812345678, TK02-001)"}
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             autoFocus
@@ -120,7 +124,7 @@ export function CheckBibModal({ activeEvent, onClose, onSelectRegistration }) {
                     </div>
 
                     <button className="btn btn-outline btn-sm">
-                      ดูคูปองของฉัน 🎟️ <ArrowRight size={14} />
+                      {isIdCard ? 'ดูบัตรประจำตัว 🪪' : 'ดูคูปองของฉัน 🎟️'} <ArrowRight size={14} />
                     </button>
                   </div>
                 ))}
