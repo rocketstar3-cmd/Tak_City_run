@@ -271,6 +271,32 @@ const mapSettingsToDB = (s) => ({
 // UNIFIED DATA SERVICE
 // ==========================================
 export const DataService = {
+  // Synchronous Local/Cache Getters for Instant First Paint (0ms)
+  getLocalSettings() {
+    const local = getLocalItem(LS_KEYS.SETTINGS, initialClubSettings);
+    if (!local.logoUrl || local.logoUrl === '/tak-city-run-logo.svg') {
+      local.logoUrl = '/tak-logo-white.png';
+    }
+    return local;
+  },
+  getLocalEvents() {
+    return getLocalItem(LS_KEYS.EVENTS, initialEvents);
+  },
+  getLocalRegistrations(eventId = null) {
+    const list = getLocalItem(LS_KEYS.REGISTRATIONS, initialRegistrations);
+    if (!eventId || eventId === 'all') return list;
+    return list.filter(r => r.eventId === eventId);
+  },
+  getLocalSponsors() {
+    return getLocalItem(LS_KEYS.SPONSORS, initialSponsors);
+  },
+  getLocalShops() {
+    return getLocalItem(LS_KEYS.SHOPS, initialShopsAndActivities);
+  },
+  getLocalGalleries() {
+    return getLocalItem(LS_KEYS.GALLERY, initialPastGalleries);
+  },
+
   // 1. Club Settings
   async getSettings() {
     let settings = null;

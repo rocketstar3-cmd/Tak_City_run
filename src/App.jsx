@@ -10,19 +10,37 @@ import { RegistrationModal } from './components/RegistrationModal';
 import { EBibModal } from './components/EBibModal';
 import { CheckBibModal } from './components/CheckBibModal';
 import { AdminPortal } from './components/AdminPortal';
-import { Top40AnnouncementModal } from './components/Top40AnnouncementModal';
 import { Footer } from './components/Footer';
 
+// Lazy load Top40AnnouncementModal to keep initial JS bundle super lightweight & fast
+const Top40AnnouncementModal = React.lazy(() =>
+  import('./components/Top40AnnouncementModal').then(m => ({ default: m.Top40AnnouncementModal }))
+);
+
 export default function App() {
-  const [loading, setLoading] = useState(true);
-  const [clubSettings, setClubSettings] = useState(null);
-  const [events, setEvents] = useState([]);
-  const [activeEvent, setActiveEvent] = useState(null);
-  const [registrationsCount, setRegistrationsCount] = useState(0);
-  const [allRegistrations, setAllRegistrations] = useState([]);
-  const [shopsAndActivities, setShopsAndActivities] = useState([]);
-  const [sponsors, setSponsors] = useState([]);
-  const [pastGalleries, setPastGalleries] = useState([]);
+  // Synchronous cache-first state initialization (loads in 0ms with zero black screen wait!)
+  const [clubSettings, setClubSettings] = useState(() => DataService.getLocalSettings());
+  const [events, setEvents] = useState(() => DataService.getLocalEvents());
+  const [activeEvent, setActiveEvent] = useState(() => {
+    const evs = DataService.getLocalEvents();
+    return evs.find(e => e.isActive) || evs[0] || null;
+  });
+  const [registrationsCount, setRegistrationsCount] = useState(() => {
+    const evs = DataService.getLocalEvents();
+    const act = evs.find(e => e.isActive) || evs[0];
+    return DataService.getLocalRegistrations(act?.id).length;
+  });
+  const [allRegistrations, setAllRegistrations] = useState(() => {
+    const evs = DataService.getLocalEvents();
+    const act = evs.find(e => e.isActive) || evs[0];
+    return DataService.getLocalRegistrations(act?.id);
+  });
+  const [shopsAndActivities, setShopsAndActivities] = useState(() => DataService.getLocalShops());
+  const [sponsors, setSponsors] = useState(() => DataService.getLocalSponsors());
+  const [pastGalleries, setPastGalleries] = useState(() => DataService.getLocalGalleries());
+  
+  // No blocking loading screen — website opens instantly!
+  const [loading, setLoading] = useState(false);
 
   // Modals & Navigation Views
   const [isRegisterOpen, setIsRegisterOpen] = useState(false);
@@ -83,6 +101,7 @@ export default function App() {
     };
   }, [activeEvent?.id]);
 
+  // Non-blocking background sync with Supabase
   const loadAllData = async () => {
     try {
       const [settingsData, eventsData, sponsorsData, shopsData, galleryData] = await Promise.all([
@@ -93,32 +112,36 @@ export default function App() {
         DataService.getPastGalleries()
       ]);
 
-      setClubSettings(settingsData);
-      setEvents(eventsData);
-
-      // Set active event
-      const currentActive = eventsData.find(e => e.isActive) || eventsData[0];
-      setActiveEvent(currentActive);
-
-      setSponsors(sponsorsData);
-      setShopsAndActivities(shopsData);
-      setPastGalleries(galleryData);
-
-      // Load registrations count
-      if (currentActive) {
-        const regs = await DataService.getRegistrations(currentActive.id);
-        setRegistrationsCount(regs.length);
-        setAllRegistrations(regs);
+      if (settingsData) setClubSettings(settingsData);
+      if (eventsData && eventsData.length > 0) {
+        setEvents(eventsData);
+        const currentActive = eventsData.find(e => e.isActive) || eventsData[0];
+        if (currentActive) {
+          setActiveEvent(currentActive);
+        }
       }
+
+      if (sponsorsData) setSponsors(sponsorsData);
+      if (shopsData) setShopsAndActivities(shopsData);
+      if (galleryData) setPastGalleries(galleryData);
 
       // Apply dynamic theme color from settings if specified
       if (settingsData?.themeColor) {
         document.documentElement.style.setProperty('--primary', settingsData.themeColor);
       }
+
+      // Sync latest registration count in background without blocking
+      const curEv = eventsData?.find(e => e.isActive) || eventsData?.[0] || activeEvent;
+      if (curEv?.id) {
+        DataService.getRegistrations(curEv.id).then(regs => {
+          if (Array.isArray(regs)) {
+            setRegistrationsCount(regs.length);
+            setAllRegistrations(regs);
+          }
+        }).catch(err => console.warn('Background reg fetch error:', err));
+      }
     } catch (err) {
-      console.error('Failed to load site data:', err);
-    } finally {
-      setLoading(false);
+      console.warn('Background data sync error:', err);
     }
   };
 
@@ -135,7 +158,7 @@ export default function App() {
     }
   };
 
-  if (loading) {
+  if (loading && !clubSettings && !activeEvent) {
     return (
       <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'var(--dark-bg)' }}>
         <div style={{ textAlign: 'center' }}>
@@ -288,15 +311,17 @@ export default function App() {
 
       {/* Public Top 40 Announcement Poster Modal */}
       {isTop40Open && (
-        <Top40AnnouncementModal
-          isOpen={isTop40Open}
-          onClose={() => setIsTop40Open(false)}
-          events={events}
-          activeEvent={activeEvent}
-          registrations={allRegistrations}
-          clubSettings={clubSettings}
-          isAdmin={false}
-        />
+        <React.Suspense fallback={null}>
+          <Top40AnnouncementModal
+            isOpen={isTop40Open}
+            onClose={() => setIsTop40Open(false)}
+            events={events}
+            activeEvent={activeEvent}
+            registrations={allRegistrations}
+            clubSettings={clubSettings}
+            isAdmin={false}
+          />
+        </React.Suspense>
       )}
     </div>
   );

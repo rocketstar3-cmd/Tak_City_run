@@ -32,6 +32,27 @@ export function EBibModal({ registration, activeEvent, clubSettings, onClose }) 
     const computeRank = async () => {
       try {
         const evId = registration?.eventId || activeEvent?.id;
+
+        // 1. Instant local calculation (0ms)
+        const localRegs = DataService.getLocalRegistrations(evId);
+        if (localRegs?.length && isMounted) {
+          const sortedLocal = [...localRegs].sort((a, b) => {
+            const timeA = new Date(a.createdAt || 0).getTime();
+            const timeB = new Date(b.createdAt || 0).getTime();
+            if (timeA !== timeB) return timeA - timeB;
+            return (a.bibNumber || '').localeCompare(b.bibNumber || '');
+          });
+          const localIdx = sortedLocal.findIndex(r => r.id === registration.id || r.bibNumber === registration.bibNumber);
+          if (localIdx !== -1) {
+            setRankInfo({
+              rank: localIdx + 1,
+              total: sortedLocal.length,
+              isTop40: (localIdx + 1) <= 40
+            });
+          }
+        }
+
+        // 2. Background sync with DB
         const allRegs = await DataService.getRegistrations(evId);
         if (!isMounted) return;
         const sorted = [...allRegs].sort((a, b) => {
@@ -42,11 +63,10 @@ export function EBibModal({ registration, activeEvent, clubSettings, onClose }) 
         });
         const index = sorted.findIndex(r => r.id === registration.id || r.bibNumber === registration.bibNumber);
         if (index !== -1) {
-          const rank = index + 1;
           setRankInfo({
-            rank,
+            rank: index + 1,
             total: sorted.length,
-            isTop40: rank <= 40
+            isTop40: (index + 1) <= 40
           });
         }
       } catch (e) {

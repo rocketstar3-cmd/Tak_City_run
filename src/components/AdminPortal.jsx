@@ -42,7 +42,10 @@ import {
 import { DataService, supabase, isSupabaseConfigured } from '../lib/supabase';
 import { ImageUploadInput } from './ImageUploadInput';
 import { formatThaiDateHero, formatThaiTimeHero, formatDatetimeLocal } from '../lib/dateUtils';
-import { Top40AnnouncementModal } from './Top40AnnouncementModal';
+
+const Top40AnnouncementModal = React.lazy(() =>
+  import('./Top40AnnouncementModal').then(m => ({ default: m.Top40AnnouncementModal }))
+);
 
 export function AdminPortal({
   clubSettings,
@@ -3025,15 +3028,17 @@ export function AdminPortal({
 
       {/* Official Top 40 Announcement Poster Modal */}
       {showPosterModal && (
-        <Top40AnnouncementModal
-          isOpen={showPosterModal}
-          onClose={() => setShowPosterModal(false)}
-          events={events}
-          activeEvent={activeEvent}
-          registrations={registrations}
-          clubSettings={clubSettings}
-          isAdmin={true}
-        />
+        <React.Suspense fallback={null}>
+          <Top40AnnouncementModal
+            isOpen={showPosterModal}
+            onClose={() => setShowPosterModal(false)}
+            events={events}
+            activeEvent={activeEvent}
+            registrations={registrations}
+            clubSettings={clubSettings}
+            isAdmin={true}
+          />
+        </React.Suspense>
       )}
     </div>
   );
