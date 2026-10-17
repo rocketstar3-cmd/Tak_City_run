@@ -17,6 +17,7 @@ import {
   ShieldCheck,
   Check
 } from 'lucide-react';
+import { formatThaiDateEBib } from '../lib/dateUtils';
 
 export function EBibModal({ registration, activeEvent, clubSettings, onClose }) {
   const cardRef = useRef(null);
@@ -30,11 +31,7 @@ export function EBibModal({ registration, activeEvent, clubSettings, onClose }) 
   const epNumber = activeEvent?.epNumber ? `EP.${String(activeEvent.epNumber).padStart(2, '0')}` : 'EP.02';
   const distance = registration.distanceLabel || activeEvent?.distanceLabel || `${activeEvent?.distanceKm || 5.8} KM City Run`;
   const location = activeEvent?.locationName || 'ริมแม่น้ำปิง หน้าสะพานสมโภชกรุงรัตนโกสินทร์ 200 ปี จ.ตาก';
-  const eventDateFormatted = activeEvent?.eventDate ? new Date(activeEvent.eventDate).toLocaleDateString('th-TH', {
-    day: 'numeric',
-    month: 'long',
-    year: 'numeric'
-  }) : '15 พฤศจิกายน 2569';
+  const eventDateFormatted = activeEvent?.eventDate ? formatThaiDateEBib(activeEvent.eventDate) : '15 พฤศจิกายน 2569';
 
   // Customizable settings from admin with smart fallbacks
   const couponConfig = {

@@ -37,10 +37,11 @@ import {
   Gift,
   RefreshCw,
   Coffee,
-  ShoppingBag,
+  ShoppingBag
 } from 'lucide-react';
 import { DataService, supabase, isSupabaseConfigured } from '../lib/supabase';
 import { ImageUploadInput } from './ImageUploadInput';
+import { formatThaiDateHero, formatThaiTimeHero, formatDatetimeLocal } from '../lib/dateUtils';
 
 export function AdminPortal({
   clubSettings,
@@ -430,6 +431,7 @@ export function AdminPortal({
 
     setEventFormData({
       ...event,
+      eventDate: formatDatetimeLocal(event.eventDate),
       coverAspectRatio: event.coverAspectRatio || '16:9',
       coverFit: event.coverFit || 'cover',
       distanceKm: Number(event.distanceKm ?? 5.8),
@@ -467,6 +469,7 @@ export function AdminPortal({
 
     const payload = {
       ...eventFormData,
+      eventDate: formatDatetimeLocal(eventFormData.eventDate) || eventFormData.eventDate,
       coverAspectRatio: eventFormData.coverAspectRatio || '16:9',
       coverFit: eventFormData.coverFit || 'cover',
       distanceKm: Number(eventFormData.distanceKm || 5.8),
@@ -1040,6 +1043,9 @@ export function AdminPortal({
                   <h3 style={{ fontSize: '1.35rem', marginBottom: '6px', color: '#FFF' }}>
                     EP.{String(ev.epNumber).padStart(2, '0')} - {ev.title}
                   </h3>
+                  <div style={{ fontSize: '0.85rem', color: 'var(--cyan)', marginBottom: '8px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                    <Calendar size={14} /> ปล่อยตัว: {formatThaiDateHero(ev.eventDate)} ({formatThaiTimeHero(ev.eventDate)} น.)
+                  </div>
                   <p style={{ color: 'var(--text-muted)', fontSize: '0.88rem', marginBottom: '16px', lineHeight: 1.6 }}>
                     {ev.subtitle}
                   </p>
@@ -2133,10 +2139,15 @@ export function AdminPortal({
                     <input
                       type="datetime-local"
                       className="form-control"
-                      value={eventFormData.eventDate ? eventFormData.eventDate.substring(0, 16) : ''}
+                      value={formatDatetimeLocal(eventFormData.eventDate)}
                       onChange={(e) => setEventFormData({ ...eventFormData, eventDate: e.target.value })}
                       required
                     />
+                    {eventFormData.eventDate && (
+                      <span style={{ fontSize: '0.82rem', color: 'var(--cyan)', marginTop: '6px', display: 'block' }}>
+                        📅 แสดงหน้าเว็บ: <strong>{formatThaiDateHero(eventFormData.eventDate)}</strong> (เวลา {formatThaiTimeHero(eventFormData.eventDate)} น.)
+                      </span>
+                    )}
                   </div>
 
                   <ImageUploadInput

@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Calendar, MapPin, Users, HeartHandshake, ArrowRight, Clock } from 'lucide-react';
+import { parseEventDateTime, formatThaiDateHero, formatThaiTimeHero } from '../lib/dateUtils';
 
 export function Hero({ 
   activeEvent, 
@@ -13,10 +14,12 @@ export function Hero({
   useEffect(() => {
     if (!activeEvent?.eventDate) return;
 
-    const targetDate = new Date(activeEvent.eventDate).getTime();
+    const parsed = parseEventDateTime(activeEvent.eventDate);
+    if (!parsed) return;
+    const targetDate = parsed.targetTimestamp;
 
     const interval = setInterval(() => {
-      const now = new Date().getTime();
+      const now = Date.now();
       const difference = targetDate - now;
 
       if (difference <= 0) {
@@ -45,17 +48,8 @@ export function Hero({
     );
   }
 
-  const formattedDate = new Date(activeEvent.eventDate).toLocaleDateString('th-TH', {
-    weekday: 'long',
-    year: 'numeric',
-    month: 'long',
-    day: 'numeric'
-  });
-
-  const formattedTime = new Date(activeEvent.eventDate).toLocaleTimeString('th-TH', {
-    hour: '2-digit',
-    minute: '2-digit'
-  });
+  const formattedDate = formatThaiDateHero(activeEvent.eventDate);
+  const formattedTime = formatThaiTimeHero(activeEvent.eventDate);
 
   const totalQuota = activeEvent.distances?.reduce((acc, d) => acc + (d.quota || 0), 0) || 800;
 
