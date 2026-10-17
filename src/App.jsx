@@ -10,6 +10,7 @@ import { RegistrationModal } from './components/RegistrationModal';
 import { EBibModal } from './components/EBibModal';
 import { CheckBibModal } from './components/CheckBibModal';
 import { AdminPortal } from './components/AdminPortal';
+import { Top40AnnouncementModal } from './components/Top40AnnouncementModal';
 import { Footer } from './components/Footer';
 
 export default function App() {
@@ -18,6 +19,7 @@ export default function App() {
   const [events, setEvents] = useState([]);
   const [activeEvent, setActiveEvent] = useState(null);
   const [registrationsCount, setRegistrationsCount] = useState(0);
+  const [allRegistrations, setAllRegistrations] = useState([]);
   const [shopsAndActivities, setShopsAndActivities] = useState([]);
   const [sponsors, setSponsors] = useState([]);
   const [pastGalleries, setPastGalleries] = useState([]);
@@ -25,6 +27,7 @@ export default function App() {
   // Modals & Navigation Views
   const [isRegisterOpen, setIsRegisterOpen] = useState(false);
   const [isCheckBibOpen, setIsCheckBibOpen] = useState(false);
+  const [isTop40Open, setIsTop40Open] = useState(false);
   const [selectedRegistration, setSelectedRegistration] = useState(null);
   const [isAdminView, setIsAdminView] = useState(false);
 
@@ -70,6 +73,7 @@ export default function App() {
         async () => {
           const regs = await DataService.getRegistrations(activeEvent.id);
           setRegistrationsCount(regs.length);
+          setAllRegistrations(regs);
         }
       )
       .subscribe();
@@ -104,6 +108,7 @@ export default function App() {
       if (currentActive) {
         const regs = await DataService.getRegistrations(currentActive.id);
         setRegistrationsCount(regs.length);
+        setAllRegistrations(regs);
       }
 
       // Apply dynamic theme color from settings if specified
@@ -200,6 +205,13 @@ export default function App() {
             registrationsCount={registrationsCount}
             onOpenRegister={() => setIsRegisterOpen(true)}
             onOpenCheckBib={() => setIsCheckBibOpen(true)}
+            onOpenTop40Modal={async () => {
+              if (activeEvent?.id) {
+                const regs = await DataService.getRegistrations(activeEvent.id);
+                setAllRegistrations(regs);
+              }
+              setIsTop40Open(true);
+            }}
           />
 
           {/* Event Details: Distances, Routes, Schedule */}
@@ -271,6 +283,19 @@ export default function App() {
           activeEvent={activeEvent}
           clubSettings={clubSettings}
           onClose={() => setSelectedRegistration(null)}
+        />
+      )}
+
+      {/* Public Top 40 Announcement Poster Modal */}
+      {isTop40Open && (
+        <Top40AnnouncementModal
+          isOpen={isTop40Open}
+          onClose={() => setIsTop40Open(false)}
+          events={events}
+          activeEvent={activeEvent}
+          registrations={allRegistrations}
+          clubSettings={clubSettings}
+          isAdmin={false}
         />
       )}
     </div>

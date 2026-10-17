@@ -1,4 +1,4 @@
-import React, { useRef, useState } from 'react';
+import React, { useRef, useState, useEffect } from 'react';
 import html2canvas from 'html2canvas';
 import { 
   X, 
@@ -18,12 +18,46 @@ import {
   Check
 } from 'lucide-react';
 import { formatThaiDateEBib } from '../lib/dateUtils';
+import { DataService } from '../lib/supabase';
 
 export function EBibModal({ registration, activeEvent, clubSettings, onClose }) {
   const cardRef = useRef(null);
   const [activeTab, setActiveTab] = useState('coupon'); // 'coupon' | 'certificate'
   const [downloading, setDownloading] = useState(false);
   const [downloadSuccess, setDownloadSuccess] = useState(false);
+  const [rankInfo, setRankInfo] = useState(null);
+
+  useEffect(() => {
+    let isMounted = true;
+    const computeRank = async () => {
+      try {
+        const evId = registration?.eventId || activeEvent?.id;
+        const allRegs = await DataService.getRegistrations(evId);
+        if (!isMounted) return;
+        const sorted = [...allRegs].sort((a, b) => {
+          const timeA = new Date(a.createdAt || 0).getTime();
+          const timeB = new Date(b.createdAt || 0).getTime();
+          if (timeA !== timeB) return timeA - timeB;
+          return (a.bibNumber || '').localeCompare(b.bibNumber || '');
+        });
+        const index = sorted.findIndex(r => r.id === registration.id || r.bibNumber === registration.bibNumber);
+        if (index !== -1) {
+          const rank = index + 1;
+          setRankInfo({
+            rank,
+            total: sorted.length,
+            isTop40: rank <= 40
+          });
+        }
+      } catch (e) {
+        console.warn('Rank calculation error:', e);
+      }
+    };
+    if (registration) {
+      computeRank();
+    }
+    return () => { isMounted = false; };
+  }, [registration, activeEvent]);
 
   if (!registration) return null;
 
@@ -228,6 +262,34 @@ export function EBibModal({ registration, activeEvent, clubSettings, onClose }) 
                     <span>•</span>
                     <span>ไซส์เสื้อ: <strong style={{ color: '#FFF' }}>{registration.shirtSize || 'Free Size'}</strong></span>
                   </div>
+
+                  {/* Special Top 40 Running Shirt Privilege Badge */}
+                  {rankInfo && rankInfo.isTop40 && (
+                    <div style={{
+                      background: 'linear-gradient(135deg, rgba(245, 158, 11, 0.22), rgba(255, 85, 0, 0.22))',
+                      border: '1.5px solid #F59E0B',
+                      borderRadius: '12px',
+                      padding: '10px 14px',
+                      marginTop: '12px',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '12px',
+                      boxShadow: '0 4px 12px rgba(245, 158, 11, 0.2)'
+                    }}>
+                      <span style={{ fontSize: '1.8rem', lineHeight: 1 }}>🎽</span>
+                      <div style={{ textAlign: 'left' }}>
+                        <div style={{ color: '#FCD34D', fontWeight: 800, fontSize: '0.92rem', display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
+                          <span>🎉 ได้รับสิทธิ์เสื้อที่ระลึก 40 คนแรก!</span>
+                          <span style={{ background: '#F59E0B', color: '#000', padding: '1px 8px', borderRadius: '999px', fontSize: '0.72rem', fontWeight: 900 }}>
+                            ลำดับที่ #{rankInfo.rank}
+                          </span>
+                        </div>
+                        <div style={{ color: '#E2E8F0', fontSize: '0.78rem', marginTop: '3px' }}>
+                          แสดงบัตรนี้ต่อเจ้าหน้าที่ ณ จุดลงทะเบียนวันงานเพื่อรับเสื้อ (ไซส์ <strong>{registration.shirtSize || 'Free Size'}</strong>)
+                        </div>
+                      </div>
+                    </div>
+                  )}
                 </div>
 
                 {/* Perforated Divider & Stub Perks (Only in Coupon Mode) */}

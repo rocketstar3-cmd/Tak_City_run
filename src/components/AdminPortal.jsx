@@ -42,6 +42,7 @@ import {
 import { DataService, supabase, isSupabaseConfigured } from '../lib/supabase';
 import { ImageUploadInput } from './ImageUploadInput';
 import { formatThaiDateHero, formatThaiTimeHero, formatDatetimeLocal } from '../lib/dateUtils';
+import { Top40AnnouncementModal } from './Top40AnnouncementModal';
 
 export function AdminPortal({
   clubSettings,
@@ -88,6 +89,7 @@ export function AdminPortal({
   // Quick Check-in
   const [quickBib, setQuickBib] = useState('');
   const [notice, setNotice] = useState(null);
+  const [showPosterModal, setShowPosterModal] = useState(false);
 
   // Event Edit/Create Modal
   const [eventModalOpen, setEventModalOpen] = useState(false);
@@ -1261,7 +1263,7 @@ export function AdminPortal({
               </select>
             </div>
 
-            <div className="runners-action-buttons" style={{ display: 'flex', gap: '10px' }}>
+            <div className="runners-action-buttons" style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
               <button
                 type="button"
                 className="btn btn-secondary"
@@ -1272,6 +1274,24 @@ export function AdminPortal({
               </button>
               <button className="btn btn-secondary" onClick={handleExportCSV}>
                 <Download size={16} /> ส่งออก Excel (CSV)
+              </button>
+              <button
+                type="button"
+                className="btn btn-primary"
+                style={{
+                  background: 'linear-gradient(135deg, #FF5500, #F59E0B)',
+                  border: 'none',
+                  color: '#FFF',
+                  fontWeight: 800,
+                  boxShadow: '0 4px 14px rgba(255, 85, 0, 0.35)',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '6px'
+                }}
+                onClick={() => setShowPosterModal(true)}
+                title="สร้างรูปภาพประกาศรายชื่อผู้ได้รับเสื้อที่ระลึก 40 คนแรกสำหรับแชร์ลงโซเชียล"
+              >
+                <Sparkles size={16} /> 📢 สร้างรูปประกาศ 40 คนแรก (รับเสื้อ)
               </button>
             </div>
           </div>
@@ -3001,6 +3021,19 @@ export function AdminPortal({
             </form>
           </div>
         </div>
+      )}
+
+      {/* Official Top 40 Announcement Poster Modal */}
+      {showPosterModal && (
+        <Top40AnnouncementModal
+          isOpen={showPosterModal}
+          onClose={() => setShowPosterModal(false)}
+          events={events}
+          activeEvent={activeEvent}
+          registrations={registrations}
+          clubSettings={clubSettings}
+          isAdmin={true}
+        />
       )}
     </div>
   );
