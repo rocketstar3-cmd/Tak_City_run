@@ -113,6 +113,13 @@ function setLocalItem(key, value) {
         localStorage.setItem(LS_KEYS.SETTINGS, JSON.stringify(parsedSettings));
       }
     }
+
+    // Auto-clean legacy resurrected / offline-sync registration cache in browser
+    const regCleanKey = 'tak_city_run_reg_cleaned_v2';
+    if (!localStorage.getItem(regCleanKey)) {
+      localStorage.removeItem(LS_KEYS.REGISTRATIONS);
+      localStorage.setItem(regCleanKey, 'true');
+    }
   } catch (e) {
     // Non-browser or JSON error
   }
@@ -251,17 +258,24 @@ const defaultCouponSettings = {
   noticeText: "แสดงคูปองนี้ต่อเจ้าหน้าที่หน้างานเพื่อรับอาหารเช้าและสิทธิ์ร่วมจับสลาก Lucky Draw"
 };
 
-const mapSettingsFromDB = (s) => ({
-  clubName: s.club_name,
-  tagline: s.tagline,
-  description: s.description,
-  logoUrl: (!s.logo_url || s.logo_url === '/tak-city-run-logo.svg') ? '/tak-logo-white.png' : s.logo_url,
-  themeColor: s.theme_color,
-  facebookUrl: s.facebook_url,
-  lineUrl: s.line_url,
-  adminPin: s.admin_pin || '1234',
-  couponSettings: s.coupon_settings || defaultCouponSettings
-});
+const mapSettingsFromDB = (s) => {
+  const rawCoupon = s.coupon_settings;
+  const validCoupon = (rawCoupon && typeof rawCoupon === 'object' && Object.keys(rawCoupon).length > 0)
+    ? { ...defaultCouponSettings, ...rawCoupon }
+    : null;
+
+  return {
+    clubName: s.club_name,
+    tagline: s.tagline,
+    description: s.description,
+    logoUrl: (!s.logo_url || s.logo_url === '/tak-city-run-logo.svg') ? '/tak-logo-white.png' : s.logo_url,
+    themeColor: s.theme_color,
+    facebookUrl: s.facebook_url,
+    lineUrl: s.line_url,
+    adminPin: s.admin_pin || '1234',
+    couponSettings: validCoupon || defaultCouponSettings
+  };
+};
 
 const mapSettingsToDB = (s) => ({
   id: 1,
@@ -272,7 +286,8 @@ const mapSettingsToDB = (s) => ({
   theme_color: s.themeColor,
   facebook_url: s.facebookUrl,
   line_url: s.lineUrl,
-  admin_pin: s.adminPin || '1234'
+  admin_pin: s.adminPin || '1234',
+  coupon_settings: s.couponSettings || defaultCouponSettings
 });
 
 // ==========================================
@@ -291,7 +306,7 @@ export const DataService = {
     return getLocalItem(LS_KEYS.EVENTS, initialEvents);
   },
   getLocalRegistrations(eventId = null) {
-    const list = getLocalItem(LS_KEYS.REGISTRATIONS, initialRegistrations);
+    const list = getLocalItem(LS_KEYS.REGISTRATIONS, []);
     if (!eventId || eventId === 'all') return list;
     return list.filter(r => r.eventId === eventId);
   },
@@ -317,10 +332,11 @@ export const DataService = {
       }
     }
     const local = getLocalItem(LS_KEYS.SETTINGS, initialClubSettings);
+    let resolved;
     if (!settings) {
-      settings = local;
+      resolved = local;
     } else {
-      settings = {
+      resolved = {
         ...local,
         ...settings,
         couponSettings: {
@@ -330,23 +346,33 @@ export const DataService = {
         }
       };
     }
-    if (!settings.logoUrl || settings.logoUrl === '/tak-city-run-logo.svg') {
-      settings.logoUrl = '/tak-logo-white.png';
+    if (!resolved.logoUrl || resolved.logoUrl === '/tak-city-run-logo.svg') {
+      resolved.logoUrl = '/tak-logo-white.png';
     }
-    return settings;
+    setLocalItem(LS_KEYS.SETTINGS, resolved);
+    return resolved;
   },
 
   async updateSettings(newSettings) {
+    const current = getLocalItem(LS_KEYS.SETTINGS, initialClubSettings);
+    const updated = { 
+      ...current, 
+      ...newSettings,
+      couponSettings: {
+        ...defaultCouponSettings,
+        ...(current?.couponSettings || {}),
+        ...(newSettings?.couponSettings || {})
+      }
+    };
+    setLocalItem(LS_KEYS.SETTINGS, updated);
+
     if (isSupabaseConfigured) {
       try {
-        await supabase.from('club_settings').upsert(mapSettingsToDB(newSettings));
+        await supabase.from('club_settings').upsert(mapSettingsToDB(updated));
       } catch (err) {
         console.warn('Supabase settings upsert error:', err);
       }
     }
-    const current = getLocalItem(LS_KEYS.SETTINGS, initialClubSettings);
-    const updated = { ...current, ...newSettings };
-    setLocalItem(LS_KEYS.SETTINGS, updated);
     return updated;
   },
 
@@ -579,48 +605,21 @@ export const DataService = {
       }
     }
 
-    const localRegs = getLocalItem(LS_KEYS.REGISTRATIONS, initialRegistrations);
-    const filteredLocal = (eventId && eventId !== 'all') ? localRegs.filter(r => r.eventId === eventId) : localRegs;
-
     if (dbRegs !== null) {
-      // Auto sync any local registrations that were created offline or before DB fix
-      const unSynced = filteredLocal.filter(lr => 
-        !lr.id.startsWith('reg-00') &&
-        !dbRegs.some(dr => dr.id === lr.id || dr.bibNumber === lr.bibNumber || (dr.phone && lr.phone && dr.phone === lr.phone))
-      );
-
-      if (unSynced.length > 0) {
-        for (const r of unSynced) {
-          try {
-            const dbPayload = mapRegToDB(r);
-            const { error: insErr } = await supabase.from('registrations').insert([dbPayload]);
-            if (!insErr) {
-              dbRegs.unshift(r);
-            }
-          } catch (e) {
-            console.warn('Failed to sync offline registration:', e);
-          }
-        }
+      // Synchronize local cache with database truth (never resurrect deleted records into DB)
+      if (!eventId || eventId === 'all') {
+        setLocalItem(LS_KEYS.REGISTRATIONS, dbRegs);
+      } else {
+        const allLocal = getLocalItem(LS_KEYS.REGISTRATIONS, []);
+        const otherEvents = allLocal.filter(r => r.eventId !== eventId);
+        setLocalItem(LS_KEYS.REGISTRATIONS, [...dbRegs, ...otherEvents]);
       }
-
-      // If DB is completely empty and initial mock data exists, seed initial registrations to DB
-      if (dbRegs.length === 0 && (!eventId || eventId === 'all' || eventId === 'ep-02')) {
-        for (const initReg of initialRegistrations) {
-          try {
-            await supabase.from('registrations').insert([mapRegToDB(initReg)]);
-            dbRegs.push(initReg);
-          } catch (e) {
-            console.warn('Seeding initial registration error:', e);
-          }
-        }
-      }
-
-      // Keep local store synchronized with DB truth
-      setLocalItem(LS_KEYS.REGISTRATIONS, dbRegs);
       return dbRegs;
     }
 
     // Fallback if Supabase is offline
+    const localRegs = getLocalItem(LS_KEYS.REGISTRATIONS, []);
+    const filteredLocal = (eventId && eventId !== 'all') ? localRegs.filter(r => r.eventId === eventId) : localRegs;
     return filteredLocal;
   },
 
@@ -700,7 +699,7 @@ export const DataService = {
     }
 
     const regs = getLocalItem(LS_KEYS.REGISTRATIONS, []);
-    const updated = regs.filter(r => r.id !== registrationId);
+    const updated = regs.filter(r => r.id !== registrationId && r.bibNumber !== registrationId);
     setLocalItem(LS_KEYS.REGISTRATIONS, updated);
     return true;
   },
@@ -757,7 +756,7 @@ export const DataService = {
       }
     }
 
-    const regs = getLocalItem(LS_KEYS.REGISTRATIONS, initialRegistrations);
+    const regs = getLocalItem(LS_KEYS.REGISTRATIONS, []);
     return regs.filter(r => 
       (r.phone && r.phone.includes(q)) || 
       (r.bibNumber && r.bibNumber.toLowerCase().includes(q)) ||

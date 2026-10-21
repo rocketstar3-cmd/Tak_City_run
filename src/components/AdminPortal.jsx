@@ -684,7 +684,16 @@ export function AdminPortal({
   // Settings Save
   const handleSaveSettings = async (e) => {
     e.preventDefault();
-    const updated = await DataService.updateSettings(settingsForm);
+    const finalCoupon = {
+      ...defaultCouponConfig,
+      ...(couponConfigForm || {}),
+      ...(settingsForm.couponSettings || {})
+    };
+    const updated = await DataService.updateSettings({
+      ...(clubSettings || {}),
+      ...settingsForm,
+      couponSettings: finalCoupon
+    });
     onSettingsUpdate(updated);
     showToast('บันทึกการตั้งค่าชมรมเรียบร้อยแล้ว!');
   };
@@ -704,35 +713,47 @@ export function AdminPortal({
     showToast('บันทึกการปรับแต่งคูปองเรียบร้อยแล้ว!');
   };
 
-  const handleSelectCardType = (type) => {
+  const handleSelectCardType = async (type) => {
+    let nextCoupon;
     if (type === 'id_card') {
-      setCouponConfigForm(prev => {
-        const base = { ...defaultCouponConfig, ...(prev || {}) };
-        return {
-          ...base,
-          cardType: 'id_card',
-          showPerks: false,
-          badgeText: (base.badgeText === '🎟️ LUCKY PASS' || base.badgeText === '🎟️ LUCKY DRAW PASS') ? '🏃‍♂️ RUNNER PASS' : (base.badgeText || '🏃‍♂️ RUNNER PASS'),
-          headline: base.headline === 'คูปองลุ้นรางวัล & สิทธิประโยชน์นักวิ่ง' ? 'บัตรประจำตัวผู้สมัคร (Runner Digital ID)' : (base.headline || 'บัตรประจำตัวผู้สมัคร (Runner Digital ID)'),
-          subheadline: base.subheadline === 'บัตรดิจิทัลประจำตัวสำหรับลุ้นของรางวัลท้ายงาน และรับอาหารเช้าหน้างาน' ? 'บัตรดิจิทัลยืนยันสิทธิ์การลงทะเบียนเข้าร่วมกิจกรรม' : (base.subheadline || 'บัตรดิจิทัลยืนยันสิทธิ์การลงทะเบียนเข้าร่วมกิจกรรม'),
-          bibLabel: (base.bibLabel === 'หมายเลขคูปองชิงโชค (LUCKY NO.)' || !base.bibLabel) ? 'หมายเลขประจำตัวนักวิ่ง (BIB NO.)' : base.bibLabel,
-          noticeText: base.noticeText === 'แสดงคูปองนี้ต่อเจ้าหน้าที่หน้างานเพื่อรับอาหารเช้าและสิทธิ์ร่วมจับสลาก Lucky Draw' ? 'แสดงบัตรนี้ต่อเจ้าหน้าที่หน้างาน ณ จุดรายงานตัวเพื่อรับ BIB' : (base.noticeText || 'แสดงบัตรนี้ต่อเจ้าหน้าที่หน้างาน ณ จุดรายงานตัวเพื่อรับ BIB')
-        };
-      });
+      const base = { ...defaultCouponConfig, ...(couponConfigForm || {}) };
+      nextCoupon = {
+        ...base,
+        cardType: 'id_card',
+        showPerks: false,
+        badgeText: (base.badgeText === '🎟️ LUCKY PASS' || base.badgeText === '🎟️ LUCKY DRAW PASS') ? '🏃‍♂️ RUNNER PASS' : (base.badgeText || '🏃‍♂️ RUNNER PASS'),
+        headline: base.headline === 'คูปองลุ้นรางวัล & สิทธิประโยชน์นักวิ่ง' ? 'บัตรประจำตัวผู้สมัคร (Runner Digital ID)' : (base.headline || 'บัตรประจำตัวผู้สมัคร (Runner Digital ID)'),
+        subheadline: base.subheadline === 'บัตรดิจิทัลประจำตัวสำหรับลุ้นของรางวัลท้ายงาน และรับอาหารเช้าหน้างาน' ? 'บัตรดิจิทัลยืนยันสิทธิ์การลงทะเบียนเข้าร่วมกิจกรรม' : (base.subheadline || 'บัตรดิจิทัลยืนยันสิทธิ์การลงทะเบียนเข้าร่วมกิจกรรม'),
+        bibLabel: (base.bibLabel === 'หมายเลขคูปองชิงโชค (LUCKY NO.)' || !base.bibLabel) ? 'หมายเลขประจำตัวนักวิ่ง (BIB NO.)' : base.bibLabel,
+        noticeText: base.noticeText === 'แสดงคูปองนี้ต่อเจ้าหน้าที่หน้างานเพื่อรับอาหารเช้าและสิทธิ์ร่วมจับสลาก Lucky Draw' ? 'แสดงบัตรนี้ต่อเจ้าหน้าที่หน้างาน ณ จุดรายงานตัวเพื่อรับ BIB' : (base.noticeText || 'แสดงบัตรนี้ต่อเจ้าหน้าที่หน้างาน ณ จุดรายงานตัวเพื่อรับ BIB')
+      };
     } else {
-      setCouponConfigForm(prev => {
-        const base = { ...defaultCouponConfig, ...(prev || {}) };
-        return {
-          ...base,
-          cardType: 'coupon',
-          showPerks: true,
-          badgeText: base.badgeText === '🏃‍♂️ RUNNER PASS' ? '🎟️ LUCKY PASS' : (base.badgeText || '🎟️ LUCKY PASS'),
-          headline: base.headline === 'บัตรประจำตัวผู้สมัคร (Runner Digital ID)' ? 'คูปองลุ้นรางวัล & สิทธิประโยชน์นักวิ่ง' : (base.headline || 'คูปองลุ้นรางวัล & สิทธิประโยชน์นักวิ่ง'),
-          subheadline: base.subheadline === 'บัตรดิจิทัลยืนยันสิทธิ์การลงทะเบียนเข้าร่วมกิจกรรม' ? 'บัตรดิจิทัลประจำตัวสำหรับลุ้นของรางวัลท้ายงาน และรับอาหารเช้าหน้างาน' : (base.subheadline || 'บัตรดิจิทัลประจำตัวสำหรับลุ้นของรางวัลท้ายงาน และรับอาหารเช้าหน้างาน'),
-          bibLabel: base.bibLabel === 'หมายเลขประจำตัวนักวิ่ง (BIB NO.)' ? 'หมายเลขคูปองชิงโชค (LUCKY NO.)' : (base.bibLabel || 'หมายเลขคูปองชิงโชค (LUCKY NO.)'),
-          noticeText: base.noticeText === 'แสดงบัตรนี้ต่อเจ้าหน้าที่หน้างาน ณ จุดรายงานตัวเพื่อรับ BIB' ? 'แสดงคูปองนี้ต่อเจ้าหน้าที่หน้างานเพื่อรับอาหารเช้าและสิทธิ์ร่วมจับสลาก Lucky Draw' : (base.noticeText || 'แสดงคูปองนี้ต่อเจ้าหน้าที่หน้างานเพื่อรับอาหารเช้าและสิทธิ์ร่วมจับสลาก Lucky Draw')
-        };
+      const base = { ...defaultCouponConfig, ...(couponConfigForm || {}) };
+      nextCoupon = {
+        ...base,
+        cardType: 'coupon',
+        showPerks: true,
+        badgeText: base.badgeText === '🏃‍♂️ RUNNER PASS' ? '🎟️ LUCKY PASS' : (base.badgeText || '🎟️ LUCKY PASS'),
+        headline: base.headline === 'บัตรประจำตัวผู้สมัคร (Runner Digital ID)' ? 'คูปองลุ้นรางวัล & สิทธิประโยชน์นักวิ่ง' : (base.headline || 'คูปองลุ้นรางวัล & สิทธิประโยชน์นักวิ่ง'),
+        subheadline: base.subheadline === 'บัตรดิจิทัลยืนยันสิทธิ์การลงทะเบียนเข้าร่วมกิจกรรม' ? 'บัตรดิจิทัลประจำตัวสำหรับลุ้นของรางวัลท้ายงาน และรับอาหารเช้าหน้างาน' : (base.subheadline || 'บัตรดิจิทัลประจำตัวสำหรับลุ้นของรางวัลท้ายงาน และรับอาหารเช้าหน้างาน'),
+        bibLabel: base.bibLabel === 'หมายเลขประจำตัวนักวิ่ง (BIB NO.)' ? 'หมายเลขคูปองชิงโชค (LUCKY NO.)' : (base.bibLabel || 'หมายเลขคูปองชิงโชค (LUCKY NO.)'),
+        noticeText: base.noticeText === 'แสดงบัตรนี้ต่อเจ้าหน้าที่หน้างาน ณ จุดรายงานตัวเพื่อรับ BIB' ? 'แสดงคูปองนี้ต่อเจ้าหน้าที่หน้างานเพื่อรับอาหารเช้าและสิทธิ์ร่วมจับสลาก Lucky Draw' : (base.noticeText || 'แสดงคูปองนี้ต่อเจ้าหน้าที่หน้างานเพื่อรับอาหารเช้าและสิทธิ์ร่วมจับสลาก Lucky Draw')
+      };
+    }
+
+    setCouponConfigForm(nextCoupon);
+
+    // Auto-persist immediately so user never loses their choice even without clicking save below
+    try {
+      const updated = await DataService.updateSettings({
+        ...(clubSettings || {}),
+        ...settingsForm,
+        couponSettings: nextCoupon
       });
+      if (onSettingsUpdate) onSettingsUpdate(updated);
+      showToast(`เปลี่ยนเป็น: ${type === 'id_card' ? '🪪 บัตรประจำตัวนักวิ่ง (E-BIB)' : '🎟️ คูปองชิงโชค & สิทธิประโยชน์'} แล้ว!`);
+    } catch (err) {
+      console.warn('Auto-save card type error:', err);
     }
   };
 
@@ -2019,13 +2040,13 @@ export function AdminPortal({
                   TK02-001
                 </div>
 
-                <div style={{ 
-                  background: 'rgba(255, 255, 255, 0.05)', 
-                  border: currentCouponConfig.cardType === 'id_card' ? '1px solid rgba(0, 240, 255, 0.35)' : '1px solid rgba(245, 158, 11, 0.3)', 
-                  borderRadius: '10px', 
-                  padding: '10px 14px', 
-                  textAlign: 'left', 
-                  marginBottom: '12px' 
+                <div style={{
+                  background: 'rgba(255, 255, 255, 0.05)',
+                  border: currentCouponConfig.cardType === 'id_card' ? '1px solid rgba(0, 240, 255, 0.35)' : '1px solid rgba(245, 158, 11, 0.3)',
+                  borderRadius: '10px',
+                  padding: '10px 14px',
+                  textAlign: 'left',
+                  marginBottom: '12px'
                 }}>
                   <div style={{ fontSize: '0.7rem', color: currentCouponConfig.cardType === 'id_card' ? 'var(--cyan)' : '#F59E0B', fontWeight: 800, display: 'flex', alignItems: 'center', gap: '4px' }}>
                     <ShieldCheck size={12} /> {currentCouponConfig.cardType === 'id_card' ? 'บัตรประจำตัวนักวิ่งที่ลงทะเบียนแล้ว' : 'ผู้สมัครที่ได้รับการยืนยัน'}
@@ -2083,9 +2104,9 @@ export function AdminPortal({
                 ) : (
                   /* Clean Runner ID Details (ID Card Mode) */
                   <div style={{ marginTop: '12px' }}>
-                    <div style={{ 
-                      background: 'rgba(255, 255, 255, 0.03)', 
-                      borderRadius: '8px', 
+                    <div style={{
+                      background: 'rgba(255, 255, 255, 0.03)',
+                      borderRadius: '8px',
                       padding: '10px 12px',
                       display: 'grid',
                       gridTemplateColumns: '1fr 1fr',
